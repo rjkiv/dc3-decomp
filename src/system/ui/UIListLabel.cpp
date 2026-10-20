@@ -84,7 +84,7 @@ void UIListLabelElement::Draw(const Transform &tf, float f3, UIColor *col, Box *
     if (box) {
         Box localBox;
         localBox.Set(box->mMin, box->mMax);
-        const Hmx::Rect &r = mLabel->DrawRect();
+        const Hmx::Rect &r = mLabel->GetDrawRect();
         Vector3 v90;
         v90.Set(r.x, 0, r.y);
         localBox.GrowToContain(v90, false);
@@ -94,11 +94,11 @@ void UIListLabelElement::Draw(const Transform &tf, float f3, UIColor *col, Box *
         box->GrowToContain(localBox.mMin, false);
         box->GrowToContain(localBox.mMax, false);
     } else {
-        float *alphas = (float *)_alloca(mLabel->NumStyles() * sizeof(float));
+        float *alphas = (float *)_alloca(mLabel->Styles().size() * sizeof(float));
 
         for (int i = 0; i < mLabel->Styles().size(); i++) {
             RndText::Style &curStyle = mLabel->Style(i);
-            alphas[i] = curStyle.mInfo.mFontColor.alpha;
+            alphas[i] = curStyle.fontColor.alpha;
         }
         mLabel->LStyle(0).mColorOverride = col;
         if (mListLabel->GetUnk8c()) {
@@ -107,11 +107,11 @@ void UIListLabelElement::Draw(const Transform &tf, float f3, UIColor *col, Box *
             }
         }
         for (int i = 0; i < mLabel->Styles().size(); i++) {
-            mLabel->Style(i).mInfo.mFontColor.alpha *= f3;
+            mLabel->Style(i).fontColor.alpha *= f3;
         }
         mLabel->DrawShowing();
         for (int i = 0; i < mLabel->Styles().size(); i++) {
-            mLabel->Style(i).mInfo.mFontColor.alpha = alphas[i];
+            mLabel->Style(i).fontColor.alpha = alphas[i];
         }
     }
 }

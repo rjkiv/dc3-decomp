@@ -404,7 +404,7 @@ RndText *UIFontImporter::FindTextForFont(RndFontBase *font) const {
             Hmx::Object *owner = it->RefOwner();
             if (owner && owner->ClassName() == Text) {
                 RndText *text = dynamic_cast<RndText *>(owner);
-                if (text->Styles()[0].mFont == font) {
+                if (text->DefaultStyle().font == font) {
                     return text;
                 }
             }

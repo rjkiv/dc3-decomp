@@ -138,7 +138,7 @@ void LabelShrinkWrapper::Init() { REGISTER_OBJ_FACTORY(LabelShrinkWrapper) }
 
 void LabelShrinkWrapper::UpdateAndDrawWrapper() {
     MILO_ASSERT(m_pLabel, 0x86);
-    const Hmx::Rect &r = m_pLabel->DrawRect();
+    const Hmx::Rect &r = m_pLabel->GetDrawRect();
     float left = r.x - mLeftBorder;
     float bottom = r.y - mBottomBorder;
     float right = mRightBorder + r.w + r.x;

@@ -67,7 +67,7 @@ public:
     virtual float AspectRatio() const { return mCellSize.y / mCellSize.x; }
     virtual RndMat *Mat() const {
         if (mMats.size() > 0)
-            return (RndMat *)mMats[0];
+            return mMats[0];
         else
             return nullptr;
     }
@@ -79,43 +79,48 @@ public:
     NEW_OBJ(RndFont)
     REGISTER_OBJ(RndFont)
 
-    RndMat *Mat(int) const;
-    RndTex *ValidTexture(int) const;
+    RndMat *Mat(int page) const;
+    RndTex *ValidTexture(int page) const;
     void SetCellSize(float, float);
-    int CharPage(unsigned short) const;
+    int CharPage(unsigned short a) const;
     void BleedTest();
-    bool
-    CharWidthAdvanceCoords(unsigned short, float &, float &, Vector2 &, Vector2 &) const;
+    bool CharWidthAdvanceCoords(
+        unsigned short c,
+        float &width,
+        float &advance,
+        Vector2 &topLeft,
+        Vector2 &bottomRight
+    ) const;
     int NumMats() const { return mMats.size(); }
     float DeprecatedSize() const { return mDeprecatedSize; }
 
 protected:
     RndFont();
-    virtual bool HasChar(unsigned short) const;
-    virtual void SetASCIIChars(String);
+    virtual bool HasChar(unsigned short w) const;
+    virtual void SetASCIIChars(String s);
 
     void UpdateChars();
-    void SetBitmapSize(const Vector2 &);
-    void SetCharInfo(CharInfo *, RndBitmap &, const Vector2 &, int);
+    void SetBitmapSize(const Vector2 &cellSize);
+    void SetCharInfo(CharInfo *info, RndBitmap &a, const Vector2 &pos, int page);
 
     ObjPtrVec<RndMat> mMats; // 0x44
     ObjOwnerPtr<RndFont> mTextureOwner; // 0x60
-    std::map<unsigned short, CharInfo> mCharInfoMap; // 0x74
+    std::map<unsigned short, CharInfo> mCharInfos; // 0x74
     Vector2 mCellSize; // 0x8c
     float mDeprecatedSize; // 0x94
-    std::vector<Vector2> unk98; // 0x98
+    std::vector<Vector2> mNormCellSize; // 0x98
     bool mPacked; // 0xa4
 };
 
 class RndFont3d : public RndFontBase {
 public:
     struct CharInfo {
-        CharInfo(Hmx::Object *owner) : unk24(owner) {}
+        CharInfo(Hmx::Object *owner) : mesh(owner) {}
 
-        Box unk0;
-        float unk20;
-        ObjPtr<RndMesh> unk24;
-        bool unk38;
+        Box bbox; // 0x0
+        float charAdvance; // 0x20
+        ObjPtr<RndMesh> mesh; // 0x24
+        bool handmade; // 0x38
 
         MEM_OVERLOAD(CharInfo, 0x12A);
     };
@@ -132,13 +137,15 @@ public:
     virtual float CharAdvance(unsigned short) const;
     virtual float Kerning(unsigned short, unsigned short) const;
     virtual float AspectRatio() const;
-    virtual RndMat *Mat() const { return unk44; }
-    virtual const RndFontBase *DataOwner() const { return mTextureOwner; }
-    virtual float FontUnit() const { return mTextureOwner->unk6c.x; }
-    virtual float FontUnitInverse() const { return mTextureOwner->unk7c.x; }
+    virtual RndMat *Mat() const { return mMat; }
+    virtual const RndFontBase *DataOwner() const { return mCharGeomOwner; }
+    virtual float FontUnit() const { return mCharGeomOwner->mCellSize.x; }
+    virtual float FontUnitInverse() const { return mCharGeomOwner->mNormalize.x; }
 
-    CharInfo *GetCharInfo(unsigned short) const;
-    bool CharWidthAdvanceMesh(unsigned short, float &, float &, RndMesh **) const;
+    CharInfo *GetCharInfo(unsigned short c) const;
+    bool CharWidthAdvanceMesh(
+        unsigned short c, float &width, float &advance, RndMesh **mesh
+    ) const;
     Vector3 CharOriginOffset() const;
 
     OBJ_MEM_OVERLOAD(0x10A)
@@ -148,27 +155,27 @@ public:
 protected:
     RndFont3d();
 
-    virtual bool HasChar(unsigned short) const;
+    virtual bool HasChar(unsigned short w) const;
 
     void Clear();
 
-    ObjPtr<RndMat> unk44; // 0x44
-    ObjOwnerPtr<RndFont3d> mTextureOwner; // 0x58
-    Vector3 unk6c; // 0x6c
-    Vector3 unk7c; // 0x7c
-    Vector3 unk8c; // 0x8c
-    std::map<unsigned short, CharInfo *> mCharInfoMap; // 0x9c
+    ObjPtr<RndMat> mMat; // 0x44
+    ObjOwnerPtr<RndFont3d> mCharGeomOwner; // 0x58
+    Vector3 mCellSize; // 0x6c
+    Vector3 mNormalize; // 0x7c
+    Vector3 mCharOriginOffset; // 0x8c
+    std::map<unsigned short, CharInfo *> mCharInfos; // 0x9c
 };
 
 class BitmapLocker {
 public:
-    BitmapLocker(RndFont *, int);
+    BitmapLocker(RndFont *f, int page);
     ~BitmapLocker();
-    void LoadPage(int);
+    void LoadPage(int page);
 
-    RndBitmap *PtrToBitmap() const { return mPbm; }
+    RndBitmap *Bitmap() const { return mPbm; }
 
-private:
+protected:
     RndFont *mFont; // 0x0
     RndTex *mTexture; // 0x4
     RndBitmap *mPbm; // 0x8

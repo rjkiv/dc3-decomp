@@ -54,7 +54,7 @@ BEGIN_HANDLERS(UILabel)
         get_font_mats, UILabelDir::GetMatVariations(LStyle(_msg->Int(2)).mFontResource)
     )
     HANDLE(set_height_from_text, OnSetHeightFromText)
-    HANDLE_EXPR(draw_rect_width, mDrawRect.w)
+    HANDLE_EXPR(draw_rect_width, mCachedRect.w)
     HANDLE_ACTION(reload_string, (SetTextToken(mTextToken), mDirty = true))
     HANDLE_SUPERCLASS(UIComponent)
 END_HANDLERS
@@ -70,19 +70,17 @@ BEGIN_CUSTOM_PROPSYNC(UILabel::LabelStyle)
     RndText::Style &textStyle = gMe->Style(idx);
     SYNC_PROP_SET(
         text_size,
-        GetPctHeightFromTextSize(textStyle.mInfo.mSize),
-        textStyle.mInfo.mSize = GetTextSizeFromPctHeight(_val.Float());
+        GetPctHeightFromTextSize(textStyle.size),
+        textStyle.size = GetTextSizeFromPctHeight(_val.Float());
         gMe->Update()
     )
     SYNC_PROP_SET(
-        font_alpha,
-        textStyle.mInfo.mFontColor.alpha,
-        textStyle.mInfo.mFontColor.alpha = _val.Float()
+        font_alpha, textStyle.fontColor.alpha, textStyle.fontColor.alpha = _val.Float()
     )
-    SYNC_PROP_MODIFY(italics, textStyle.mInfo.mItalics, gMe->Update())
-    SYNC_PROP_MODIFY(kerning, textStyle.mInfo.mKerning, gMe->Update())
-    SYNC_PROP_MODIFY(z_offset, textStyle.mInfo.mZOffset, gMe->Update())
-    SYNC_PROP_MODIFY(blacklight, textStyle.mBlacklight, gMe->Update())
+    SYNC_PROP_MODIFY(italics, textStyle.italics, gMe->Update())
+    SYNC_PROP_MODIFY(kerning, textStyle.kerning, gMe->Update())
+    SYNC_PROP_MODIFY(z_offset, textStyle.zOffset, gMe->Update())
+    SYNC_PROP_MODIFY(blacklight, textStyle.blacklight, gMe->Update())
 END_CUSTOM_PROPSYNC
 
 bool PropSync(
@@ -128,7 +126,7 @@ BEGIN_PROPSYNCS(UILabel)
     SYNC_PROP_SET(edit_text, mEditText.c_str(), SetEditText(_val.Str()))
     SYNC_PROP_MODIFY(width, mWidth, Update())
     SYNC_PROP_MODIFY(height, mHeight, Update())
-    SYNC_PROP_MODIFY(circle, mCircle, Update())
+    SYNC_PROP_MODIFY(circle, mCircleCircumference, Update())
     SYNC_PROP_MODIFY(alignment, (int &)mAlignment, Update())
     SYNC_PROP_MODIFY(fit_type, (int &)mFitType, Update())
     SYNC_PROP_MODIFY(caps_mode, (int &)mCapsMode, Update())
@@ -140,7 +138,7 @@ BEGIN_PROPSYNCS(UILabel)
     SYNC_PROP_MODIFY(indentation, mIndentation, Update())
     SYNC_PROP_MODIFY(basic_markup, mBasicMarkup, Update())
     SYNC_PROP_SET(fixed_length, mFixedLength, SetFixedLength(_val.Int()); Update())
-    SYNC_PROP(draw_width, mDrawRect.w)
+    SYNC_PROP(draw_width, mCachedRect.w)
     gMe = this;
     SYNC_PROP(styles, mLabelStyles)
     SYNC_SUPERCLASS(UIComponent)
@@ -163,7 +161,7 @@ BEGIN_SAVES(UILabel)
     bs << mMarkup;
     bs << mCapsMode;
     bs << mHeight;
-    bs << mCircle;
+    bs << mCircleCircumference;
     bs << mFitType;
     bs << mLabelStyles.size();
     for (int i = 0; i < mLabelStyles.size(); i++) {
@@ -171,12 +169,12 @@ BEGIN_SAVES(UILabel)
         bs << curLabelStyle.mFontResource;
         bs << curLabelStyle.mColorOverride;
         RndText::Style &curStyle = Style(i);
-        bs << curStyle.mInfo.mSize;
-        bs << curStyle.mInfo.mKerning;
-        bs << curStyle.mInfo.mZOffset;
-        bs << curStyle.mInfo.mItalics;
-        bs << curStyle.mInfo.mFontColor.alpha;
-        bs << curStyle.mBlacklight;
+        bs << curStyle.size;
+        bs << curStyle.kerning;
+        bs << curStyle.zOffset;
+        bs << curStyle.italics;
+        bs << curStyle.fontColor.alpha;
+        bs << curStyle.blacklight;
     }
     bs << mScrollDelay;
     bs << mScrollRate;
@@ -226,7 +224,7 @@ void UILabel::PreLoad(BinStream &bs) {
         d >> (int &)mCapsMode;
         d >> mHeight;
         if (d.altRev > 0) {
-            d >> mCircle;
+            d >> mCircleCircumference;
         }
         d >> (int &)mFitType;
         int numLabelStyles;
@@ -238,13 +236,13 @@ void UILabel::PreLoad(BinStream &bs) {
             d >> curLabelStyle.mFontResource;
             d >> curLabelStyle.mColorOverride;
             RndText::Style &curStyle = Style(i);
-            d >> curStyle.mInfo.mSize;
-            d >> curStyle.mInfo.mKerning;
-            d >> curStyle.mInfo.mZOffset;
-            d >> curStyle.mInfo.mItalics;
-            d >> curStyle.mInfo.mFontColor.alpha;
+            d >> curStyle.size;
+            d >> curStyle.kerning;
+            d >> curStyle.zOffset;
+            d >> curStyle.italics;
+            d >> curStyle.fontColor.alpha;
             if (d.rev >= 0x1E) {
-                d >> curStyle.mBlacklight;
+                d >> curStyle.blacklight;
             }
         }
         if (d.rev >= 0x1F) {
@@ -277,17 +275,17 @@ void UILabel::PreLoad(BinStream &bs) {
             }
         }
         if (d.rev > 1) {
-            d >> Style(0).mInfo.mSize;
+            d >> Style(0).size;
             d >> (int &)mAlignment;
             d >> (int &)mCapsMode;
             if (d.rev > 7) {
                 d >> mMarkup;
             }
             d >> mLeading;
-            d >> Style(0).mInfo.mKerning;
+            d >> Style(0).kerning;
         }
         if (d.rev > 4) {
-            d >> Style(0).mInfo.mItalics;
+            d >> Style(0).italics;
         }
         if (d.rev > 2) {
             d >> (int &)mFitType;
@@ -327,7 +325,7 @@ void UILabel::PreLoad(BinStream &bs) {
             d >> str;
         }
         if (d.rev > 10) {
-            d >> Style(0).mInfo.mFontColor.alpha;
+            d >> Style(0).fontColor.alpha;
         }
         if (d.rev > 0xC) {
             BinStream &bs2 = d;
@@ -351,18 +349,18 @@ void UILabel::PreLoad(BinStream &bs) {
                 mLabelStyles[0].mFontResource.LoadFile(fp, true, true, kLoadFront, false);
                 mStyles.resize(i9);
             }
-            Style(1).mInfo.mSize = size;
+            Style(1).size = size;
             LStyle(1).mColorOverride = color;
         }
         if (d.rev > 0x12) {
-            d >> Style(1).mInfo.mKerning;
+            d >> Style(1).kerning;
         } else {
-            Style(1).mInfo.mKerning = Style(0).mInfo.mKerning;
+            Style(1).kerning = Style(0).kerning;
         }
         if (d.rev > 0x13) {
-            d >> Style(1).mInfo.mZOffset;
+            d >> Style(1).zOffset;
             if (d.rev < 0x19) {
-                Style(1).mInfo.mZOffset /= Style(1).mInfo.mSize;
+                Style(1).zOffset /= Style(1).size;
             }
         }
         if (d.rev > 0x14) {
@@ -388,8 +386,8 @@ void UILabel::PreLoad(BinStream &bs) {
             d.PushRev((int)s, this);
         }
         if (d.rev > 0x17) {
-            d >> Style(1).mInfo.mItalics;
-            d >> Style(1).mInfo.mFontColor.alpha;
+            d >> Style(1).italics;
+            d >> Style(1).fontColor.alpha;
         }
     }
     PUSH_REVS(d);
@@ -474,7 +472,7 @@ void UILabel::SetInt(int i, bool b) {
 }
 
 void UILabel::DrawShowing() {
-    if (Style(0).mInfo.mFontColor.alpha > 0) {
+    if (Style(0).fontColor.alpha > 0) {
         if (mDirty) {
             Update();
         }
@@ -485,14 +483,14 @@ void UILabel::DrawShowing() {
             for (int i = 0; i < mLabelStyles.size(); i++) {
                 LabelStyle &curLabelStyle = mLabelStyles[i];
                 RndText::Style &curStyle = Style(i);
-                curStyle.mInfo.mFontColorOverride = true;
+                curStyle.fontColorOverride = true;
                 UIColor *curColor = curLabelStyle.mColorOverride
                     ? curLabelStyle.mColorOverride.Ptr()
                     : color;
                 const Hmx::Color &curColorColor = curColor->GetColor();
-                curStyle.mInfo.mFontColor.red = curColorColor.red;
-                curStyle.mInfo.mFontColor.green = curColorColor.green;
-                curStyle.mInfo.mFontColor.blue = curColorColor.blue;
+                curStyle.fontColor.red = curColorColor.red;
+                curStyle.fontColor.green = curColorColor.green;
+                curStyle.fontColor.blue = curColorColor.blue;
             }
         }
         RndText::DrawShowing();
@@ -656,8 +654,8 @@ void UILabel::CenterWithLabel(UILabel *label, bool b2, float f3) {
     int add = b2 ? -1 : 1;
     Transform myXfm = LocalXfm();
     Transform labelXfm = label->LocalXfm();
-    myXfm.v.x = (label->mDrawRect.w / 2 + f3 / 2) * (float)add + labelXfm.v.x;
-    labelXfm.v.x = -((mDrawRect.w / 2 + f3 / 2) * (float)add - labelXfm.v.x);
+    myXfm.v.x = (label->mCachedRect.w / 2 + f3 / 2) * (float)add + labelXfm.v.x;
+    labelXfm.v.x = -((mCachedRect.w / 2 + f3 / 2) * (float)add - labelXfm.v.x);
     SetLocalXfm(myXfm);
     label->SetLocalXfm(labelXfm);
 }
@@ -681,15 +679,15 @@ bool UILabel::AllowEditText() const {
 
 void UILabel::LabelUpdate(bool b) {
     mDirty = false;
-    RndFontBase *font = Style(0).mFont;
-    Style(0).mInfo.mTextColor.Set(1, 1, 1, 1);
+    RndFontBase *font = Style(0).font;
+    Style(0).textColor.Set(1, 1, 1, 1);
     for (int i = 1; i < mLabelStyles.size(); i++) {
         RndText::Style &curStyle = Style(i);
         LabelStyle &curLabelStyle = LStyle(i);
-        if (curLabelStyle.mColorOverride && curStyle.mFont && curStyle.mFont != font) {
-            curStyle.mInfo.mTextColor = curLabelStyle.mColorOverride->GetColor();
+        if (curLabelStyle.mColorOverride && curStyle.font && curStyle.font != font) {
+            curStyle.textColor = curLabelStyle.mColorOverride->GetColor();
         } else {
-            curStyle.mInfo.mTextColor.Set(1, 1, 1, 1);
+            curStyle.textColor.Set(1, 1, 1, 1);
         }
     }
     UpdateText();
@@ -728,14 +726,14 @@ void UILabel::SetFontMat(char const *c, int idx) {
         }
     }
     if (idx < mStyles.size()) {
-        mStyles[idx].mFont = font;
+        mStyles[idx].font = font;
     }
 }
 
 const char *UILabel::GetFontMat(int idx) {
     RndFontBase *font = nullptr;
     if (idx < mStyles.size()) {
-        font = mStyles[idx].mFont;
+        font = mStyles[idx].font;
     }
     UILabelDir *fontRsrc = LStyle(idx).mFontResource;
     return fontRsrc ? fontRsrc->GetMatVariationName(font) : "";
@@ -808,9 +806,9 @@ DataNode UILabel::OnSetTimeHMS(const DataArray *da) {
 }
 
 DataNode UILabel::OnSetHeightFromText(DataArray *a) {
-    if (mFitType == 0 && Style(0).mFont) {
+    if (mFitType == 0 && Style(0).font) {
         float fl;
-        mHeight = ComputeHeight(unkc4, 1.0f, fl);
+        mHeight = ComputeHeight(mCachedNumLines, 1.0f, fl);
     } else {
         MILO_NOTIFY(
             "Could not set height, either no default font set, or fit type is not kFitWrap"

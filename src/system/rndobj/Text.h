@@ -18,14 +18,22 @@ class TextHolder {
 public:
     TextHolder() {}
     virtual ~TextHolder() {}
-    virtual void SetTextToken(Symbol) = 0;
-    virtual void SetInt(int, bool) = 0;
+    virtual void SetTextToken(Symbol s) = 0;
+    virtual void SetInt(int num, bool comma_separate) = 0;
 };
 
 class RndText : public virtual RndDrawable, public virtual RndTransformable {
 public:
-    enum Alignment {
+    enum _Alignment {
+        kLeft = 1,
         kCenter = 2,
+        kRight = 4,
+        kTop = 0x10,
+        kMiddle = 0x20,
+        kBottom = 0x40,
+    };
+
+    enum Alignment {
         kTopLeft = 0x11,
         kTopCenter = 0x12,
         kTopRight = 0x14,
@@ -49,7 +57,7 @@ public:
     enum FitType {
         /** "Performs normal line wrapping if [width] is set" */
         kFitWrap = 0,
-        // where 1 lol
+        kFitStretchObsolete = 1,
         /** "Shrinks the text until it fits within [width] and [height].
             Note that this is a very expensive process, super slow,
             and so should never be used on dynamically changing text when in game" */
@@ -67,115 +75,117 @@ public:
         kFitScrollMarqueeWrapAlways = 7
     };
 
-    struct StyleInfo {
-        StyleInfo()
-            : mSize(30), mTextColor(1, 1, 1), mFontColorOverride(false),
-              mFontColor(1, 1, 1), mItalics(0), mKerning(0), mZOffset(0) {}
+    class StyleBase {
+    public:
+        StyleBase()
+            : size(30), textColor(1, 1, 1), fontColorOverride(false), fontColor(1, 1, 1),
+              italics(0), kerning(0), zOffset(0) {}
 
         /** "Size of the text" */
-        float mSize; // 0x0
+        float size; // 0x0
         /** "Color of the text, put into mesh verts.
             Modifed by <color=r,g,b,a> markup .
             This will only work if the font mat has [prelit] set true
             and [use_environment] set false" */
-        Hmx::Color mTextColor; // 0x4
+        Hmx::Color textColor; // 0x4
         /** "If true, and if there's a font,
             you can change color and alpha during the draw" */
-        bool mFontColorOverride; // 0x14
+        bool fontColorOverride; // 0x14
         /** "Color of the font during draw, can be changed dynamically" */
-        Hmx::Color mFontColor; // 0x18
+        Hmx::Color fontColor; // 0x18
         /** "Defines the slant of the text, changed by <it> tag".
             Ranges from -5 to 5. */
-        float mItalics; // 0x28
+        float italics; // 0x28
         /** "Extra kerning for the text" */
-        float mKerning; // 0x2c
+        float kerning; // 0x2c
         /** "vertical offset as fraction of size" */
-        float mZOffset; // 0x30
+        float zOffset; // 0x30
     };
 
-    class Style {
+    class Style : public StyleBase {
     public:
         Style(Hmx::Object *owner);
         Style &operator=(const Style &s) {
-            mFont = s.mFont;
-            mBlacklight = s.mBlacklight;
-            mInfo = s.mInfo;
+            font = s.font;
+            blacklight = s.blacklight;
+            StyleBase &me = *this;
+            const StyleBase &rhs = s;
+            me = rhs;
             return *this;
         }
-        void SetAlpha(float alpha) { mInfo.mFontColor.alpha = alpha; }
 
-        StyleInfo mInfo; // 0x0
         /** "Font to use for this style" */
-        ObjPtr<RndFontBase> mFont; // 0x34
+        ObjPtr<RndFontBase> font; // 0x34
         /** "draw in blacklight pass?" */
-        bool mBlacklight; // 0x48
+        bool blacklight; // 0x48
     };
 
-    class StyleState {
-        friend class RndText;
-
+    class StyleState : public StyleBase {
     public:
-        StyleState(RndText *, float);
+        StyleState(RndText *text, float s);
 
-        StyleInfo mInfo; // 0x0
-        Style *unk34; // 0x34
-        int unk38; // 0x38
-        float unk3c; // 0x3c
+        Style *curStyle; // 0x34
+        int fontMapIndex; // 0x38
+        float scale; // 0x3c
         bool brk; // 0x40
     };
 
     // size 0x20
     class BlacklightPacket {
     public:
-        RndMesh *unk0; // 0x0
-        Hmx::Color unk4; // 0x4
-        float unk14; // 0x14
-        int unk18; // 0x18
-        RndCam *unk1c; // 0x1c
+        RndMesh *mpMesh; // 0x0
+        Hmx::Color mColor; // 0x4
+        float mCloneOffset; // 0x14
+        int mNumClones; // 0x18
+        RndCam *mpCam; // 0x1c
     };
 
     // size 0x14
     class Line {
     public:
-        unsigned short *unk0;
-        unsigned short *unk4;
-        float unk8;
-        float unkc;
-        float unk10;
+        unsigned short *start; // 0x0
+        unsigned short *end; // 0x4
+        float width; // 0x8
+        float x; // 0xc
+        float z; // 0x10
     };
 
     class FontMapBase {
     public:
-        FontMapBase() : mBlacklight(false) {}
+        FontMapBase() : m_IsBlacklight(false) {}
         virtual ~FontMapBase() {}
         virtual Symbol ClassName() const = 0;
-        virtual void SetFont(RndFontBase *) = 0;
+        virtual void SetFont(RndFontBase *f) = 0;
         virtual RndFontBase *Font() const = 0;
         virtual int NumMeshes() const = 0;
-        virtual RndMesh *Mesh(int) const = 0;
+        virtual RndMesh *Mesh(int i) const = 0;
         virtual int NumMaterials() const = 0;
-        virtual RndMat *Material(int) const = 0;
+        virtual RndMat *Material(int i) const = 0;
         virtual void ResetDisplayableChars() = 0;
-        virtual void IncrementDisplayableChars(unsigned short) = 0;
-        virtual void AllocateMeshes(RndText *, int) = 0;
+        virtual void IncrementDisplayableChars(unsigned short w) = 0;
+        virtual void AllocateMeshes(RndText *parent, int fixedLength) = 0;
         virtual void CleanupSyncMeshes() = 0;
         virtual void SetupCharacter(
-            unsigned short,
-            float &,
-            float,
-            const StyleState &state,
-            unsigned short,
-            float circle,
+            unsigned short c,
+            float &x,
+            float baseZ,
+            const StyleState &style,
+            unsigned short prevChar,
+            float circleCircumference,
             FitType fitType,
             float indentation
         ) = 0;
         virtual bool SupportsScrolling() const = 0;
         virtual void SetupScrolling() = 0;
-        virtual void UpdateScrolling(float) = 0;
+        virtual void UpdateScrolling(float offset) = 0;
+
+        bool IsBlacklight() { return m_IsBlacklight; }
+        void SetBlacklight(bool b) { m_IsBlacklight = b; }
 
         MEM_OVERLOAD(FontMapBase, 0xD7);
 
-        bool mBlacklight; // 0x4
+    private:
+        bool m_IsBlacklight; // 0x4
     };
 
     // size 0x18
@@ -194,19 +204,19 @@ public:
 
             RndMesh *mesh; // 0x0
             int displayableChars; // 0x4
-            RndMesh::Vert *unk8; // 0x8 - vert iterator/pointer?
-            int unkc; // 0xc - mesh sync flags?
+            RndMesh::Vert *vertIt; // 0x8
+            int syncFlags; // 0xc
         };
 
-        FontMap() : mFont(nullptr) {}
+        FontMap() : font(nullptr) {}
         virtual ~FontMap();
         virtual Symbol ClassName() const { return StaticClassName(); }
         virtual void SetFont(RndFontBase *);
-        virtual RndFontBase *Font() const { return mFont; }
-        virtual int NumMeshes() const { return mPages.size(); }
-        virtual RndMesh *Mesh(int idx) const { return mPages[idx]->mesh; }
-        virtual int NumMaterials() const { return mPages.size(); }
-        virtual RndMat *Material(int idx) const { return mFont->Mat(idx); }
+        virtual RndFontBase *Font() const { return font; }
+        virtual int NumMeshes() const { return pages.size(); }
+        virtual RndMesh *Mesh(int idx) const { return pages[idx]->mesh; }
+        virtual int NumMaterials() const { return pages.size(); }
+        virtual RndMat *Material(int idx) const { return font->Mat(idx); }
         virtual void ResetDisplayableChars();
         virtual void IncrementDisplayableChars(unsigned short);
         virtual void AllocateMeshes(RndText *, int);
@@ -230,26 +240,26 @@ public:
             return name;
         }
 
-        RndFont *mFont; // 0x8
-        std::vector<Page *> mPages; // 0xc
+        RndFont *font; // 0x8
+        std::vector<Page *> pages; // 0xc
     };
 
     // size 0x20
     class FontMap3d : public FontMapBase {
     public:
-        FontMap3d() : mFont(nullptr), mDisplayableChars(0) {}
+        FontMap3d() : font(nullptr), displayableChars(0) {}
         virtual ~FontMap3d();
         virtual Symbol ClassName() const { return StaticClassName(); }
         virtual void SetFont(RndFontBase *);
-        virtual RndFontBase *Font() const { return mFont; }
-        virtual int NumMeshes() const { return mMeshes.size(); }
-        virtual RndMesh *Mesh(int idx) const { return mMeshes[idx]; }
-        virtual int NumMaterials() const { return mFont && mFont->Mat(); }
+        virtual RndFontBase *Font() const { return font; }
+        virtual int NumMeshes() const { return meshes.size(); }
+        virtual RndMesh *Mesh(int idx) const { return meshes[idx]; }
+        virtual int NumMaterials() const { return font && font->Mat(); }
         virtual RndMat *Material(int i) const {
             MILO_ASSERT(i==0, 0x150);
-            return mFont->Mat();
+            return font->Mat();
         }
-        virtual void ResetDisplayableChars() { mDisplayableChars = 0; }
+        virtual void ResetDisplayableChars() { displayableChars = 0; }
         virtual void IncrementDisplayableChars(unsigned short);
         virtual void AllocateMeshes(RndText *, int);
         virtual void CleanupSyncMeshes();
@@ -272,10 +282,10 @@ public:
             return name;
         }
 
-        RndFont3d *mFont; // 0x8
-        int mDisplayableChars; // 0xc
-        std::vector<RndMesh *> mMeshes; // 0x10
-        std::vector<RndMesh *>::iterator mMeshItr; // 0x1c
+        RndFont3d *font; // 0x8
+        int displayableChars; // 0xc
+        std::vector<RndMesh *> meshes; // 0x10
+        std::vector<RndMesh *>::iterator meshIt; // 0x1c
     };
 
     // Hmx::Object
@@ -304,20 +314,26 @@ public:
     REGISTER_OBJ(RndText)
 
     String TextASCII() const;
-    void SetTextASCII(const char *);
-    void SetFixedLength(int);
-    void ReFitTextScroll(String);
-    void GetWidthHeightBox(Box &) const;
-    float ComputeCharWidthsForText(String);
-    void ConstructMeshes(const std::vector<RndText::Line> &, const Hmx::Rect &, float);
-    void WrapText(
-        const unsigned short *,
-        int,
-        float *,
-        std::vector<RndText::Line> &,
-        Hmx::Rect &,
-        float
+    void SetTextASCII(const char *ascii);
+    void SetFixedLength(int numChars);
+    void ReFitTextScroll(String text);
+    void GetWidthHeightBox(Box &b) const;
+    float ComputeCharWidthsForText(String text);
+    void ConstructMeshes(
+        const std::vector<RndText::Line> &lines, const Hmx::Rect &r, float scale
     );
+    void WrapText(
+        const unsigned short *buffer,
+        int wLen,
+        float *charWidths,
+        std::vector<RndText::Line> &lines,
+        Hmx::Rect &rect,
+        float scale
+    );
+    void UpdateText();
+    void SetText(const char *utf8);
+    int FontMapIndex(RndFontBase *font, bool blacklight);
+    float ComputeHeight(int numLines, float scale, float &lSize);
 
     static void Init();
     static void DrawBlacklight();
@@ -325,47 +341,56 @@ public:
     static void SetBlacklightModeEnabled(bool b) { sBlacklightModeEnabled = b; }
     static bool IsBlacklightModeEnabled() { return sBlacklightModeEnabled; }
 
-    int GetTextSize() const { return Max<int>(mFixedLength, mText.length()); }
+    void SetAlignment(Alignment a) { mAlignment = a; }
+    Alignment GetAlignment() const { return mAlignment; }
     void SetCapsMode(CapsMode c) { mCapsMode = c; }
-    void UpdateText();
-    void SetText(const char *);
-    int FontMapIndex(RndFontBase *, bool);
-    float ComputeHeight(int, float, float &);
-    int NumStyles() const { return mStyles.size(); }
-    float Width() const { return mWidth; }
-    FitType GetFitType() const { return mFitType; }
+    CapsMode GetCapsMode() const { return mCapsMode; }
+    void SetLeading(float l) { mLeading = l; }
+    float Leading() const { return mLeading; }
+    void SetWidth(float w) { mWidth = w; }
+    float GetWidth() const { return mWidth; }
+    float GetHeight() const { return mHeight; }
+    void SetHeight(float h) { mHeight = h; }
+    int FixedLength() const { return mFixedLength; }
+    void SetMarkup(bool m) { mMarkup = m; }
+    bool Markup() const { return mMarkup; }
     void SetFitType(FitType f) { mFitType = f; }
-    void SetUnk78(Hmx::Object *o) { unk78 = o; };
-    float DrawRectWidth() const { return mDrawRect.w; }
+    FitType GetFitType() { return mFitType; }
+    void SetEventReceiver(Hmx::Object *o) { mEventReceiver = o; };
+    const String &Text() const { return mText; }
+    float GetIndentation() const { return mIndentation; }
+    const Hmx::Rect &GetDrawRect() const { return mCachedRect; }
+    int NumLines() const { return mCachedNumLines; }
+    float GetCircleCircumference() const { return mCircleCircumference; }
+    void SetCircleCircumference(float c) { mCircleCircumference = c; }
     ObjVector<Style> &Styles() { return mStyles; }
-    const String &RawText() const { return mText; }
-    float Indentation() const { return mIndentation; }
-    const Hmx::Rect &DrawRect() const { return mDrawRect; }
+    // all inferred
+    RndFontBase *GetSafeFont(const RndText::Style &style) {
+        return style.font ? style.font : DefaultStyle().font;
+    }
+    const Style &DefaultStyle() const { return mStyles[0]; }
+    Style &DefaultStyle() { return mStyles[0]; }
 
 protected:
     RndText();
 
     void DoBasicMarkup();
-    void BuildFontMaps(bool);
-    void ClearFixedLength() {
-        if (mFixedLength != 0) {
-            mFixedLength = 0;
-        }
-    }
+    void BuildFontMaps(bool force_rebuild);
     const unsigned short *
-    ParseMarkup(const unsigned short *, StyleState &, unsigned short &);
+    ParseMarkup(const unsigned short *c, StyleState &s, unsigned short &substitute);
     void SizeCheck();
-    int ConvertTextToWide(const char *, std::vector<unsigned short> &);
-    int OnComputeCharWidths(const unsigned short *, float *, bool);
+    int ConvertTextToWide(const char *utf8, std::vector<unsigned short> &buffer);
+    int
+    OnComputeCharWidths(const unsigned short *in, float *charWidths, bool externalUsage);
     void FitTextJust();
     void FitTextEllipsis();
     void FitTextScroll();
     void UpdateScrollOffsets();
-    void ReplaceMissingCharacters(std::vector<unsigned short> &);
+    void ReplaceMissingCharacters(std::vector<unsigned short> &buffer);
 
-    static void QueueBlacklightPacket(RndMesh *, float, int);
-    static FontMapBase *AcquireFontMap(RndFontBase *);
-    static void DrawMesh(RndMesh *, float, int);
+    static void QueueBlacklightPacket(RndMesh *pMesh, float cloneOffset, int numClones);
+    static FontMapBase *AcquireFontMap(RndFontBase *font);
+    static void DrawMesh(RndMesh *pMesh, float cloneOffset, int numClones);
     static bool sBlacklightModeEnabled;
     static int sBlacklightPacketCount;
     static std::vector<BlacklightPacket> sBlacklightPacketPool;
@@ -378,7 +403,7 @@ protected:
     /** "Height of the text, used for [fit_type] kFitJust". Ranges from 0 to 1000. */
     float mHeight; // 0x14
     /** "Lay text around circle of this circumference. Negative values face other way." */
-    float mCircle; // 0x18
+    float mCircleCircumference; // 0x18
     /** "Alignment option for the text" */
     Alignment mAlignment; // 0x1c
     FitType mFitType; // 0x20
@@ -405,29 +430,29 @@ protected:
     /** "If scrolling oversized text - delay this many seconds between scrolls.
         When the fit type is kFitScrollMarqueeWrapAlways, this value will be ignored." */
     float mScrollPause; // 0x3c
-    bool unk40;
-    float unk44;
-    float unk48;
-    float unk4c;
-    float unk50;
-    float unk54;
-    float unk58;
-    int unk5c;
-    int unk60;
+    bool mScrollEnabled; // 0x40
+    float mScrollTimeMs; // 0x44
+    float mScrollTriggerTime; // 0x48
+    float mScrollSpeed; // 0x4c
+    float mScrollOffset; // 0x50
+    float mFullStringLength; // 0x54
+    float mCloneOffset; // 0x58
+    int mNumClones; // 0x5c
+    int mNumSubTexts; // 0x60
     /** "Space between continuous scrolling messages.
         This value is only considered when the fit type
         is set to kFitScrollMarqueeWrapAlways." */
     float mIndentation; // 0x64
-    std::list<float> unk68;
-    std::list<float> unk70;
-    ObjPtr<Hmx::Object> unk78;
-    float unk8c;
-    int unk90;
-    int unk94;
+    std::list<float> mEnterCheckPts; // 0x68
+    std::list<float> mExitCheckPts; // 0x70
+    ObjPtr<Hmx::Object> mEventReceiver; // 0x78
+    float mEnterOffset; // 0x8c
+    int mEnteredIdx; // 0x90
+    int mExitedIdx; // 0x94
     /** "The different styles this text can have" */
     ObjVector<Style> mStyles; // 0x98
-    std::vector<FontMapBase *> mFontMaps; // 0xa8
-    Hmx::Rect mDrawRect; // 0xb4
-    int unkc4; // 0xc4 - num lines?
-    float unkc8;
+    std::vector<FontMapBase *> mFontMap; // 0xa8
+    Hmx::Rect mCachedRect; // 0xb4
+    int mCachedNumLines; // 0xc4
+    float unkc8; // 0xc8 - not in the pdb!
 };
