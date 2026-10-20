@@ -174,10 +174,12 @@ void Debug::Fail(const char *msg, void *context) {
             (*it)();
         }
         mFailCallbacks.clear();
-        ModalType t = kModalFail;
-        Modal(t, msgStr.c_str(), context);
-        if (t != kModalFail) {
-            mFailing = false;
+        {
+            ModalType t = kModalFail;
+            Modal(t, msgStr.c_str(), context);
+            if (t != kModalFail) {
+                mFailing = false;
+            }
         }
     }
 }

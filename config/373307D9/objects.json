@@ -510,7 +510,7 @@
             "system/os/ContentMgr_Xbox.cpp": "NonMatching",
             "system/os/CritSec.cpp": "Matching",
             "system/os/DateTime.cpp": "NonMatching",
-            "system/os/Debug.cpp": "NonMatching",
+            "system/os/Debug.cpp": "Matching",
             "system/os/File.cpp": "NonMatching",
             "system/os/FileCache.cpp": "NonMatching",
             "system/os/File_Win.cpp": "Matching",
