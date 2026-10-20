@@ -14,6 +14,7 @@
 #include "utl/Loader.h"
 #include "utl/MemMgr.h"
 #include "utl/Option.h"
+#include "utl/Std.h"
 #include "utl/TextFileStream.h"
 #include "xdk/win_types.h"
 #include "xdk/xapilibi/errhandlingapi.h"
@@ -149,39 +150,35 @@ void Debug::Notify(const char *msg) {
 
 void Debug::Fail(const char *msg, void *context) {
     if (!mNoDebug && !mFailing) {
-        bool &failing = mFailing;
-        failing = true;
+        ScopedState<bool, true, false> scoped_mFailing(&mFailing);
         StackString<256> msgStr(msg);
         StackString<4096> stackTrace;
         DataAppendStackTrace(stackTrace);
         MILO_LOG(stackTrace.c_str());
-        static int heap = MemFindHeap("main");
-        {
-            MemHeapTracker tracker(heap);
-            if (!MainThread()) {
-                CaptureStackTrace(DIM(mFailThreadStack), mFailThreadStack, context);
-                mFailThreadMsg = msg;
-                MILO_LOG("THREAD-FAIL: %s\n", msgStr);
-                while (true) {
-                    Timer::Sleep(200);
-                    PlatformDebugBreak();
-                }
-            }
-            if (mTry) {
-                mTry--;
-                throw msg;
-            }
-            FOREACH (it, mFailCallbacks) {
-                (*it)();
-            }
-            mFailCallbacks.clear();
-            ModalType t = kModalFail;
-            Modal(t, msgStr.c_str(), context);
-            if (t != kModalFail) {
-                mFailing = false;
+        static int _x = MemFindHeap("main");
+        MemHeapTracker tracker(_x);
+        if (!MainThread()) {
+            CaptureStackTrace(Debug::STACK_MAX, mFailThreadStack, context);
+            mFailThreadMsg = msg;
+            MILO_LOG("THREAD-FAIL: %s\n", msgStr);
+            while (true) {
+                Timer::Sleep(200);
+                PlatformDebugBreak();
             }
         }
-        mFailing = false;
+        if (mTry) {
+            mTry--;
+            throw msg;
+        }
+        FOREACH (it, mFailCallbacks) {
+            (*it)();
+        }
+        mFailCallbacks.clear();
+        ModalType t = kModalFail;
+        Modal(t, msgStr.c_str(), context);
+        if (t != kModalFail) {
+            mFailing = false;
+        }
     }
 }
 
@@ -330,7 +327,7 @@ void Debug::Modal(Debug::ModalType &mt, const char *msg, void *context) {
 
             outputStr += MakeString(
                 "\nUptime: %.2f hrs   UsingCD: %s   SDK: %s",
-                SystemMs() * 2.7777777777777778E-7,
+                SystemMs() / 3600000.0,
                 UsingCD() ? "true" : "false",
                 mSDKVersion
             );

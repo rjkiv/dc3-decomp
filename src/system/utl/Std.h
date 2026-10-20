@@ -132,3 +132,13 @@ inline int atoi_s(char *str) {
     else
         return 0;
 }
+
+// also not sure where to put this
+template <class T, T Start, T End>
+class ScopedState {
+public:
+    ScopedState(T *x) : m_t(x) { *m_t = Start; }
+    ~ScopedState() { *m_t = End; }
+
+    T *m_t; // 0x0
+};
