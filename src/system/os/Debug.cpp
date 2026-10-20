@@ -69,8 +69,8 @@ void DebugModal(enum Debug::ModalType &ty, class FixedString &str, bool b3) {
 
 Debug::Debug()
     : mNoDebug(0), mFailing(0), mExiting(0), mNoTry(0), mNoModal(0), mTry(0), mLog(0),
-      mAlwaysFlush(0), mReflect(0), mModalCallback(DebugModal), mDataPointCallback(0),
-      mFailThreadMsg(0), mNotifyThreadMsg(0), mHostname(0), mApp(0) {}
+      mAlwaysFlush(0), mReflect(0), mModalCallback(DebugModal), mErrorCallback(0),
+      mFailThreadMsg(0), mNotifyThreadMsg(0), mCrucibleHostname(0), mCrucibleApp(0) {}
 
 void Debug::RemoveExitCallback(ExitCallbackFunc *func) {
     if (!mExiting) {
@@ -159,7 +159,7 @@ void Debug::Fail(const char *msg, void *context) {
         {
             MemHeapTracker tracker(heap);
             if (!MainThread()) {
-                CaptureStackTrace(DIM(mStackData.mFailThreadStack), &mStackData, context);
+                CaptureStackTrace(DIM(mFailThreadStack), mFailThreadStack, context);
                 mFailThreadMsg = msg;
                 MILO_LOG("THREAD-FAIL: %s\n", msgStr);
                 while (true) {
@@ -290,9 +290,10 @@ void Debug::Init() {
     DM_SYSTEM_INFO sysInfo;
     sysInfo.SizeOfStruct = 0x20;
     if (SUCCEEDED(DmGetSystemInfo(&sysInfo))) {
-        mSDK = MakeString("%d.%d", sysInfo.XDKVersion.Build, sysInfo.XDKVersion.Qfe);
+        mSDKVersion =
+            MakeString("%d.%d", sysInfo.XDKVersion.Build, sysInfo.XDKVersion.Qfe);
     }
-    mSource = NetworkSocket::GetHostName();
+    mUser = NetworkSocket::GetHostName();
 }
 
 void Debug::Modal(Debug::ModalType &mt, const char *msg, void *context) {
@@ -308,7 +309,7 @@ void Debug::Modal(Debug::ModalType &mt, const char *msg, void *context) {
             mModalCallback(mt, outputStr, false);
         }
         if (mFailThreadMsg) {
-            AppendThreadStackTrace(outputStr, &mStackData);
+            AppendThreadStackTrace(outputStr, mFailThreadStack);
         } else {
             String sysCfgFile;
             String versionStr;
@@ -331,7 +332,7 @@ void Debug::Modal(Debug::ModalType &mt, const char *msg, void *context) {
                 "\nUptime: %.2f hrs   UsingCD: %s   SDK: %s",
                 SystemMs() * 2.7777777777777778E-7,
                 UsingCD() ? "true" : "false",
-                mSDK
+                mSDKVersion
             );
             FOREACH (it, mFailAppendCallbacks) {
                 (*it)(outputStr);
@@ -364,17 +365,17 @@ void Debug::Modal(Debug::ModalType &mt, const char *msg, void *context) {
 }
 
 void Debug::DoCrucible(Debug::ModalType mt, const char *msg, void *context) {
-    if (!mHostname) {
+    if (!mCrucibleHostname) {
         if (SystemConfig()) {
             DataArray *cfg = SystemConfig()->FindArray("crucible", false);
             if (cfg) {
-                mHostname = cfg->FindStr("hostname");
-                mApp = cfg->FindStr("app");
-                mProject = cfg->FindStr("project");
+                mCrucibleHostname = cfg->FindStr("hostname");
+                mCrucibleApp = cfg->FindStr("app");
+                mCrucibleProject = cfg->FindStr("project");
             }
         }
-        if (!mHostname) {
-            mHostname = DevHostname("crucible");
+        if (!mCrucibleHostname) {
+            mCrucibleHostname = DevHostname("crucible");
         }
     }
     DataPoint dataPt;
@@ -389,9 +390,9 @@ void Debug::DoCrucible(Debug::ModalType mt, const char *msg, void *context) {
         severityMsg = "warn";
     }
     dataPt.AddPair("severity", severityMsg);
-    dataPt.AddPair("project", mProject.c_str());
+    dataPt.AddPair("project", mCrucibleProject.c_str());
     dataPt.AddPair("platform", PlatformSymbol(TheLoadMgr.GetPlatform()));
-    dataPt.AddPair("source", mSource);
+    dataPt.AddPair("source", mUser);
     {
         String sysCfgFile;
         String versionStr;
@@ -416,8 +417,8 @@ void Debug::DoCrucible(Debug::ModalType mt, const char *msg, void *context) {
         }
         pathStr.ReplaceAll('\\', '/');
         dataPtJson.AddPair("path", pathStr.c_str());
-        if (mApp) {
-            dataPt.AddPair("application", mApp);
+        if (mCrucibleApp) {
+            dataPt.AddPair("application", mCrucibleApp);
         } else {
             dataPt.AddPair("application", appStr.c_str());
         }
@@ -432,7 +433,7 @@ void Debug::DoCrucible(Debug::ModalType mt, const char *msg, void *context) {
         }
         dataPtJson.AddPair("args", argsStr.c_str());
     }
-    dataPtJson.AddPair("opsys", mSDK);
+    dataPtJson.AddPair("opsys", mSDKVersion);
     dataPt.AddPair("extra", "");
     if (mt == kModalFail) {
         StackString<512> dataStackTrace;
@@ -452,8 +453,8 @@ void Debug::DoCrucible(Debug::ModalType mt, const char *msg, void *context) {
             dataPtJson.AddPair("history", cheatStr.c_str());
         }
     }
-    if (mDataPointCallback) {
-        mDataPointCallback(mt, dataPtJson);
+    if (mErrorCallback) {
+        mErrorCallback(mt, dataPtJson);
     }
     String json;
     dataPtJson.ToJSON(json);

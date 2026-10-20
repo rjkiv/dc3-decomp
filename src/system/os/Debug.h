@@ -9,8 +9,7 @@ typedef void ExitCallbackFunc(void);
 typedef void FixedStringFunc(FixedString &);
 
 struct StackData {
-    /** Addresses in memory corresponding to called functions. */
-    unsigned int mFailThreadStack[50]; // 0x0
+    unsigned int address; // 0x0
 };
 
 // size 0x134
@@ -25,10 +24,54 @@ public:
     typedef void ModalCallbackFunc(ModalType &, FixedString &, bool);
     typedef void DataPointFunc(ModalType, class DataPoint &);
 
+    Debug();
+    virtual ~Debug();
+    virtual void Print(const char *);
+
+    void Poll();
+    void SetDisabled(bool);
+    void SetTry(bool);
+    void DoCrucible(ModalType, const char *, void *);
+    //   public: void AddFailCallback(void (*)());
+    //   public: void RemoveFailCallback(void (*)());
+    void AddExitCallback(ExitCallbackFunc *func) { mExitCallbacks.push_front(func); }
+    void RemoveExitCallback(ExitCallbackFunc *);
+    void AddFailAppendCallback(FixedStringFunc *func) {
+        mFailAppendCallbacks.push_front(func);
+    }
+    //   public: void RemoveFailAppendCallback(void (*)(FixedString&));
+    bool CheckModalCallback(ModalCallbackFunc *func) { return mModalCallback == func; }
+    ModalCallbackFunc *ModalCallback() const { return mModalCallback; }
+
+    //   public: void (*SetModalCallback(void (*)(Debug::ModalType&, FixedString&, bool)))
+    //      (Debug::ModalType&, FixedString&, bool);
+    //   public: void (*GetModalCallback())(Debug::ModalType&, FixedString&, bool) const;
+
+    void SetErrorCallback(DataPointFunc *func) { mErrorCallback = func; }
+
+    bool NoModal() const { return mNoModal; }
+    void SetNoModal(bool nomodal) { mNoModal = nomodal; }
+
+    void StartLog(const char *, bool);
+    void StopLog();
+    void Init();
+    ModalCallbackFunc *SetModalCallback(ModalCallbackFunc *);
+    void Exit(int, bool);
+    void Warn(const char *msg);
+    void Notify(const char *msg);
+    void Fail(const char *msg, void *context);
+    TextStream *SetReflect(TextStream *ts) {
+        TextStream *ret = mReflect;
+        mReflect = ts;
+        return ret;
+    }
+
+    static const int STACK_MAX = 50;
+
 private:
     void Modal(ModalType &, const char *, void *);
 
-    bool mNoDebug; // 0x4
+    volatile bool mNoDebug; // 0x4
     bool mFailing; // 0x5
     bool mExiting; // 0x6
     bool mNoTry; // 0x7
@@ -41,50 +84,17 @@ private:
     std::list<ExitCallbackFunc *> mFailCallbacks; // 0x20
     std::list<ExitCallbackFunc *> mExitCallbacks; // 0x28
     std::list<FixedStringFunc *> mFailAppendCallbacks; // 0x30
-    DataPointFunc *mDataPointCallback; // 0x38
-    StackData mStackData; // 0x3c
+    DataPointFunc *mErrorCallback; // 0x38
+    /** Addresses in memory corresponding to called functions. */
+    StackData mFailThreadStack[50]; // 0x3c
     const char *mFailThreadMsg; // 0x104
     const char *mNotifyThreadMsg; // 0x108
-    const char *mHostname; // 0x10c
-    const char *mApp; // 0x110
-    String mProject; // 0x114
-    String mSDK; // 0x11c
-    String unk124; // 0x124
-    String mSource; // 0x12c
-
-public:
-    Debug();
-    virtual ~Debug();
-    virtual void Print(const char *);
-
-    void Poll();
-    void SetDisabled(bool);
-    void SetTry(bool);
-    void DoCrucible(ModalType, const char *, void *);
-    void AddExitCallback(ExitCallbackFunc *func) { mExitCallbacks.push_front(func); }
-    void RemoveExitCallback(ExitCallbackFunc *);
-    void AddFailAppendCallback(FixedStringFunc *func) {
-        mFailAppendCallbacks.push_front(func);
-    }
-    bool CheckModalCallback(ModalCallbackFunc *func) { return mModalCallback == func; }
-    ModalCallbackFunc *ModalCallback() const { return mModalCallback; }
-    bool NoModal() const { return mNoModal; }
-    void SetNoModal(bool nomodal) { mNoModal = nomodal; }
-
-    void StartLog(const char *, bool);
-    void StopLog();
-    void Init();
-    ModalCallbackFunc *SetModalCallback(ModalCallbackFunc *);
-    void Exit(int, bool);
-    void Warn(const char *msg);
-    void Notify(const char *msg);
-    void Fail(const char *msg, void *context);
-    TextStream *Reflect() const { return mReflect; }
-    TextStream *SetReflect(TextStream *ts) {
-        TextStream *ret = mReflect;
-        mReflect = ts;
-        return ret;
-    }
+    const char *mCrucibleHostname; // 0x10c
+    const char *mCrucibleApp; // 0x110
+    String mCrucibleProject; // 0x114
+    String mSDKVersion; // 0x11c
+    String mWorkingDir; // 0x124
+    String mUser; // 0x12c
 };
 
 typedef void ModalCallbackFunc(Debug::ModalType &, FixedString &, bool);

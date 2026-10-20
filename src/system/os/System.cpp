@@ -205,7 +205,7 @@ int SystemMs() {
 }
 
 void SystemPoll(bool b1) {
-    static Timer *_t = AutoTimer ::GetTimer("system_poll");
+    static Timer *_t = AutoTimer::GetTimer("system_poll");
     AutoTimer _at(_t, 50.0f, nullptr, nullptr);
     Timer::ClearSlowFrame();
     SystemMs();
@@ -340,12 +340,12 @@ void LanguageInit() {
 }
 
 void AppendStackTrace(FixedString &msg, void *context) {
-    StackData data;
-    memset(&data, 0, sizeof(StackData));
-    CaptureStackTrace(50, &data, context);
+    StackData data[Debug::STACK_MAX];
+    memset(data, 0, sizeof(data));
+    CaptureStackTrace(50, data, context);
     int stackIdx;
-    for (stackIdx = 0; stackIdx < 50; stackIdx++) {
-        if (data.mFailThreadStack[stackIdx] == 0)
+    for (stackIdx = 0; stackIdx < Debug::STACK_MAX; stackIdx++) {
+        if (data[stackIdx].address == 0)
             break;
     }
     String mapName;
@@ -354,16 +354,16 @@ void AppendStackTrace(FixedString &msg, void *context) {
     bool parse;
     if (!UsingCD() && !FileIsLocal(mapName.c_str())) {
         String strf8;
-        HolmesClientStackTrace(mapName.c_str(), &data, stackIdx, strf8);
+        HolmesClientStackTrace(mapName.c_str(), data, stackIdx, strf8);
         msg += strf8.c_str();
         parse = !strf8.empty();
     } else if (TheArchive && TheArchive->Patched()) {
         parse = false;
     } else {
-        parse = (*ParseStack)(mapName.c_str(), &data, stackIdx, msg);
+        parse = (*ParseStack)(mapName.c_str(), data, stackIdx, msg);
     }
     if (!parse) {
-        GenericMapFile::ParseStack(mapName.c_str(), &data, stackIdx, msg);
+        GenericMapFile::ParseStack(mapName.c_str(), data, stackIdx, msg);
     }
     msg += "\r\n";
 }
@@ -372,7 +372,7 @@ void AppendThreadStackTrace(FixedString &msg, StackData *stack) {
     msg += "\n\n-- Thread failure, no stack yet --";
     int idx;
     for (idx = 0; idx < 50; idx++) {
-        if (stack->mFailThreadStack[idx] == 0)
+        if (stack[idx].address == 0)
             break;
     }
     GenericMapFile::ParseStack(nullptr, stack, idx, msg);
@@ -383,7 +383,7 @@ bool GenericMapFile::ParseStack(
 ) {
     msg += " (map file unavailable)";
     for (int i = 0; i < stack_size; i++) {
-        msg += MakeString("\n   %08x", stack->mFailThreadStack[i]);
+        msg += MakeString("\n   %08x", stack[i].address);
     }
     return true;
 }

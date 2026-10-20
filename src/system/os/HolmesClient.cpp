@@ -533,7 +533,9 @@ void HolmesClientTruncate(int file_handle, int length) {
     }
 }
 
-bool HolmesClientOpen(const char *filename, int mode, unsigned int &file_size, int &file_handle) {
+bool HolmesClientOpen(
+    const char *filename, int mode, unsigned int &file_size, int &file_handle
+) {
     CritSecTracker tracker(&gCrit);
     if (gHostLogging) {
         if (mode & 1U) {
@@ -582,7 +584,8 @@ void HolmesClientWrite(int file_handle, int start, int bytes, const void *buf) {
         MILO_ASSERT(gHolmesStream, 0x395);
         if (!gHolmesStream->Fail() || !gHostLogging) {
             BeginCmd(Holmes::kWriteFile, true);
-            *gStreamBuffer << (unsigned char)Holmes::kWriteFile << file_handle << start << bytes;
+            *gStreamBuffer << (unsigned char)Holmes::kWriteFile << file_handle << start
+                           << bytes;
             gStreamBuffer->Write(buf, bytes);
             HolmesFlushStreamBuffer();
             WaitForResponse(Holmes::kWriteFile);
@@ -600,7 +603,8 @@ void HolmesClientRead(int file_handle, int start, int bytes, void *buf, File *re
         CritSecTracker tracker(&gCrit);
         MILO_ASSERT(gHolmesStream, 0x3C7);
         BeginCmd(Holmes::kReadFile, true);
-        *gStreamBuffer << (unsigned char)Holmes::kReadFile << file_handle << start << bytes;
+        *gStreamBuffer << (unsigned char)Holmes::kReadFile << file_handle << start
+                       << bytes;
         HolmesFlushStreamBuffer();
 
         ReadRequest req;
@@ -635,7 +639,8 @@ void HolmesClientClose(File *f, int file_handle) {
     EndCmd(Holmes::kCloseFile);
 }
 
-CacheResourceResult HolmesClientCacheResource(const char *filename, const char *cachedName) {
+CacheResourceResult
+HolmesClientCacheResource(const char *filename, const char *cachedName) {
     AutoSlowFrame frame(__FUNCTION__, 1000);
     CritSecTracker tracker(&gCrit);
     BeginCmd(Holmes::kCacheResource, true);
@@ -714,7 +719,9 @@ void HolmesClientEnumerate(
     EndCmd(Holmes::kEnumerate);
 }
 
-void HolmesClientStackTrace(const char *file, struct StackData *stack, int stack_size, String &stack_desc) {
+void HolmesClientStackTrace(
+    const char *file, struct StackData *stack, int stack_size, String &stack_desc
+) {
     stack_desc = "";
     CritSecTracker cst(&gCrit);
     if (gHolmesStream && !gHolmesStream->Fail()) {
@@ -723,7 +730,7 @@ void HolmesClientStackTrace(const char *file, struct StackData *stack, int stack
         *gStreamBuffer << file;
         *gStreamBuffer << stack_size;
         for (int j = 0; j < stack_size; j++) {
-            *gStreamBuffer << stack->mFailThreadStack[j];
+            *gStreamBuffer << stack[j].address;
         }
         HolmesFlushStreamBuffer();
         gStackTraced = true;

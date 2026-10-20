@@ -405,8 +405,7 @@ void NgPostProc::DoBloom() {
     if (!b2 && s_BloomSetter) {
         RndOverlay *ppOverlay = RndOverlay::Find("postproc");
         if (ppOverlay->Showing()) {
-            TextStream *r = TheDebug.Reflect();
-            TheDebug.SetReflect(ppOverlay);
+            TextStream *r = TheDebug.SetReflect(ppOverlay);
             MILO_LOG("BLOOM : NONE\n");
             TheDebug.SetReflect(r);
         }
@@ -429,9 +428,8 @@ void NgPostProc::DoBloom() {
             s_BloomSetter = this;
             RndOverlay *ppOverlay = RndOverlay::Find("postproc");
             if (ppOverlay->Showing()) {
-                TextStream *r = TheDebug.Reflect();
                 RndPostProc *path = TheHamDirector->GetUnk18c();
-                TheDebug.SetReflect(ppOverlay);
+                TextStream *r = TheDebug.SetReflect(ppOverlay);
                 static int s8a30;
                 MILO_LOG(
                     "%03d:BLOOM: C=<%3d,%3d,%3d> I=%5.2f : %s\n",

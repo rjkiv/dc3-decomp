@@ -68,8 +68,7 @@ void LightPresetManager::SyncObjects() {
 void LightPresetManager::UpdateOverlay() {
     RndOverlay *o = RndOverlay::Find("light_preset", true);
     if (o->Showing()) {
-        TextStream *ts = TheDebug.Reflect();
-        TheDebug.SetReflect(o);
+        TextStream *ts = TheDebug.SetReflect(o);
         MILO_LOG("Last Category: %s\n", mLastCategory.Str());
         PrintPreset("PresetNew", mPresetNew);
         PrintPreset("PresetPrev", mPresetPrev);
