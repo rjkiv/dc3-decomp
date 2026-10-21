@@ -9,15 +9,15 @@
 #include "utl/SongPos.h"
 
 BeatClock::BeatClock()
-    : mMeasureMap(new MeasureMap()), mSound(this), mBpm(100),
-      mBeatsPerMeasure(4), mMeasuresPerPhrase(0), mUseGlobal(0), mElapsedTime(0),
-      mLastTime(0), mIsRunning(0), mTimeUnits(kTaskSeconds) {}
+    : mMeasureMap(new MeasureMap()), mSound(this), mBpm(100), mBeatsPerMeasure(4),
+      mMeasuresPerPhrase(0), mUseGlobal(0), mElapsedTime(0), mLastTime(0), mIsRunning(0),
+      mTimeUnits(kTaskSeconds) {}
 
 BeatClock::~BeatClock() { RELEASE(mMeasureMap); }
 
 BEGIN_HANDLERS(BeatClock)
-    HANDLE_ACTION(start, mIsRunning = true)
-    HANDLE_ACTION(pause, mIsRunning = false)
+    HANDLE_ACTION(start, Start())
+    HANDLE_ACTION(pause, Pause())
     HANDLE_ACTION(reset, Reset())
     HANDLE(sync, OnSyncState)
     HANDLE_SUPERCLASS(RndPollable)
@@ -29,12 +29,12 @@ BEGIN_PROPSYNCS(BeatClock)
     SYNC_PROP_SET(beats_per_measure, mBeatsPerMeasure, SetBeatsPerMeasure(_val.Int()))
     SYNC_PROP(measures_per_phrase, mMeasuresPerPhrase)
     SYNC_PROP_MODIFY(use_global, mUseGlobal, mSound = nullptr)
-    SYNC_PROP(measure, mSongPos.AccessMeasure())
-    SYNC_PROP(phrase, mSongPos.AccessPhrase())
-    SYNC_PROP(beat, mSongPos.AccessBeat())
-    SYNC_PROP(tick, mSongPos.AccessTick())
+    SYNC_PROP(measure, mSongPos.mMeasure)
+    SYNC_PROP(phrase, mSongPos.mPhrase)
+    SYNC_PROP(beat, mSongPos.mBeat)
+    SYNC_PROP(tick, mSongPos.mTick)
     SYNC_PROP(sub_division, mSubDivision)
-    SYNC_PROP(total_beat, mSongPos.AccessTotalBeat())
+    SYNC_PROP(total_beat, mSongPos.mTotalBeat)
     SYNC_PROP(seconds, mElapsedTime)
     SYNC_PROP_MODIFY(sound, mSound, mUseGlobal = false)
     SYNC_PROP(timeline, (int &)mTimeUnits)
@@ -133,15 +133,15 @@ void BeatClock::UpdateSongPos() {
             }
             secs = mElapsedTime + (time - old50);
         }
-        pos.AccessTotalBeat() = mBpm * secs * 0.016666668f;
-        pos.AccessTotalTick() = pos.GetTotalBeat() * 480.0f;
+        pos.mTotalBeat = mBpm * secs / 60.0f;
+        pos.mTotalTick = pos.GetTotalBeat() * 480.0f;
         mMeasureMap->TickToMeasureBeatTick(
-            pos.AccessTotalTick(), pos.AccessMeasure(), pos.AccessBeat(), pos.AccessTick()
+            pos.mTotalTick, pos.mMeasure, pos.mBeat, pos.mTick
         );
     }
     if (mMeasuresPerPhrase != 0) {
-        pos.AccessPhrase() = pos.GetMeasure() / mMeasuresPerPhrase;
-        pos.AccessMeasure() = pos.GetMeasure() % mMeasuresPerPhrase;
+        pos.mPhrase = pos.GetMeasure() / mMeasuresPerPhrase;
+        pos.mMeasure = pos.GetMeasure() % mMeasuresPerPhrase;
     }
     int div = pos.GetTick() / 120;
     if (mMeasuresPerPhrase != 0) {
@@ -180,14 +180,14 @@ DataNode BeatClock::OnSyncState(DataArray *a) {
         default:
             break;
         }
-        float mdiff =
-            (float)(mSongPos.GetMeasure() - mySongPos.GetMeasure()) * mBeatsPerMeasure;
+        float mdiff = (mSongPos.GetMeasure() - mySongPos.GetMeasure()) * mBeatsPerMeasure;
         float bdiff = mSongPos.GetBeat() - mySongPos.GetBeat();
-        float tdiff = (float)(mSongPos.GetTick() - mySongPos.GetTick()) * 0.0020833334f;
-        float f5 = mdiff + bdiff + tdiff;
+        float tdiff = (float)(mSongPos.GetTick() - mySongPos.GetTick()) / 480.0f;
+        float f5 = bdiff + tdiff;
+        f5 += mdiff;
         if (!NearlyZero(f5)) {
-            mSongPos.AccessTotalBeat() += f5;
-            mSongPos.AccessTotalTick() = mSongPos.AccessTotalBeat() * 480.0f;
+            mSongPos.mTotalBeat += f5;
+            mSongPos.mTotalTick = mSongPos.mTotalBeat * 480.0f;
             BroadcastPropertyChange("total_beat");
             mElapsedTime += (60.0f / mBpm) * f5;
             BroadcastPropertyChange("seconds");

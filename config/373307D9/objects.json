@@ -845,7 +845,7 @@
             "system/utl/VarTimer.cpp": "Matching",
             "system/utl/WaveFile.cpp": "Matching",
             "system/utl/trie.cpp": "NonMatching",
-            "system/world/BeatClock.cpp": "NonMatching",
+            "system/world/BeatClock.cpp": "Matching",
             "system/world/CameraManager.cpp": "Matching",
             "system/world/CameraShot.cpp": "NonMatching",
             "system/world/ColorPalette.cpp": "Matching",

@@ -35,8 +35,14 @@ public:
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(BeatClock)
 
-    void SetBeatsPerMeasure(int);
+    void Start() { mIsRunning = true; }
+    void Pause() { mIsRunning = false; }
     void Reset();
+    bool IsRunning() const { return mIsRunning; }
+    float GetBPM() const { return mBpm; }
+    const SongPos &GetSongPos() const { return mSongPos; }
+    int GetSubDivision() const { return mSubDivision; }
+    void SetBeatsPerMeasure(int beatsPerMeasure);
 
 protected:
     BeatClock();
