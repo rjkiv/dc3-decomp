@@ -6,7 +6,7 @@
 
 UITransitionHandler::UITransitionHandler(Hmx::Object *obj)
     : mInAnim(obj), mOutAnim(obj), mAnimationState(kUITransitionAnimationInvalid),
-      mChangePending(0), unk31(0) {}
+      mChangePending(0), mOutAnimStartedThisFrame(0) {}
 
 UITransitionHandler::~UITransitionHandler() {
     if (mInAnim)
@@ -28,7 +28,7 @@ void UITransitionHandler::FinishValueChange() {
         ClearAnimationState();
     else {
         if (mOutAnim && !TheUI->InTransition()) {
-            unk31 = true;
+            mOutAnimStartedThisFrame = true;
             mOutAnim->Animate(0.0f, false, 0.0f, 0, kEaseLinear, 0, 0);
             mAnimationState = kUITransitionAnimationOutAnimating;
         } else
@@ -50,7 +50,7 @@ void UITransitionHandler::StartValueChange() {
         }
     } else if (mAnimationState == 3) {
         MILO_ASSERT(mOutAnim, 0x89);
-        if (unk31)
+        if (mOutAnimStartedThisFrame)
             FinishValueChange();
         else {
             mOutAnim->Animate(
@@ -70,7 +70,7 @@ void UITransitionHandler::StartValueChange() {
 }
 
 void UITransitionHandler::UpdateHandler() {
-    unk31 = false;
+    mOutAnimStartedThisFrame = false;
     if (mChangePending && IsReadyToChange()) {
         FinishValueChange();
     }

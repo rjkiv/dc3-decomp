@@ -19,55 +19,73 @@ public:
     UIListProvider() {}
     virtual DataNode Handle(DataArray *, bool);
     virtual ~UIListProvider() {}
-    virtual void Text(int, int, UIListLabel *, UILabel *) const;
-    virtual RndMat *Mat(int, int, UIListMesh *) const;
-    virtual UIListProvider *Provider(int, int, UIListSubList *) const { return nullptr; }
-    virtual void Custom(int, int, class UIListCustom *, Hmx::Object *) const {}
-    virtual void UpdateExtendedText(int, int, UILabel *) const;
-    virtual void UpdateExtendedMesh(int, int, RndMesh *) const;
-    virtual void UpdateExtendedCustom(int, int, Hmx::Object *) const;
-    virtual Symbol DataSymbol(int) const { return gNullStr; }
-    virtual bool CanSelect(int) const { return true; }
-    virtual int DataIndex(Symbol s) const {
+    virtual void Text(int showing, int data, UIListLabel *slot, UILabel *label) const;
+    virtual RndMat *Mat(int showing, int data, UIListMesh *slot) const;
+    virtual UIListProvider *Provider(int showing, int data, UIListSubList *slot) const {
+        return nullptr;
+    }
+    virtual void
+    Custom(int showing, int data, class UIListCustom *slot, Hmx::Object *object) const {}
+    virtual void UpdateExtendedText(int showing, int data, UILabel *label) const;
+    virtual void UpdateExtendedMesh(int showing, int data, RndMesh *mesh) const;
+    virtual void UpdateExtendedCustom(int showing, int data, Hmx::Object *custom) const;
+    virtual Symbol DataSymbol(int data) const { return gNullStr; }
+    virtual bool CanSelect(int data) const { return true; }
+    virtual int DataIndex(Symbol sym) const {
         int numdata = NumData();
         for (int i = 0; i < numdata; i++) {
-            if (DataSymbol(i) == s)
+            if (DataSymbol(i) == sym)
                 return i;
         }
         return -1;
     }
     virtual int NumData() const = 0;
-    virtual bool IsActive(int) const { return true; }
-    virtual bool IsHidden(int) const { return false; }
-    virtual void InitData(RndDir *) {}
-    virtual float GapSize(int, int, int, int) const { return 0; }
-    virtual UIComponent::State
-    ComponentStateOverride(int, int, UIComponent::State s) const {
-        return s;
+    virtual bool IsActive(int data) const { return true; }
+    virtual bool IsHidden(int data) const { return false; }
+    virtual void InitData(RndDir *dir) {}
+    virtual float
+    GapSize(int showing, int data, int selected_data, int scroll_direction) const {
+        return 0;
     }
-    virtual UIListWidgetState ElementStateOverride(int, int, UIListWidgetState s) const {
-        return s;
+    virtual UIComponent::State ComponentStateOverride(
+        int showing, int data, UIComponent::State component_state
+    ) const {
+        return component_state;
     }
     virtual UIListWidgetState
-    SlotElementStateOverride(int, int, class UIListWidget *, UIListWidgetState s) const {
-        return s;
+    ElementStateOverride(int showing, int data, UIListWidgetState state) const {
+        return state;
     }
-    virtual UIColor *SlotColorOverride(int, int, class UIListWidget *, UIColor *c) const {
-        return c;
+    virtual UIListWidgetState SlotElementStateOverride(
+        int showing, int data, class UIListWidget *slot, UIListWidgetState state
+    ) const {
+        return state;
     }
-    virtual void PreDraw(int, int, UIListSlot *) const {}
-    virtual int SnappableAtOrBeforeData(int) const { return -1; }
-    virtual bool IsSnappableAtData(int) const { return false; }
-    virtual bool IsHeader(int) { return false; }
+    virtual UIColor *SlotColorOverride(
+        int showing, int data, class UIListWidget *slot, UIColor *color
+    ) const {
+        return color;
+    }
+    virtual void PreDraw(int showing, int data, UIListSlot *slot) const {}
+    virtual int SnappableAtOrBeforeData(int data) const { return -1; }
+    virtual bool IsSnappableAtData(int data) const { return false; }
+    virtual bool IsHeader(int data) { return false; }
     virtual void UnHighlightCurrent() {}
     virtual void ClearIconLabels() {}
 };
 
 class DataProvider : public UIListProvider {
 public:
-    DataProvider(DataArray *arr, int i, bool b1, bool b2, UIList *ul)
-        : mData(0), mOffset(i), mFluidWidth(b1), unkd(b2), mList(ul) {
-        SetData(arr);
+    DataProvider(
+        DataArray *data,
+        int offset,
+        bool fluidWidth,
+        bool subArraysAsTokenFmt,
+        UIList *list
+    )
+        : mData(0), mOffset(offset), mFluidWidth(fluidWidth),
+          mSubarraysAsTokenFmt(subArraysAsTokenFmt), mList(list) {
+        SetData(data);
     }
     virtual ~DataProvider() { mData->Release(); }
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
@@ -92,18 +110,18 @@ public:
             : s;
     }
 
-    void SetData(DataArray *);
-    void Enable(Symbol);
-    void Disable(Symbol);
-    void Dim(Symbol);
-    void UnDim(Symbol);
+    void SetData(DataArray *data);
+    void Enable(Symbol element);
+    void Disable(Symbol element);
+    void Dim(Symbol element);
+    void UnDim(Symbol element);
     DataArray *Data() const { return mData; }
 
-protected:
+private:
     DataArray *mData; // 0x4
     int mOffset; // 0x8
     bool mFluidWidth; // 0xc
-    bool unkd; // 0xd
+    bool mSubarraysAsTokenFmt; // 0xd
     std::list<Symbol> mDisabled; // 0x10
     std::list<Symbol> mDimmed; // 0x18
     std::vector<float> mWidths; // 0x20

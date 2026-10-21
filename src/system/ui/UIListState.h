@@ -97,6 +97,7 @@ private:
 class UIListStateCallback {
 public:
     virtual ~UIListStateCallback() {}
-    virtual void StartScroll(const UIListState &, int, bool) = 0;
-    virtual void CompleteScroll(const UIListState &) = 0;
+    virtual void
+    StartScroll(const UIListState &state, int direction, bool changing_state) = 0;
+    virtual void CompleteScroll(const UIListState &state) = 0;
 };

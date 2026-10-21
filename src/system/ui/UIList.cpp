@@ -35,10 +35,11 @@ static bool gLoading = false;
 
 UIList::UIList()
     : UITransitionHandler(this), mListDir(this), mListState(this, this), mDataProvider(0),
-      mNumData(100), mPaginate(0), mUser(0), mParent(0), mExtendedLabelEntries(this),
+      mDummyNumData(100), mPaginate(0), mUser(0), mParent(0), mExtendedLabelEntries(this),
       mExtendedMeshEntries(this), mExtendedCustomEntries(this), mAutoScrollPause(2),
-      mAutoScrollSendMsgs(0), unk150(1), mAutoScrolling(0), unk158(-1), unk15c(0),
-      unk15d(0), unk160(1), mAllowHighlight(1) {}
+      mAutoScrollSendMessages(0), mAutoScrollDirection(1), mAutoScrolling(0),
+      mNextScrollTime(-1), mScrollingAfterPoll(0), mDrawManuallyControlledWidgets(0),
+      mDesiredNumDisplay(1), mAllowHighlight(1) {}
 
 UIList::~UIList() {
     DeleteAll(mWidgets);
@@ -63,7 +64,10 @@ BEGIN_HANDLERS(UIList)
     HANDLE(set_selected_simulate_scroll, OnSetSelectedSimulateScroll)
     HANDLE_ACTION(set_scroll_user, mUser = _msg->Obj<LocalUser>(2))
     HANDLE_ACTION(refresh, Refresh(true))
-    HANDLE_ACTION(set_draw_manually_controlled_widgets, unk15d = _msg->Int(2))
+    HANDLE_ACTION(
+        set_draw_manually_controlled_widgets,
+        mDrawManuallyControlledWidgets = _msg->Int(2)
+    )
     HANDLE(scroll, OnScroll)
     HANDLE_EXPR(is_scrolling, IsScrolling())
     HANDLE_EXPR(is_scrolling_down, mListState.CurrentScroll() > 0)
@@ -108,9 +112,9 @@ BEGIN_PROPSYNCS(UIList)
         mListState.ScrollPastMaxDisplay(),
         mListState.SetScrollPastMaxDisplay(_val.Int())
     )
-    SYNC_PROP_MODIFY(num_data, mNumData, Update())
+    SYNC_PROP_MODIFY(num_data, mDummyNumData, Update())
     SYNC_PROP(auto_scroll_pause, mAutoScrollPause)
-    SYNC_PROP(auto_scroll_send_messages, mAutoScrollSendMsgs)
+    SYNC_PROP(auto_scroll_send_messages, mAutoScrollSendMessages)
     SYNC_PROP(extended_label_entries, mExtendedLabelEntries)
     SYNC_PROP(extended_mesh_entries, mExtendedMeshEntries)
     SYNC_PROP(extended_custom_entries, mExtendedCustomEntries)
@@ -118,7 +122,7 @@ BEGIN_PROPSYNCS(UIList)
     SYNC_PROP_SET(out_anim, GetOutAnim(), SetOutAnim(_val.Obj<RndAnimatable>()))
     SYNC_PROP_SET(
         limit_circular_display_num_to_data_num,
-        mLimitCircularDisplayNumToDataNum,
+        mLimitCircularDisplay,
         LimitCircularDisplay(_val.Int())
     )
     SYNC_SUPERCLASS(ScrollSelect)
@@ -139,14 +143,14 @@ BEGIN_SAVES(UIList)
     bs << mSelectToScroll;
     bs << mListState.MinDisplay();
     bs << mListState.MaxDisplay();
-    bs << mNumData;
+    bs << mDummyNumData;
     bs << mAutoScrollPause;
-    bs << mAutoScrollSendMsgs;
+    bs << mAutoScrollSendMessages;
     bs << mExtendedLabelEntries;
     bs << mExtendedMeshEntries;
     bs << mExtendedCustomEntries;
     SaveHandlerData(bs);
-    bs << mLimitCircularDisplayNumToDataNum;
+    bs << mLimitCircularDisplay;
 END_SAVES
 
 BEGIN_COPYS(UIList)
@@ -164,14 +168,14 @@ BEGIN_COPYS(UIList)
         mListState.SetScrollPastMinDisplay(c->mListState.ScrollPastMinDisplay());
         mListState.SetMaxDisplay(c->mListState.MaxDisplay());
         mListState.SetScrollPastMaxDisplay(c->mListState.ScrollPastMaxDisplay());
-        COPY_MEMBER(mNumData)
+        COPY_MEMBER(mDummyNumData)
         COPY_MEMBER(mAutoScrollPause)
-        COPY_MEMBER(mAutoScrollSendMsgs)
+        COPY_MEMBER(mAutoScrollSendMessages)
         COPY_MEMBER(mExtendedLabelEntries)
         COPY_MEMBER(mExtendedMeshEntries)
         COPY_MEMBER(mExtendedCustomEntries)
-        COPY_MEMBER(mLimitCircularDisplayNumToDataNum)
-        COPY_MEMBER(unk160)
+        COPY_MEMBER(mLimitCircularDisplay)
+        COPY_MEMBER(mDesiredNumDisplay)
     END_COPYING_MEMBERS
     const UIList *l = dynamic_cast<const UIList *>(o);
     if (l) {
@@ -276,7 +280,7 @@ void UIList::PostLoad(BinStream &bs) {
     }
     gLoading = true;
     mListState.SetNumDisplay(i88, false);
-    unk160 = i88;
+    mDesiredNumDisplay = i88;
     mListState.SetGridSpan(local_gridspan, false);
     mListState.SetCircular(b8e, false);
     mListState.SetSpeed(i7c);
@@ -289,15 +293,15 @@ void UIList::PostLoad(BinStream &bs) {
         d >> i64 >> i60;
     }
     if (d.rev >= 0xC) {
-        d >> mNumData;
+        d >> mDummyNumData;
     }
     if (d.rev >= 0xE) {
         d >> mAutoScrollPause;
     }
     if (d.rev < 0x13) {
-        mAutoScrollSendMsgs = true;
+        mAutoScrollSendMessages = true;
     } else {
-        d >> mAutoScrollSendMsgs;
+        d >> mAutoScrollSendMessages;
     }
     if (d.rev >= 0x10) {
         d >> mExtendedLabelEntries;
@@ -308,9 +312,9 @@ void UIList::PostLoad(BinStream &bs) {
         LoadHandlerData(d);
     }
     if (d.rev >= 0x15) {
-        d >> mLimitCircularDisplayNumToDataNum;
+        d >> mLimitCircularDisplay;
     } else {
-        mLimitCircularDisplayNumToDataNum = false;
+        mLimitCircularDisplay = false;
     }
     gLoading = false;
     Update();
@@ -325,14 +329,14 @@ void UIList::Enter() {
 void UIList::Poll() {
     UIComponent::Poll();
     if (mAutoScrolling) {
-        if (unk158 >= 0.0f && TheTaskMgr.UISeconds() >= unk158) {
-            Scroll(unk150);
-            unk158 = -1.0f;
+        if (mNextScrollTime >= 0.0f && TheTaskMgr.UISeconds() >= mNextScrollTime) {
+            Scroll(mAutoScrollDirection);
+            mNextScrollTime = -1.0f;
         }
     }
     mListState.Poll(TheTaskMgr.UISeconds());
     mListDir->PollWidgets(mWidgets);
-    unk15c = false;
+    mScrollingAfterPoll = false;
     UpdateHandler();
 }
 
@@ -361,14 +365,14 @@ float UIList::GetDistanceToPlane(const Plane &p, Vector3 &v) {
 }
 
 void UIList::DrawShowing() {
-    if (unk15c) {
+    if (mScrollingAfterPoll) {
         mListState.Poll(TheTaskMgr.UISeconds());
-        unk15c = false;
+        mScrollingAfterPoll = false;
     }
-    bool u7 = unk15d;
+    bool u7 = mDrawManuallyControlledWidgets;
     if (ParentList()) {
         if (ParentList()->ChildList() == this) {
-            u7 = ParentList()->unk15d;
+            u7 = ParentList()->mDrawManuallyControlledWidgets;
         }
     }
     float f9;
@@ -401,7 +405,14 @@ RndDrawable *UIList::CollideShowing(const Segment &s, float &fl, Plane &pl) {
             Interp(segment.start, segment.end, fd0, segment.end);
             b1 = true;
             fl *= fd0;
-            pl.Set(triangle.origin, triangle.frame.z);
+            // explain to me why it is, that calling Plane::Set doesn't match,
+            // but doing the a/b/c/d setting manually, does?
+            // how does this make any sense hamronix and/or michaelsoft pls
+            pl.a = triangle.frame.z.x;
+            pl.b = triangle.frame.z.y;
+            pl.c = triangle.frame.z.z;
+            pl.d = -Dot(triangle.frame.z, triangle.origin);
+            // pl.Set(triangle.origin, triangle.frame.z);
         }
     }
     if (b1) {
@@ -432,7 +443,7 @@ int UIList::CollidePlane(const Plane &pl) {
 void UIList::StartScroll(const UIListState &state, int i2, bool b3) {
     mListDir->StartScroll(state, mWidgets, i2, b3);
     if (state.Provider()->IsActive(state.SelectedData())
-        && (!mAutoScrolling || mAutoScrollSendMsgs)) {
+        && (!mAutoScrolling || mAutoScrollSendMessages)) {
         TheUI->Handle(UIComponentScrollStartMsg(this, mUser), false);
     }
 }
@@ -442,16 +453,16 @@ void UIList::CompleteScroll(const UIListState &state) {
     if (mAutoScrolling) {
         int i4 = mListState.FirstShowing();
         state.Provider();
-        int i2 = unk150 > 0 ? mListState.MaxFirstShowing() : 0;
+        int i2 = mAutoScrollDirection > 0 ? mListState.MaxFirstShowing() : 0;
         if (i4 == i2) {
-            unk150 = -unk150;
-            unk158 = TheTaskMgr.UISeconds() + mAutoScrollPause;
+            mAutoScrollDirection = -mAutoScrollDirection;
+            mNextScrollTime = TheTaskMgr.UISeconds() + mAutoScrollPause;
         } else {
-            Scroll(unk150);
+            Scroll(mAutoScrollDirection);
         }
     }
     if (state.Provider()->IsActive(state.SelectedData())) {
-        if (!mAutoScrolling || mAutoScrollSendMsgs) {
+        if (!mAutoScrolling || mAutoScrollSendMessages) {
             TheUI->Handle(UIComponentScrollMsg(this, mUser), false);
         }
         HandleSelectionUpdated();
@@ -498,7 +509,7 @@ Symbol UIList::SelectedSym(bool fail) const {
 }
 
 void UIList::Scroll(int i) {
-    unk15c = true;
+    mScrollingAfterPoll = true;
     mListState.Scroll(i, false);
 }
 
@@ -520,8 +531,8 @@ void UIList::AutoScroll() {
         StopAutoScroll();
     } else {
         mAutoScrolling = true;
-        unk150 = 1;
-        unk158 = mAutoScrollPause + TheTaskMgr.UISeconds();
+        mAutoScrollDirection = 1;
+        mNextScrollTime = mAutoScrollPause + TheTaskMgr.UISeconds();
     }
 }
 
@@ -694,11 +705,11 @@ void UIList::SetCircular(bool b) {
 
 void UIList::LimitCircularDisplay(bool b) {
     if (Circular()) {
-        mLimitCircularDisplayNumToDataNum = b;
+        mLimitCircularDisplay = b;
         if (b) {
-            SetNumDisplay(Max(Min(unk160, NumProviderData()), 1));
+            SetNumDisplay(Max(Min(mDesiredNumDisplay, NumProviderData()), 1));
         } else {
-            SetNumDisplay(unk160);
+            SetNumDisplay(mDesiredNumDisplay);
         }
         Refresh(false);
     }
@@ -706,11 +717,11 @@ void UIList::LimitCircularDisplay(bool b) {
 
 void UIList::SetProvider(UIListProvider *prov) {
     if (prov == mListState.Provider()) {
-        LimitCircularDisplay(mLimitCircularDisplayNumToDataNum);
+        LimitCircularDisplay(mLimitCircularDisplay);
         Refresh(true);
     } else {
         mListState.SetProvider(prov, mListDir);
-        LimitCircularDisplay(mLimitCircularDisplayNumToDataNum);
+        LimitCircularDisplay(mLimitCircularDisplay);
         SetSelected(0, -1);
     }
     if (ChildList()) {
@@ -744,7 +755,13 @@ void UIList::CalcBoundingBox(Box &box) {
     UIListWidgetDrawState drawState;
     mListDir->BuildDrawState(drawState, mListState, DrawState(this), f9, true);
     mListDir->DrawWidgets(
-        drawState, mListState, mWidgets, WorldXfm(), DrawState(this), &box, unk15d
+        drawState,
+        mListState,
+        mWidgets,
+        WorldXfm(),
+        DrawState(this),
+        &box,
+        mDrawManuallyControlledWidgets
     );
 }
 

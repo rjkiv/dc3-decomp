@@ -157,21 +157,21 @@ void BeatClock::UpdateSongPos() {
 
 DataNode BeatClock::OnSyncState(DataArray *a) {
     BeatClock *other = a->Obj<BeatClock>(2);
-    int i3 = a->Int(3);
+    int syncState = a->Int(3);
     if (other) {
         SongPos aSongPos = other->mSongPos;
         SongPos mySongPos = mSongPos;
-        switch (i3) {
-        case 0:
+        switch (syncState) {
+        case kSync_TicksOnly:
             SetProperty("tick", aSongPos.GetTick());
             SetProperty("sub_division", other->mSubDivision);
             break;
-        case 1:
+        case kSync_BeatsAndTicks:
             SetProperty("tick", aSongPos.GetTick());
             SetProperty("sub_division", other->mSubDivision);
             SetProperty("beat", aSongPos.GetBeat());
             break;
-        case 2:
+        case kSync_MeasuresBeatsAndTicks:
             SetProperty("tick", aSongPos.GetTick());
             SetProperty("sub_division", other->mSubDivision);
             SetProperty("beat", aSongPos.GetBeat());

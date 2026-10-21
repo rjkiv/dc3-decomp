@@ -756,7 +756,7 @@
             "system/ui/UIGuide.cpp": "Matching",
             "system/ui/UILabel.cpp": "Matching",
             "system/ui/UILabelDir.cpp": "Matching",
-            "system/ui/UIList.cpp": "NonMatching",
+            "system/ui/UIList.cpp": "Matching",
             "system/ui/UIListArrow.cpp": "Matching",
             "system/ui/UIListCustom.cpp": "Matching",
             "system/ui/UIListDir.cpp": "NonMatching",

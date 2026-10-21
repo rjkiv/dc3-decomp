@@ -47,7 +47,7 @@ public:
     virtual void Enter();
     virtual void Poll();
     // UIListProvider
-    virtual int NumData() const { return mNumData; }
+    virtual int NumData() const { return mDummyNumData; }
     // RndDrawable
     virtual float GetDistanceToPlane(const Plane &, Vector3 &);
     virtual void DrawShowing();
@@ -57,8 +57,8 @@ public:
     virtual void StartScroll(const UIListState &, int, bool);
     virtual void CompleteScroll(const UIListState &);
 
-    virtual void AdjustTrans(Transform &, const UIListElementDrawState &) {}
-    virtual void AdjustTransSelected(Transform &) {}
+    virtual void AdjustTrans(Transform &xfm, const UIListElementDrawState &eds) {}
+    virtual void AdjustTransSelected(Transform &xfm) {}
 
     static void Init();
 
@@ -126,18 +126,19 @@ protected:
     DataNode OnSetSelectedSimulateScroll(DataArray *);
     DataNode OnScroll(DataArray *);
 
-    int CollidePlane(std::vector<Vector3> const &, Plane const &);
+    int CollidePlane(std::vector<Vector3> const &tri, Plane const &p);
     void HandleSelectionUpdated();
     void UpdateExtendedEntries(UIListState const &);
     void PreLoadWithRev(BinStreamRev &);
-    void BoundingBoxTriangles(std::vector<std::vector<Vector3> > &);
+    void BoundingBoxTriangles(std::vector<std::vector<Vector3> > &tris);
 
     ResourceDirPtr<UIListDir> mListDir; // 0x8c
     std::vector<UIListWidget *> mWidgets; // 0xa4
     UIListState mListState; // 0xb0
+private:
     DataProvider *mDataProvider; // 0xf8
     /** "Num data to show (only for milo)". Ranges from 1 to 1000. */
-    int mNumData; // 0xfc
+    int mDummyNumData; // 0xfc
     /** "Allow scrolling by pages?" */
     bool mPaginate; // 0x100
     LocalUser *mUser; // 0x104
@@ -152,15 +153,15 @@ protected:
         Ranges from 0 to 100. */
     float mAutoScrollPause; // 0x148
     /** "Should this list send UIComponentScroll* messages while auto-scrolling?" */
-    bool mAutoScrollSendMsgs; // 0x14c
-    int unk150;
+    bool mAutoScrollSendMessages; // 0x14c
+    int mAutoScrollDirection; // 0x150
     bool mAutoScrolling; // 0x154
-    float unk158;
-    bool unk15c;
-    bool unk15d;
+    float mNextScrollTime; // 0x158
+    bool mScrollingAfterPoll; // 0x15c
+    bool mDrawManuallyControlledWidgets; // 0x15d
     /** "Allow multiple instances of same option to be displayed?" */
-    bool mLimitCircularDisplayNumToDataNum; // 0x15e
-    int unk160;
+    bool mLimitCircularDisplay; // 0x15e
+    int mDesiredNumDisplay; // 0x160
     bool mAllowHighlight; // 0x164
 };
 

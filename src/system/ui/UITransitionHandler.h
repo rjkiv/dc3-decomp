@@ -44,5 +44,5 @@ protected:
     /** The current transition animation state. */
     UITransitionAnimationState mAnimationState; // 0x2c
     bool mChangePending; // 0x30
-    bool unk31; // 0x31
+    bool mOutAnimStartedThisFrame; // 0x31
 };

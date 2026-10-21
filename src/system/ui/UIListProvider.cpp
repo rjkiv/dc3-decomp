@@ -67,7 +67,7 @@ void UIListProvider::UpdateExtendedCustom(int, int, Hmx::Object *obj) const {
 void DataProvider::Text(int i, int j, UIListLabel *listlabel, UILabel *label) const {
     DataNode &n = mData->Node(mOffset + j);
     if (n.Type() == kDataArray) {
-        if (!TheLoadMgr.EditMode() && unkd) {
+        if (!TheLoadMgr.EditMode() && mSubarraysAsTokenFmt) {
             Message msg("set_token_fmt", n);
             label->Handle(msg, false);
         } else if (TheLoadMgr.EditMode()) {
