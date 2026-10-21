@@ -908,8 +908,7 @@ void Rnd::SetPostProcOverride(RndPostProc *pp) {
     mPostProcOverride = pp;
     RndOverlay *ppOverlay = RndOverlay::Find("postproc");
     if (ppOverlay->Showing()) {
-        TextStream *old = TheDebug.Reflect();
-        TheDebug.SetReflect(ppOverlay);
+        TextStream *old = TheDebug.SetReflect(ppOverlay);
         MILO_LOG("SETPROSTPROCOVERRIDE: %s\n", pp == 0 ? "NULL" : PathName(pp));
         TheDebug.SetReflect(old);
     }
@@ -919,8 +918,7 @@ void Rnd::SetPostProcBlacklightOverride(RndPostProc *pp) {
     mPostProcBlackLightOverride = pp;
     RndOverlay *ppOverlay = RndOverlay::Find("postproc");
     if (ppOverlay->Showing()) {
-        TextStream *old = TheDebug.Reflect();
-        TheDebug.SetReflect(ppOverlay);
+        TextStream *old = TheDebug.SetReflect(ppOverlay);
         MILO_LOG("SETBLACKLIGHTOVERRIDE: %s\n", pp == 0 ? "NULL" : PathName(pp));
         TheDebug.SetReflect(old);
     }

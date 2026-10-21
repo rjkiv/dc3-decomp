@@ -1406,10 +1406,10 @@ void ScriptDebugModal(Debug::ModalType &mt, FixedString &msg, bool wait) {}
 
 DEF_DATA_FUNC(DataFilterNotify) {
     if (array->Size() > 3) {
-        bool restore = !TheDebug.CheckModalCallback(ScriptDebugModal);
+        bool restore = TheDebug.GetModalCallback() != ScriptDebugModal;
         if (restore) {
             sOldNoModal = TheDebug.NoModal();
-            sOldModalCallback = TheDebug.ModalCallback();
+            sOldModalCallback = TheDebug.GetModalCallback();
             TheDebug.SetNoModal(false);
         }
 

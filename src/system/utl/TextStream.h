@@ -8,7 +8,7 @@ class TextStream {
 public:
     TextStream();
     virtual ~TextStream() {}
-    virtual void Print(const char *) = 0;
+    virtual void Print(const char *msg) = 0;
 
     TextStream &operator<<(char);
     TextStream &operator<<(short);
