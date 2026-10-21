@@ -4,6 +4,35 @@
 #include "xdk/XAPILIB.h"
 #include <process.h>
 
+DWORD gMainThreadID = -1;
+
+namespace JobQueue {
+    enum State {
+        JS_IDLE = 0x0000,
+        JS_WAITING = 0x0001,
+        JS_RUNNING = 0x0002,
+    };
+
+    struct Entry {
+        Entry *next; // 0x0
+        State mState; // 0x4
+        ThreadCallback *mTask; // 0x8
+    };
+
+    HANDLE threadIdleCountSema = nullptr;
+    HANDLE jobWaitingCountSema = nullptr;
+    int shouldExit;
+    int numWorkers;
+    int maxJobs;
+    volatile int numIdle;
+    Entry *allEntries;
+    Entry *idleEntries;
+    Entry *waitingEntries;
+    HANDLE *jobThreadHandle;
+    CriticalSection jobQueueMutex;
+
+}
+
 namespace {
     bool gReadyForNext = true;
     ThreadCallData gData[12];
@@ -35,24 +64,6 @@ namespace {
         CloseHandle(gThreadSema);
         return 0;
     }
-}
-
-DWORD gMainThreadID = -1;
-
-namespace JobQueue {
-    struct Entry {
-        int lol;
-    };
-
-    int shouldExit;
-    int numWorkers;
-    int maxJobs;
-    volatile int numIdle;
-    Entry *allEntries;
-    Entry *idleEntries;
-    Entry *waitingEntries;
-    void **jobThreadHandle;
-    CriticalSection jobQueueMutex;
 }
 
 void ThreadCallInit() {

@@ -270,46 +270,46 @@ const char *FileRelativePathBuf(const char *iRoot, const char *iFilepath, char *
     MILO_ASSERT(iFilepath, 0x38E);
     MILO_ASSERT(oBuf, 0x38F);
     if (*iFilepath != '\0') {
-        char rootBuffer[256];
-        char filePathBuffer[256];
-        strcpy(rootBuffer, iRoot);
-        strcpy(filePathBuffer, iFilepath);
-        std::list<char *> tok218;
-        std::list<char *> tok220;
-        char *tok = strtok(rootBuffer, "/");
-        while (tok) {
-            tok218.push_back(tok);
-            tok = strtok(nullptr, "/");
+        char path[File::MaxFileNameLen];
+        char file[File::MaxFileNameLen];
+        strcpy(path, iRoot);
+        strcpy(file, iFilepath);
+        std::list<char *> pathDirs;
+        std::list<char *> fileDirs;
+        char *c = strtok(path, "/");
+        while (c) {
+            pathDirs.push_back(c);
+            c = strtok(nullptr, "/");
         }
-        tok = strtok(filePathBuffer, "/");
-        while (tok) {
-            tok220.push_back(tok);
-            tok = strtok(nullptr, "/");
+        c = strtok(file, "/");
+        while (c) {
+            fileDirs.push_back(c);
+            c = strtok(nullptr, "/");
         }
-        if (!tok220.empty() && !tok218.empty()) {
-            if (streq(tok218.front(), tok220.front())) {
-                while (tok218.size() && tok220.size()
-                       && streq(tok218.front(), tok220.front())) {
-                    tok218.pop_front();
-                    tok220.pop_front();
+        if (!fileDirs.empty() && !pathDirs.empty()) {
+            if (streq(pathDirs.front(), fileDirs.front())) {
+                while (pathDirs.size() && fileDirs.size()
+                       && streq(pathDirs.front(), fileDirs.front())) {
+                    pathDirs.pop_front();
+                    fileDirs.pop_front();
                 }
                 char *p = oBuf;
-                while (tok218.size()) {
+                while (pathDirs.size()) {
                     if (p != oBuf) {
                         *p++ = '/';
                     }
                     *p++ = '.';
                     *p++ = '.';
-                    tok218.pop_front();
+                    pathDirs.pop_front();
                 }
-                while (tok220.size()) {
+                while (fileDirs.size()) {
                     if (p != oBuf) {
                         *p++ = '/';
                     }
-                    for (char *ptr = tok220.front(); *ptr != '\0'; ptr++) {
+                    for (char *ptr = fileDirs.front(); *ptr != '\0'; ptr++) {
                         *p++ = *ptr;
                     }
-                    tok220.pop_front();
+                    fileDirs.pop_front();
                 }
                 MILO_ASSERT(p - oBuf < File::MaxFileNameLen, 0x3D9);
                 if (p == oBuf) {
@@ -476,7 +476,9 @@ String UniqueFilename(const char *base, const char *ext) {
 DataNode OnFileGetDrive(DataArray *arg) { return FileGetDrive(arg->Str(1)); }
 DataNode OnFileGetPath(DataArray *arg) { return FileGetPath(arg->Str(1)); }
 DataNode OnFileGetBase(DataArray *arg) { return FileGetBase(arg->Str(1)); }
-DataNode OnFileAbsolutePath(DataArray *arg) { return FileMakePath(arg->Str(1), arg->Str(2)); }
+DataNode OnFileAbsolutePath(DataArray *arg) {
+    return FileMakePath(arg->Str(1), arg->Str(2));
+}
 
 DataNode OnFileRelativePath(DataArray *arg) {
     return FileRelativePath(arg->Str(1), arg->Str(2));
@@ -536,7 +538,9 @@ void RecursePatternInternal(
     FileEnumerate(str48.c_str(), cb, recurse, patternStr.c_str(), findDirs);
 }
 
-void FileRecursePattern(const char *pttn, void (*cb)(char const *, char const *), bool recurse) {
+void FileRecursePattern(
+    const char *pttn, void (*cb)(char const *, char const *), bool recurse
+) {
     RecursePatternInternal(pttn, cb, recurse, false);
 }
 
