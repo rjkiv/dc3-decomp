@@ -190,14 +190,14 @@ namespace {
 PhysMemTypeTracker::PhysMemTypeTracker(Symbol type) {
     if (gPhysicalType == gNullStr) {
         gPhysicalType = type.Str();
-        unk0 = true;
+        mSet = true;
     } else {
-        unk0 = false;
+        mSet = false;
     }
 }
 
 PhysMemTypeTracker::~PhysMemTypeTracker() {
-    if (unk0) {
+    if (mSet) {
         gPhysicalType = gNullStr;
     }
 }

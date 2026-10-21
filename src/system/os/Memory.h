@@ -3,16 +3,18 @@
 
 class PhysMemTypeTracker {
 public:
-    PhysMemTypeTracker(Symbol);
+    PhysMemTypeTracker(Symbol type);
     ~PhysMemTypeTracker();
 
 private:
-    bool unk0;
+    bool mSet; // 0x0
 };
 
 int PhysicalUsage();
-void PhysicalFree(void *);
+void PhysicalFree(void *ptr);
 int ForceLinkXMemFuncs();
 
-void *PhysicalAllocTracked(unsigned long, unsigned long, const char *, int, const char *);
-void PhysicalFreeTracked(void *, const char *, int, const char *);
+void *PhysicalAllocTracked(
+    unsigned long size, unsigned long flags, const char *file, int line, const char *type
+);
+void PhysicalFreeTracked(void *ptr, const char *file, int line, const char *type);

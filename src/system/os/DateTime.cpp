@@ -35,6 +35,24 @@ void GetTimeZoneBias(long &bias) {
     }
 }
 
+int DateTimeCmp(const DateTime &a, const DateTime &b) {
+    unsigned int ymdA = (a.mYear * 256 + a.mMonth) * 256 + a.mDay;
+    unsigned int hmsA = (a.mHour * 256 + a.mMin) * 256 + a.mSec;
+    unsigned int ymdB = (b.mYear * 256 + b.mMonth) * 256 + b.mDay;
+    unsigned int hmsB = (b.mHour * 256 + b.mMin) * 256 + b.mSec;
+
+    if (ymdA < ymdB) {
+        return -1;
+    } else if (ymdA == ymdB) {
+        if (hmsA < hmsB) {
+            return -1;
+        } else if (hmsA == hmsB) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 #define SECS_PER_MIN 60
 #define SECS_PER_HOUR 3600
 #define SECS_PER_DAY 86400
@@ -44,15 +62,18 @@ void GetTimeZoneBias(long &bias) {
 #define SECS_PER_YEAR 33177600
 
 DateTime::DateTime(unsigned int code) {
-    mYear = (code / SECS_PER_YEAR) + 100;
-    mMonth = (code % SECS_PER_YEAR) / SECS_PER_MONTH;
-    unsigned char u2 = (code % SECS_PER_YEAR) % SECS_PER_MONTH;
+    unsigned int u1 = code / SECS_PER_YEAR;
+    unsigned int u2 = code - u1 * SECS_PER_YEAR;
+    mMonth = u2 / SECS_PER_MONTH;
+    mYear = u1 + 100;
+    u2 = u2 - mMonth * SECS_PER_MONTH;
     mDay = u2 / SECS_PER_DAY;
-    u2 = u2 % SECS_PER_DAY;
+    u2 = u2 - mDay * SECS_PER_DAY;
     mHour = u2 / SECS_PER_HOUR;
-    u2 = u2 % SECS_PER_HOUR;
+    u2 = u2 - mHour * SECS_PER_HOUR;
     mMin = u2 / SECS_PER_MIN;
-    mSec = u2 - mMin * SECS_PER_MIN;
+    u2 = u2 - mMin * SECS_PER_MIN;
+    mSec = u2;
 }
 
 DateTime::DateTime(
@@ -72,8 +93,9 @@ DateTime::DateTime(
 }
 
 unsigned int DateTime::ToCode() const {
-    return (mDay * 0x15180) + (mMonth * 0x2A3000) + (mYear - 100) * 0x1FA4000
-        + (mHour * 0xE10) + (mMin * 0x3C) + mSec;
+    return (mDay * SECS_PER_DAY) + (mMonth * SECS_PER_MONTH)
+        + (mYear - 100) * SECS_PER_YEAR + (mHour * SECS_PER_HOUR) + (mMin * SECS_PER_MIN)
+        + mSec;
 }
 
 int DateTime::Year() const { return mYear + 1900; }
@@ -85,10 +107,16 @@ bool DateTime::IsLeapYear() const {
 }
 
 int DateTime::DayOfYear() const {
-    static unsigned short sCumulativeDays[] = { 0,   31,  59,  90,  120, 151,
-                                                181, 212, 243, 273, 304, 334 };
+    static unsigned short dayOffsetByMonth[] = { 0,   31,  59,  90,  120, 151,
+                                                 181, 212, 243, 273, 304, 334 };
     int add = mMonth > 1 && IsLeapYear();
-    return sCumulativeDays[mMonth] + mDay + add;
+    return dayOffsetByMonth[mMonth] + mDay + add;
+}
+
+int DateTime::DayOfWeek() const {
+    int year = Year() - 1;
+    int day = DayOfYear();
+    return (day + (year * 365 - year / 100 + (year / 4) + year / 400) % 7) % 7;
 }
 
 unsigned int DateTime::DiffSeconds(DateTime &dt) { return ToSeconds() - dt.ToSeconds(); }
@@ -106,7 +134,7 @@ void DateTime::FromFileTime(const FILETIME &ft) {
 
 namespace {
     Symbol MonthToken(int month) {
-        MILO_ASSERT((0) <= (month) && (month) <= (11), 0x1A1);
+        MILO_ASSERT_RANGE_EQ(month, 0, 11, 0x1A1);
         static Symbol month_symbols[12] = {
             "month_january",   "month_february", "month_march",    "month_april",
             "month_may",       "month_june",     "month_july",     "month_august",
@@ -212,8 +240,10 @@ DateFormat DateTime::GetDateFormatting() {
         return kMDY;
     else if (locale == swe)
         return kYMD;
-    else if (locale == chn || locale == hkg || locale == jpn || locale == kor
-             || locale == sin || locale == tpe)
+    else if (
+        locale == chn || locale == hkg || locale == jpn || locale == kor || locale == sin
+        || locale == tpe
+    )
         return kISO;
     else
         return kDMY;

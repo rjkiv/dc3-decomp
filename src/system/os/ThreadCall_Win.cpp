@@ -103,25 +103,23 @@ void ThreadCall(ThreadCallback *callback) {
 }
 
 void ThreadCallPoll() {
-    if (gCallDone) {
+    if (gCallDone && gData[gCurCall].mType) {
         ThreadCallData &data = gData[gCurCall];
         ThreadCallDataType oldType = data.mType;
-        if (data.mType) {
-            data.mType = kTCDT_None;
-            gCallDone = false;
-            gCurCall = (gCurCall + 1) % 12;
-            gReadyForNext = true;
-            switch (oldType) {
-            case kTCDT_None:
-                MILO_ASSERT(false, 0x97);
-                break;
-            case kTCDT_Func:
-                data.mCallback(data.mArg);
-                break;
-            case kTCDT_Class:
-                data.mClass->ThreadDone(data.mArg);
-                break;
-            }
+        data.mType = kTCDT_None;
+        gCallDone = false;
+        gCurCall = (gCurCall + 1) % 12;
+        gReadyForNext = true;
+        switch (oldType) {
+        case kTCDT_None:
+            MILO_ASSERT(false, 0x97);
+            break;
+        case kTCDT_Func:
+            data.mCallback(data.mArg);
+            break;
+        case kTCDT_Class:
+            data.mClass->ThreadDone(data.mArg);
+            break;
         }
     }
     if (gReadyForNext && gData[gCurCall].mType != kTCDT_None) {
