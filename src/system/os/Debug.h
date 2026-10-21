@@ -26,37 +26,32 @@ public:
 
     Debug();
     virtual ~Debug();
-    virtual void Print(const char *);
+    virtual void Print(const char *msg);
 
     void Poll();
-    void SetDisabled(bool);
-    void SetTry(bool);
-    void DoCrucible(ModalType, const char *, void *);
+    void SetDisabled(bool b);
+    void SetTry(bool b);
+    void DoCrucible(ModalType mt, const char *msg, void *context);
     //   public: void AddFailCallback(void (*)());
     //   public: void RemoveFailCallback(void (*)());
     void AddExitCallback(ExitCallbackFunc *func) { mExitCallbacks.push_front(func); }
-    void RemoveExitCallback(ExitCallbackFunc *);
+    void RemoveExitCallback(ExitCallbackFunc *func);
     void AddFailAppendCallback(FixedStringFunc *func) {
         mFailAppendCallbacks.push_front(func);
     }
     //   public: void RemoveFailAppendCallback(void (*)(FixedString&));
-    bool CheckModalCallback(ModalCallbackFunc *func) { return mModalCallback == func; }
-    ModalCallbackFunc *ModalCallback() const { return mModalCallback; }
-
-    //   public: void (*SetModalCallback(void (*)(Debug::ModalType&, FixedString&, bool)))
-    //      (Debug::ModalType&, FixedString&, bool);
-    //   public: void (*GetModalCallback())(Debug::ModalType&, FixedString&, bool) const;
+    ModalCallbackFunc *GetModalCallback() const { return mModalCallback; }
+    ModalCallbackFunc *SetModalCallback(ModalCallbackFunc *func);
 
     void SetErrorCallback(DataPointFunc *func) { mErrorCallback = func; }
 
     bool NoModal() const { return mNoModal; }
     void SetNoModal(bool nomodal) { mNoModal = nomodal; }
 
-    void StartLog(const char *, bool);
+    void StartLog(const char *file, bool always_flush);
     void StopLog();
     void Init();
-    ModalCallbackFunc *SetModalCallback(ModalCallbackFunc *);
-    void Exit(int, bool);
+    void Exit(int err, bool call_exit);
     void Warn(const char *msg);
     void Notify(const char *msg);
     void Fail(const char *msg, void *context);
@@ -69,13 +64,18 @@ public:
     static const int STACK_MAX = 50;
 
 private:
-    void Modal(ModalType &, const char *, void *);
+    void Modal(ModalType &mt, const char *msg, void *context);
 
+    /** Whether or not to enable debug output. */
     volatile bool mNoDebug; // 0x4
+    /** Whether or not we are in failure handling code. (aka the red screen of death) */
     bool mFailing; // 0x5
+    /** Whether or not the app is currently exiting. */
     bool mExiting; // 0x6
+    /** Whether or not we are allowed to enter try blocks in the code. */
     bool mNoTry; // 0x7
     bool mNoModal; // 0x8
+    /** How many try blocks we are currently in. */
     int mTry; // 0xc
     TextFileStream *mLog; // 0x10
     bool mAlwaysFlush; // 0x14
@@ -171,12 +171,12 @@ public:
 extern DebugFailer TheDebugFailer;
 
 class DebugNotifyOncePrinter {
-    char msg[0x100];
+    char mStr[256];
 
 public:
     void operator<<(const char *cc) {
-        if (strcmp(msg, cc)) {
-            strncpy(msg, cc, 0xFF);
+        if (strcmp(mStr, cc)) {
+            strncpy(mStr, cc, 0xFF);
             TheDebug.Print(cc);
         }
     }
@@ -205,14 +205,14 @@ namespace {
 
 class DebugNotifyOncer {
 private:
-    std::list<String> mStrings;
+    std::list<String> mStrs;
 
 public:
     DebugNotifyOncer() {}
     ~DebugNotifyOncer() {}
 
     void operator<<(const char *cc) {
-        if (AddToStrings(cc, mStrings)) {
+        if (AddToStrings(cc, mStrs)) {
             TheDebugNotifier << cc;
         }
     }
@@ -226,14 +226,14 @@ public:
 
 class DebugWarnOncer {
 private:
-    std::list<String> mStrings;
+    std::list<String> mStrs;
 
 public:
     DebugWarnOncer() {}
     ~DebugWarnOncer() {}
 
     void operator<<(const char *cc) {
-        if (AddToStrings(cc, mStrings)) {
+        if (AddToStrings(cc, mStrs)) {
             TheDebugWarner << cc;
         }
     }
