@@ -61,7 +61,7 @@ BEGIN_HANDLERS(CameraManager)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(CameraManager)
-    SYNC_PROP_SET(next_shot, mNextShot.Ptr(), SetNextShot(_val.Obj<CamShot>()))
+    SYNC_PROP_SET(next_shot, mNextShot.Ptr(), ForceCameraShot(_val.Obj<CamShot>(), false))
     SYNC_PROP(blend_time, mBlendTime)
     SYNC_PROP(parent, mParent)
     SYNC_SUPERCLASS(Hmx::Object)
@@ -132,11 +132,6 @@ FreeCamera *CameraManager::GetFreeCam(int padnum) {
 
 void CameraManager::DeleteFreeCam() { RELEASE(mFreeCam); }
 
-void CameraManager::SetNextShot(CamShot *shot) {
-    mNextShotChanged = shot != mNextShot || mNextShotChanged;
-    mNextShot = shot;
-}
-
 void CameraManager::ForceCameraShot(CamShot *shot, bool b) {
     mNextShotChanged = (shot != mNextShot || b) || mNextShotChanged;
     mNextShot = shot;
@@ -206,7 +201,7 @@ void CameraManager::PrePoll() {
 CamShot *CameraManager::ShotAfter(CamShot *cshot) {
     ObjDirItr<CamShot> it((ObjectDir *)mParent, true);
     CamShot *ret = it;
-    for (; it != 0 && it != cshot; ++it)
+    for (; it != nullptr && it != cshot; ++it)
         ;
     if (it)
         ++it;
@@ -243,8 +238,7 @@ Symbol CameraManager::MakeCategoryAndFilters(
                 if (filt.prop.Type() == kDataSymbol && filt.prop.Sym() == flags_exact) {
                     filt.mask = currArr->Int(1);
                     filt.match = currArr->Int(2);
-                } else if (filt.prop.Type() == kDataSymbol
-                           && filt.prop.Sym() == flags_any) {
+                } else if (filt.prop.Type() == kDataSymbol && filt.prop.Sym() == flags_any) {
                     filt.mask = currArr->Int(1);
                     filt.match = 1;
                 } else {
@@ -265,13 +259,15 @@ bool CameraManager::SetCrowds(ObjVector<CamShotCrowd> &crowds) {
     bool ret = false;
     FOREACH (it, mCrowds) {
         WorldCrowd *curCrowd = *it;
-        ObjVector<CamShotCrowd>::iterator target = crowds.end();
+        ObjVector<CamShotCrowd>::iterator target;
         FOREACH (cit, crowds) {
-            target = cit;
             if (curCrowd == cit->mCrowd) {
-                break;
+                target = cit;
+                goto done;
             }
         }
+        target = crowds.end();
+    done:
         if (target != crowds.end()) {
             curCrowd->SetShowing(true);
             ret = true;

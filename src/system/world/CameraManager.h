@@ -47,32 +47,42 @@ public:
     CamShot *GetCurrentShot() const { return mCurrentCam; }
     bool HasFreeCam() const { return mFreeCam; }
     void ForceCamShot(CamShot *);
-    FreeCamera *GetFreeCam(int);
+    FreeCamera *GetFreeCam(int padNum);
     void DeleteFreeCam();
-    CamShot *ShotAfter(CamShot *);
-    CamShot *FindCameraShot(Symbol, const std::vector<PropertyFilter> &);
+    CamShot *ShotAfter(CamShot *cur);
+    CamShot *FindCameraShot(Symbol category, const std::vector<PropertyFilter> &filters);
     CamShot *MiloCamera();
-    void ForceCameraShot(CamShot *, bool);
+    void ForceCameraShot(CamShot *shot, bool forceRestart);
     void PrePoll();
     void Randomize();
     void Enter();
-    bool SetCrowds(ObjVector<CamShotCrowd> &);
-    int
-    NumCameraShots(Symbol s, const std::vector<PropertyFilter> &, std::list<CamShot *> *);
-    void SetNextShot(CamShot *);
-    void SyncObjects(WorldDir *);
-    CamShot *PickCameraShot(Symbol, const std::vector<PropertyFilter> &);
+    bool SetCrowds(ObjVector<CamShotCrowd> &crowds);
+    int NumCameraShots(
+        Symbol category,
+        const std::vector<PropertyFilter> &filters,
+        std::list<CamShot *> *shots
+    );
+    void SyncObjects(WorldDir *parent);
+    CamShot *PickCameraShot(Symbol category, const std::vector<PropertyFilter> &filters);
     void Poll();
+    std::vector<Category> &GetCameras() { return mCategories; }
+
+    //  public: void ClearFlags(int32_t);
+    //  public: void SetBlendTime(float);
 
 protected:
     CameraManager();
 
 private:
-    void StartShot_(CamShot *);
+    void StartShot_(CamShot *shot);
     float CalcFrame();
-    void FirstShotOk(Symbol);
-    void RandomizeCategory(ObjPtrList<CamShot> &);
-    bool ShotMatches(CamShot *, const std::vector<PropertyFilter> &);
+    void FirstShotOk(Symbol category);
+    void RandomizeCategory(ObjPtrList<CamShot> &cams);
+    bool ShotMatches(CamShot *shot, const std::vector<PropertyFilter> &filters);
+    Symbol MakeCategoryAndFilters(
+        DataArray *args, std::vector<PropertyFilter> &filterList, float *blendTime
+    );
+    ObjPtrList<CamShot> &FindOrAddCategory(Symbol cat);
 
     DataNode OnPickCameraShot(DataArray *);
     DataNode OnFindCameraShot(DataArray *);
@@ -81,8 +91,6 @@ private:
     DataNode OnIterateShot(DataArray *);
     DataNode OnNumCameraShots(DataArray *);
     DataNode OnGetShotList(DataArray *);
-    Symbol MakeCategoryAndFilters(DataArray *da, std::vector<PropertyFilter> &, float *);
-    ObjPtrList<CamShot> &FindOrAddCategory(Symbol);
 
     /** "Controlling world object" */
     WorldDir *mParent; // 0x2c
