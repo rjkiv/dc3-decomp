@@ -476,13 +476,12 @@ ObjPtrList<T1, T2>::insert(typename ObjPtrList<T1, T2>::iterator it, T1 *obj) {
 
 template <class T1, class T2>
 void ObjPtrList<T1, T2>::Set(iterator it, T1 *obj) {
-    Node *n = *reinterpret_cast<Node **>(&it);
-    n->SetObjConcrete(obj);
+    it.mNode->SetObjConcrete(obj);
 }
 
 template <class T1, class T2>
 typename ObjPtrList<T1, T2>::iterator ObjPtrList<T1, T2>::erase(iterator it) {
-    Node *n = *reinterpret_cast<Node **>(&it);
+    Node *n = it.mNode;
     Node *unlinked = Unlink(n);
     delete n;
     return unlinked;
