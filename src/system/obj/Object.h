@@ -408,6 +408,7 @@ private:
 
 public:
     class iterator {
+        friend class ObjPtrList;
     public:
         iterator() : mNode(0) {}
         iterator(Node *node) : mNode(node) {}
