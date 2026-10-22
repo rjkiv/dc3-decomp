@@ -752,7 +752,7 @@
             "system/ui/UIButton.cpp": "Matching",
             "system/ui/UIColor.cpp": "Matching",
             "system/ui/UIComponent.cpp": "Matching",
-            "system/ui/UIFontImporter.cpp": "NonMatching",
+            "system/ui/UIFontImporter.cpp": "Matching",
             "system/ui/UIGuide.cpp": "Matching",
             "system/ui/UILabel.cpp": "Matching",
             "system/ui/UILabelDir.cpp": "Matching",
