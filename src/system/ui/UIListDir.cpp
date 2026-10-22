@@ -26,7 +26,7 @@ UIListDir::UIListDir()
     mTestState.SetSelected(0, -1, true);
 }
 
-UIListDir::~UIListDir() { DeleteAll(unk270); }
+UIListDir::~UIListDir() { DeleteAll(mEditWidgets); }
 
 BEGIN_HANDLERS(UIListDir)
     HANDLE_ACTION(test_scroll, mTestState.Scroll(_msg->Int(2), false))
@@ -120,8 +120,8 @@ void UIListDir::PostLoad(BinStream &bs) {
 void UIListDir::SyncObjects() {
     RndDir::SyncObjects();
     if (TheLoadMgr.EditMode()) {
-        CreateElements(0, unk270, mTestState.NumDisplay());
-        FillElements(mTestState, unk270);
+        CreateElements(0, mEditWidgets, mTestState.NumDisplay());
+        FillElements(mTestState, mEditWidgets);
     }
 }
 
@@ -130,7 +130,13 @@ void UIListDir::DrawShowing() {
         UIListWidgetDrawState drawState;
         BuildDrawState(drawState, mTestState, mTestComponentState, 0, true);
         DrawWidgets(
-            drawState, mTestState, unk270, WorldXfm(), mTestComponentState, nullptr, false
+            drawState,
+            mTestState,
+            mEditWidgets,
+            WorldXfm(),
+            mTestComponentState,
+            nullptr,
+            false
         );
     } else {
         RndDir::DrawShowing();
@@ -142,7 +148,7 @@ void UIListDir::Poll() {
         RndDir::Poll();
         if (mTestMode) {
             mTestState.Poll(TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo));
-            PollWidgets(unk270);
+            PollWidgets(mEditWidgets);
         }
     }
 }
@@ -159,11 +165,11 @@ bool UIListDir::IsActive(int i) const {
 }
 
 void UIListDir::StartScroll(const UIListState &state, int i, bool b) {
-    StartScroll(state, unk270, i, b);
+    StartScroll(state, mEditWidgets, i, b);
 }
 
 void UIListDir::CompleteScroll(const UIListState &state) {
-    CompleteScroll(state, unk270);
+    CompleteScroll(state, mEditWidgets);
 }
 
 UIListOrientation UIListDir::Orientation() const { return mOrientation; }
@@ -285,8 +291,8 @@ void UIListDir::BuildDrawState(
     UIListWidgetDrawState &drawState,
     const UIListState &listState,
     UIComponent::State compState,
-    float f4,
-    bool b5
+    float highlight_offset,
+    bool draw_highlight
 ) const {
     int numDisplay = listState.NumDisplay();
     int numDisplayWithData = listState.NumDisplayWithData();
@@ -379,7 +385,7 @@ void UIListDir::BuildDrawState(
             int i16;
             if (!listState.Provider()->IsActive(i7)) {
                 i16 = 2;
-            } else if (selected != i9 || !b5) {
+            } else if (selected != i9 || !draw_highlight) {
                 i16 = 0;
             } else {
                 i16 = 1;
@@ -418,7 +424,13 @@ void UIListDir::BuildDrawState(
     SetElementPos(
         drawState.mLastPos, listState.NumDisplay() - 1, listState.GridSpan(), f18, 0
     );
-    SetElementPos(drawState.mHighlightPos, selectedDisplay, listState.GridSpan(), f24, f4);
+    SetElementPos(
+        drawState.mHighlightPos,
+        selectedDisplay,
+        listState.GridSpan(),
+        f24,
+        highlight_offset
+    );
 }
 
 void UIListDir::CreateElements(UIList *uilist, std::vector<UIListWidget *> &vec, int i) {
@@ -454,5 +466,5 @@ float UIListDir::SetElementPos(Vector3 &v, float f1, int i2, float f3, float f4)
 
 void UIListDir::Reset() {
     mTestState.SetSelected(0, -1, true);
-    FillElements(mTestState, unk270);
+    FillElements(mTestState, mEditWidgets);
 }

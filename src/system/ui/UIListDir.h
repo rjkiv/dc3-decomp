@@ -40,32 +40,62 @@ public:
     virtual void CompleteScroll(const UIListState &);
 
     UIListOrientation Orientation() const;
+    //  public: void SetOrientation(UIListOrientation);
+    //  public: int32_t FadeOffset() const;
+    //  public: void SetFadeOffset(int32_t);
     float ElementSpacing() const;
-    UIList *SubList(int, std::vector<UIListWidget *> &);
+    //  public: void SetElementSpacing(float);
+    //  public: float ScrollHighlightChange() const;
+    //  public: void SetScrollHighlightChange(float);
+    //  public: bool TestMode() const;
+    //  public: int32_t TestNumDisplay() const;
+    //  public: float TestScrollTime() const;
+    //  public: UIComponent::State TestListState() const;
+    //  public: bool TestDisableElements() const;
+    //  public: UIListState* TestState();
+    UIList *SubList(int display, std::vector<UIListWidget *> &widgets);
     void DrawWidgets(
-        UIListWidgetDrawState &,
-        UIListState const &,
-        std::vector<UIListWidget *> &,
-        class Transform const &,
-        UIComponent::State,
-        Box *,
-        bool
+        UIListWidgetDrawState &ds,
+        const UIListState &s,
+        std::vector<UIListWidget *> &widgets,
+        const Transform &root_xfm,
+        UIComponent::State component_state,
+        Box *bounding_box,
+        bool drawManuallyControlledObjects
     );
-    void PollWidgets(std::vector<UIListWidget *> &);
-    void FillElement(UIListState const &, std::vector<UIListWidget *> &, int);
-    void StartScroll(UIListState const &, std::vector<UIListWidget *> &, int, bool);
-    void CompleteScroll(UIListState const &, std::vector<UIListWidget *> &);
-    void FillElements(UIListState const &, std::vector<UIListWidget *> &);
+    void PollWidgets(std::vector<UIListWidget *> &widgets);
+    void
+    FillElement(const UIListState &s, std::vector<UIListWidget *> &widgets, int display);
+    void StartScroll(
+        const UIListState &s,
+        std::vector<UIListWidget *> &widgets,
+        int direction,
+        bool changing_data
+    );
+    void CompleteScroll(const UIListState &s, std::vector<UIListWidget *> &widgets);
+    void FillElements(const UIListState &s, std::vector<UIListWidget *> &widgets);
     void ListEntered();
     void BuildDrawState(
-        UIListWidgetDrawState &, UIListState const &, UIComponent::State, float, bool
+        UIListWidgetDrawState &ds,
+        const UIListState &s,
+        UIComponent::State component_state,
+        float highlight_offset,
+        bool draw_highlight
     ) const;
-    void CreateElements(UIList *, std::vector<UIListWidget *> &, int);
+    void
+    CreateElements(UIList *parent, std::vector<UIListWidget *> &widgets, int num_elems);
 
     NEW_OBJ(UIListDir)
     OBJ_MEM_OVERLOAD(0x1b)
 
-protected:
+    //  public: void CalcBoundingBox(Box&);
+
+private:
+    float SetElementPos(
+        Vector3 &pos, float display, int gridSpan, float offset, float offsetAcross
+    ) const;
+    void Reset();
+
     /** "scroll direction of list" */
     UIListOrientation mOrientation; // 0x204
     /** "Number of elements to fade from beginning/end of list". Ranges from 0 to 10. */
@@ -84,10 +114,6 @@ protected:
     UIComponent::State mTestComponentState; // 0x268
     /** "test disable every other element" */
     bool mTestDisableElements; // 0x26c
-    std::vector<UIListWidget *> unk270; // 0x270
+    std::vector<UIListWidget *> mEditWidgets; // 0x270
     int mDirection; // 0x27c
-
-private:
-    float SetElementPos(Vector3 &, float, int, float, float) const;
-    void Reset();
 };
