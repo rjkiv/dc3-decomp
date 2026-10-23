@@ -19,7 +19,9 @@ NetStream::~NetStream() {
 
 EofType NetStream::Eof() { return (EofType)!mSocket->CanRead(); }
 
-int NetStream::ReadAsync(void *data, int maxbytes) { return mSocket->Recv(data, maxbytes); }
+int NetStream::ReadAsync(void *data, int maxbytes) {
+    return mSocket->Recv(data, maxbytes);
+}
 
 void NetStream::ReadImpl(void *data, int bytes) {
     int orig_i = bytes;
@@ -64,6 +66,8 @@ void NetStream::WriteImpl(const void *data, int bytes) {
 
 void NetStream::SeekImpl(int i, SeekType ty) { MILO_ASSERT(false, 0x7A); }
 
+static const float kConnectTimeout = 1000;
+
 void NetStream::ClientConnect(const NetAddress &addr) {
     MILO_ASSERT(mSocket, 0x38);
     Timer timer;
@@ -73,7 +77,10 @@ void NetStream::ClientConnect(const NetAddress &addr) {
         mFail = true;
     } else {
         while (!mSocket->CanSend()) {
-            if (mSocket->Fail() || timer.SplitMs() > 1000) {
+            if (mSocket->Fail()) {
+                mFail = true;
+                break;
+            } else if (timer.SplitMs() > kConnectTimeout) {
                 mFail = true;
                 break;
             }

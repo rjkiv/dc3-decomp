@@ -2798,7 +2798,7 @@ system/os/NetStream.cpp:
 	.rdata      start:0x82296FA0 end:0x82296FEC rename:.rdata$r
 	.pdata      start:0x822D33F8 end:0x822D3448
 	.text       start:0x82601820 end:0x82601DE0
-	.data       start:0x82F12B08 end:0x82F12BA0
+	.data       start:0x82F12B08 end:0x82F12B20
 
 system/os/Keyboard.cpp:
 	.rdata      start:0x82084E38 end:0x82084E98
@@ -2806,11 +2806,13 @@ system/os/Keyboard.cpp:
 	.text       start:0x82601DE0 end:0x82602208
 	.text       start:0x82EDC890 end:0x82EDC8A0 rename:.text$yc
 	.text       start:0x82EE25D0 end:0x82EE2610 rename:.text$yd
+	.data       start:0x82F12B20 end:0x82F12B38
 
 system/os/Memcard.cpp:
 	.rdata      start:0x82084E98 end:0x82084F20
 	.pdata      start:0x822D34A0 end:0x822D34C0
 	.text       start:0x82602208 end:0x82602458
+	.data       start:0x82F12B38 end:0x82F12BA0
 
 system/os/AsyncTask.cpp:
 	.rdata      start:0x82084F20 end:0x82084F30

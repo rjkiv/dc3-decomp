@@ -118,8 +118,8 @@ void UsbMidiGuitar::Poll() {
                     RGStompBoxMsg msg(stompBox, i);
                     JoypadPushThroughMsg(msg);
                 }
-                int programChange = (extended[0xa] >> 7 & 1)
-                    + ((extended[0xb] >> 7 & 1) << 1) + ((extended[0xc] >> 7 & 1) << 2);
+                int programChange = (extended[0xc] >> 5 & 4) + (extended[0xb] >> 6 & 2)
+                    + (extended[0xa] >> 7 & 1);
                 if (programChange != TheGuitar->GetProgramChange(i)) {
                     TheGuitar->SetProgramChange(i, programChange);
                     RGProgramChangeMsg msg(programChange, i);

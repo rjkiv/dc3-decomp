@@ -10,6 +10,9 @@ typedef void FixedStringFunc(FixedString &);
 
 struct StackData {
     unsigned int address; // 0x0
+
+    bool operator<(const StackData &s) const { return address < s.address; }
+    bool operator>(const StackData &s) const { return address > s.address; }
 };
 
 // size 0x134

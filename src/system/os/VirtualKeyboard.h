@@ -2,17 +2,12 @@
 #include "obj/Object.h"
 
 class VirtualKeyboard : public Hmx::Object {
-private:
-    Hmx::Object *mPobjKeyboardCallback; // 0x2c
-    bool mCallbackReady; // 0x30
-    bool mMsgOk; // 0x31
-    String mCallbackMsg; // 0x34
-
-    void PlatformPoll();
-    const char *GetInputString();
-    DataNode ShowKeyboardUI(int, int, String, String, String, int);
-
 public:
+    enum KeyboardConfigType {
+        kKeyboard_Normal = 0,
+        kKeyboard_Numeric = 1,
+    };
+
     VirtualKeyboard();
     virtual ~VirtualKeyboard();
     virtual DataNode Handle(DataArray *, bool);
@@ -27,6 +22,23 @@ public:
 
     void PlatformTerminate();
     DataNode OnShowKeyboardUI(const DataArray *);
+
+private:
+    Hmx::Object *mPobjKeyboardCallback; // 0x2c
+    bool mCallbackReady; // 0x30
+    bool mMsgOk; // 0x31
+    String mCallbackMsg; // 0x34
+
+    void PlatformPoll();
+    const char *GetInputString();
+    DataNode ShowKeyboardUI(
+        int pad,
+        int textLength,
+        String strWindowTitle,
+        String strDescription,
+        String strDefaultText,
+        int configType
+    );
 };
 
 #include "obj/Msg.h"

@@ -10,8 +10,6 @@ public:
     UsbMidiGuitar();
     ~UsbMidiGuitar();
 
-    static bool mUsbMidiGuitarExists;
-
     static void Init();
     static void Terminate();
     static void Poll();
@@ -43,6 +41,7 @@ public:
 private:
     static Timer mTimer;
     static int mMinVelocity;
+    static bool mUsbMidiGuitarExists;
 
     bool mStringStrummed[4][6]; // 0x0
     int mStringFret[4][6]; // 0x18

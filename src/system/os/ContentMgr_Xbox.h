@@ -7,14 +7,14 @@
 
 class XboxContent : public Content {
 public:
-    XboxContent(const XCONTENT_CROSS_TITLE_DATA &, int, int, bool);
+    XboxContent(const XCONTENT_CROSS_TITLE_DATA &d, int id, int padNum, bool discover);
     virtual ~XboxContent();
-    virtual const char *Root() { return unk150.c_str(); }
+    virtual const char *Root() { return mDrive.c_str(); }
     virtual bool OnMemcard() { return Location() == kLocationRemovableMem; }
     virtual ContentLocT Location();
     virtual unsigned long LicenseBits() { return mLicenseBits; }
-    virtual bool HasValidLicenseBits() { return mValidLicenseBits; }
-    virtual bool IsCorrupt() { return mState == 8 && unk161; }
+    virtual bool HasValidLicenseBits() { return mHasValidLicenseBits; }
+    virtual bool IsCorrupt() { return mState == 8 && mCorrupt; }
     virtual State GetState() { return mState; }
     virtual void Poll();
     virtual void Mount();
@@ -23,22 +23,22 @@ public:
     virtual Symbol FileName() { return mFilename; }
     virtual const char *DisplayName() {
         const unsigned short *displayName =
-            reinterpret_cast<const unsigned short *>(mXData.szDisplayName);
+            reinterpret_cast<const unsigned short *>(mData.szDisplayName);
         return WideCharToChar(displayName);
     }
     virtual unsigned int GetLRM() { return mLRM; }
 
 private:
     XOVERLAPPED *mOverlapped; // 0x4
-    XCONTENT_CROSS_TITLE_DATA mXData; // 0x8
+    XCONTENT_CROSS_TITLE_DATA mData; // 0x8
     unsigned long mLicenseBits; // 0x140
-    bool mValidLicenseBits; // 0x144
+    bool mHasValidLicenseBits; // 0x144
     String mRoot; // 0x148
-    String unk150; // 0x150
+    String mDrive; // 0x150
     State mState; // 0x158
     int mPadNum; // 0x15c
-    bool unk160; // 0x160
-    bool unk161; // 0x161
+    bool mDelete; // 0x160
+    bool mCorrupt; // 0x161
     Symbol mFilename; // 0x164
     unsigned int mLRM; // 0x168
 };
@@ -65,25 +65,25 @@ public:
     virtual bool IsDeleteDone(Symbol);
     virtual bool GetLicenseBits(Symbol, unsigned long &ul);
 
-protected:
-    virtual void NotifyMounted(Content *);
-    virtual void NotifyUnmounted(Content *);
-    virtual void NotifyDeleted(Content *);
-    virtual void NotifyFailed(Content *);
-
 private:
     DataNode OnMsg(const SigninChangedMsg &);
     DataNode OnMsg(const ConnectionStatusChangedMsg &);
     DataNode OnMsg(const StorageChangedMsg &);
     DataNode OnMsg(const ContentInstalledMsg &);
 
-    bool unk70; // 0x70
-    bool unk71; // 0x71
-    HANDLE mEnumerators[kNumberOfBuffers]; // 0x74
-    XCONTENT_CROSS_TITLE_DATA mXDatas[kNumberOfBuffers]; // 0x90
-    XOVERLAPPED *mOverlappeds[kNumberOfBuffers]; // 0x918
-    int unk934; // 0x934
-    int unk938; // 0x938
+protected:
+    virtual void NotifyMounted(Content *);
+    virtual void NotifyUnmounted(Content *);
+    virtual void NotifyDeleted(Content *);
+    virtual void NotifyFailed(Content *);
+
+    bool mPermissionsIncreased; // 0x70
+    bool mNeedsPermissions; // 0x71
+    HANDLE mContentEnum[kNumberOfBuffers]; // 0x74
+    XCONTENT_CROSS_TITLE_DATA mBuffer[kNumberOfBuffers]; // 0x90
+    XOVERLAPPED *mOverlapped[kNumberOfBuffers]; // 0x918
+    int mId; // 0x934
+    int mContentsToDiscover; // 0x938
     bool mEnumerateSaveGameExports; // 0x93c
 };
 

@@ -5,6 +5,7 @@
 #include <cstdio>
 
 namespace {
+    const char *kUnknownFunction = "????";
     const char *kSpecialOperators[] = { "constuctor",
                                         "destructor",
                                         "operator new",
@@ -209,11 +210,11 @@ void TryDemangleFunc(char *demangled, const char *mangled) {
 XboxMapFile::XboxMapFile(const char *filename) {
     static int _x = MemFindHeap("main");
     MemHeapTracker tmp(_x);
-    mFile = NewFile(filename, 0x10002);
+    mFile = NewFile(filename, FILE_OPEN_NOARK | FILE_OPEN_READ);
     char buf[1024];
-    if (!mFile)
+    if (!mFile) {
         return;
-    else {
+    } else {
         do {
             ReadLine(buf, 1024);
         } while (!strstr(buf, "Publics by Value"));
@@ -240,29 +241,83 @@ void XboxMapFile::ReadLine(char *dest, int destSize) {
 }
 
 const char *XboxMapFile::GetFunction(unsigned int addr, bool restart) {
-    static char sBuffer[0x400];
+    static char funcName[1024];
     if (restart) {
         mFile->Seek(mStart, 0);
     }
-    char localC40[1024];
-    char local1440[2048];
-    char *cur = local1440;
-    sprintf(localC40, "%8x", addr);
+    char buf1[2048];
+    char funcAddr[1024];
+    char buf2[2048];
+    sprintf(funcAddr, "%8x", addr);
+    char *dest = buf1;
+    const char *src = "";
     int oldTell = mFile->Tell();
-    char *b4 = "";
     while (!mFile->Eof()) {
-        cur = cur != local1440 ? local1440 : localC40;
+        dest = dest == buf1 ? buf2 : buf1;
         int curTell = mFile->Tell();
-        ReadLine(cur, 0x800);
-        char c2 = cur[0x15];
-        char *pCur = &cur[0x15];
-        while (c2 != 0x20) {
-            pCur++;
-            c2 = *pCur;
-        }
-        *pCur = 0;
-        while (*pCur++ == 0x20)
+        ReadLine(dest, 0x800);
+        char *pCur = &dest[0x15];
+        char *orig = pCur;
+        for (char notSpace = *pCur; notSpace != ' '; notSpace = *++pCur)
             ;
+        *pCur = 0;
+        for (char space = *++pCur; space == ' '; space = *++pCur)
+            ;
+        pCur[8] = 0;
+        if (strcmp(funcAddr, pCur) < 0) {
+            TryDemangleFunc(funcName, src);
+            mFile->Seek(oldTell, 0);
+            return funcName;
+        }
+        src = orig;
+        oldTell = curTell;
     }
     return "(unknown)";
+}
+
+template <typename T>
+void InsertSort(int *keys, T *vals, int size) {
+    int offset = (int)keys - (int)vals;
+    for (int i = 1; i < size; i++) {
+        int k = keys[i];
+        T v = vals[i];
+        int j = i;
+        for (; j > 0 && v < vals[j - 1]; j--) {
+            vals[j] = vals[j - 1];
+            keys[j] = keys[j - 1];
+        }
+        vals[j] = v;
+        keys[j] = k;
+    }
+}
+
+bool XboxMapFile::ParseStack(
+    const char *mapname, struct StackData *results, int stack_size, FixedString &msg
+) {
+    XboxMapFile mapfile(mapname);
+    if (!mapfile.mFile) {
+        return false;
+    } else {
+        int keys[50];
+        int numKeys;
+        for (numKeys = 0; numKeys < stack_size; numKeys++) {
+            keys[numKeys] = numKeys;
+        }
+        InsertSort(keys, results, numKeys);
+        char funcNames[50][128];
+        for (int i = 0; i < stack_size; i++) {
+            unsigned int addr = results[i].address;
+            int diff = keys[i] * 128;
+            const char *source = mapfile.GetFunction(addr, false);
+            char *which = funcNames[0] + diff;
+            strncpy(which, source, 127);
+            funcNames[0][diff + 127] = '\0';
+        }
+        for (int i = 0; i < stack_size; i++) {
+            msg += "\n   ";
+            msg += funcNames[i];
+        }
+    }
+
+    return true;
 }
