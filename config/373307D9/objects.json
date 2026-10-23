@@ -404,7 +404,7 @@
             "system/math/Interp.cpp": "Matching",
             "system/math/Key.cpp": "NonMatching",
             "system/math/Primes.cpp": "Matching",
-            "system/math/Rand.cpp": "NonMatching",
+            "system/math/Rand.cpp": "Matching",
             "system/math/Rand2.cpp": "Matching",
             "system/math/Rot.cpp": "NonMatching",
             "system/math/SHA1.cpp": "Matching",

@@ -11,11 +11,12 @@ Rand::Rand(int i)
 }
 
 void Rand::Seed(int seed) {
-    int s = seed;
+    unsigned int s = seed;
     for (int i = 0; i < DIM(mRandTable); i++) {
-        int j = s * 0x41C64E6D + 0x3039;
-        s = j * 0x41C64E6D + 0x3039;
-        mRandTable[i] = (s & 0x7FFF0000) | (j >> 16);
+        s = s * 0x41C64E6D + 0x3039;
+        unsigned int slo = s >> 16;
+        s = s * 0x41C64E6D + 0x3039;
+        mRandTable[i] = (s & 0x7FFF0000) | slo;
     }
     mRandIndex1 = 0;
     mRandIndex2 = 0x67;
