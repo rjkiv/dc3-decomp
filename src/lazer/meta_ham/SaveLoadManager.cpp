@@ -302,7 +302,7 @@ void SaveLoadManager::DisableAutosave(HamProfile *pProfile) {
         MILO_NOTIFY("Tried to disable autosave while saveloadmgr is not idle.");
         return;
     } else
-        pProfile->SetSaveState(kMetaProfileError); // error?
+        pProfile->SetSaveState(kMetaProfileError);
 }
 
 bool SaveLoadManager::IsSafePlaceToSave() const {
@@ -663,27 +663,27 @@ DataNode SaveLoadManager::OnMsg(const MCResultMsg &msg) {
         break;
     case kS_AutoloadStartLoad:
         switch (res) {
-        case 0:
-            mLastMCResult = (MCResult)0;
+        case kMCNoError:
+            mLastMCResult = kMCNoError;
             SetState(kS_SaveLoadSuccess);
             break;
-        case 1:
+        case kMCNoCard:
             SetState(kS_AutoloadDeviceMissing);
             break;
-        case 5:
+        case kMCCorrupt:
             SetState(kS_AutoloadCorrupt);
             break;
-        case 6:
-        case 8:
+        case kMCNotEnoughSpace:
+        case kMCFileNotFound:
             SetState(kS_SaveLookForFile);
             break;
-        case 10:
+        case kMCObsoleteVersion:
             SetState(kS_AutoloadObsolete);
             break;
-        case 0xB:
+        case kMCNewerVersion:
             SetState(kS_AutoloadFuture);
             break;
-        case 0x19:
+        case kMCNotOwner:
             SetState(kS_AutoloadNotOwner);
             break;
         default:
@@ -693,17 +693,17 @@ DataNode SaveLoadManager::OnMsg(const MCResultMsg &msg) {
         break;
     case kS_SaveLookForFile:
         switch (res) {
-        case 0:
-        case 5:
-        case 7:
-        case 0x19:
+        case kMCNoError:
+        case kMCCorrupt:
+        case kMCFileExists:
+        case kMCNotOwner:
             SetState(kS_SaveConfirmOverwrite);
             break;
-        case 1:
+        case kMCNoCard:
             SetState(kS_SaveDeviceInvalid);
             break;
-        case 6:
-        case 8:
+        case kMCNotEnoughSpace:
+        case kMCFileNotFound:
             SetState(kS_SaveOverwrite);
             break;
         default:
@@ -716,26 +716,26 @@ DataNode SaveLoadManager::OnMsg(const MCResultMsg &msg) {
         break;
     case kS_ManualLoadStartLoad:
         switch (res) {
-        case 0:
-            mLastMCResult = (MCResult)0;
+        case kMCNoError:
+            mLastMCResult = kMCNoError;
             SetState(kS_SaveLoadSuccess);
             break;
-        case 1:
+        case kMCNoCard:
             SetState(kS_ManualLoadMissing);
             break;
-        case 5:
+        case kMCCorrupt:
             SetState(kS_ManualLoadCorrupt);
             break;
-        case 8:
+        case kMCFileNotFound:
             SetState(kS_ManualLoadNoFile);
             break;
-        case 10:
+        case kMCObsoleteVersion:
             SetState(kS_AutoloadObsolete);
             break;
-        case 11:
+        case kMCNewerVersion:
             SetState(kS_AutoloadFuture);
             break;
-        case 0x19:
+        case kMCNotOwner:
             SetState(kS_ManualLoadNotOwner);
             break;
         default:
@@ -964,13 +964,13 @@ void SaveLoadManager::Poll() {
             case kS_AutoloadSearch:
                 if (!mWaiting) {
                     switch (mLastMCResult) {
-                    case 7:
+                    case kMCFileExists:
                         SetState(kS_AutoloadStartLoad);
                         break;
-                    case 8:
+                    case kMCFileNotFound:
                         SetState(kS_AutoloadNoSaveFound);
                         break;
-                    case 9:
+                    case kMCMultipleFilesFound:
                         SetState(kS_AutoloadMultipleSavesFound);
                         break;
                     default:
@@ -983,11 +983,11 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     mLastCacheResult = TheCacheMgr->GetLastResult();
                     switch (mLastCacheResult) {
-                    case 0:
+                    case kCache_NoError:
                         TheCacheMgr->AddCacheID(mCacheID, mSongCacheName.c_str());
                         SetState(kS_SongCacheCreateMountRead);
                         break;
-                    case 6:
+                    case kCache_ErrorCacheNotFound:
                         SetState(kS_SongCacheCreateNotFound);
                         break;
                     default:
@@ -1004,13 +1004,13 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         mDeviceIDState = kDeviceID_Chosen;
                         mLastChosenDeviceID = mCacheID->GetDeviceID();
                         TheCacheMgr->AddCacheID(mCacheID, mSongCacheName.c_str());
                         SetState(kS_SongCacheCreateMountWrite);
                         break;
-                    case 4:
+                    case kCache_ErrorUserCancel:
                         mDeviceIDState = kDeviceID_Declined;
                         SetState(kS_SongCacheCreateNotFound_Msg);
                         break;
@@ -1033,13 +1033,13 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         SetState(kS_SongCacheCreateFileSize);
                         break;
-                    case 7:
+                    case kCache_ErrorCorrupt:
                         SetState(kS_SongCacheCreateCorrupt);
                         break;
-                    case 8:
+                    case kCache_ErrorStorageDeviceMissing:
                         SetState(kS_SongCacheCreateMissing);
                         break;
                     default:
@@ -1056,19 +1056,19 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         SetState(kS_SongCacheCreateWrite);
                         break;
-                    case 7:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                    case kCache_ErrorCorrupt:
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         SetState(kS_SongCacheCreateCorrupt);
                         break;
-                    case 8:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                    case kCache_ErrorStorageDeviceMissing:
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         SetState(kS_SongCacheCreateMissing);
                         break;
                     default:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         MILO_FAIL(
                             "SaveLoadManager - kS_SongCacheCreateMountWrite unhandled error %d",
                             (int)res
@@ -1082,13 +1082,13 @@ void SaveLoadManager::Poll() {
                 if (mCache->IsDone()) {
                     CacheResult res = mCache->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         SetState(kS_SongCacheCreateRead);
                         break;
-                    case 6:
+                    case kCache_ErrorCacheNotFound:
                         SetState(kS_SongCacheCreateWrite);
                         break;
-                    case 8:
+                    case kCache_ErrorStorageDeviceMissing:
                         SetState(kS_SongCacheCreateMissing);
                         break;
                     default:
@@ -1099,7 +1099,7 @@ void SaveLoadManager::Poll() {
                 break;
             case kS_SongCacheCreateMountDelete:
                 if (TheCacheMgr->IsDone()) {
-                    UpdateStatus((SaveLoadMgrStatus)2);
+                    UpdateStatus(kStatus_PhysicalWriteEnd);
                     SetState(kS_SongCacheCreateMountWrite);
                 }
                 break;
@@ -1107,7 +1107,7 @@ void SaveLoadManager::Poll() {
                 if (mCache->IsDone()) {
                     CacheResult res = mCache->GetLastResult();
                     switch (res) {
-                    case 0: {
+                    case kCache_NoError: {
                         BufStream stream(mData, mSongCacheSize, true);
                         TheSongMgr.LoadCachedSongInfo(stream);
                         SetState(kS_SongCacheCreateUnmount);
@@ -1125,13 +1125,13 @@ void SaveLoadManager::Poll() {
                 if (mCache->IsDone()) {
                     mLastCacheResult = mCache->GetLastResult();
                     switch (mState) {
-                    case 0x21:
+                    case kS_SongCacheCreateWrite:
                         SetState(kS_SongCacheCreateUnmountWrite);
                         break;
-                    case 0x33:
+                    case kS_GlobalCreateWrite:
                         SetState(kS_GlobalCreateUnmountWrite);
                         break;
-                    case 0x3E:
+                    case kS_GlobalOptionsAutoWrite:
                         SetState(kS_GlobalOptionsAutoUnmountWrite);
                         break;
                     default:
@@ -1143,7 +1143,7 @@ void SaveLoadManager::Poll() {
 
             case kS_SongCacheCreateUnmount:
                 if (TheCacheMgr->IsDone()) {
-                    if (TheCacheMgr->GetLastResult() == 0) {
+                    if (TheCacheMgr->GetLastResult() == kCache_NoError) {
                         SetState(kS_SongCacheCreateDone);
                     } else {
                         SetState(kS_SongCacheCreateError);
@@ -1152,11 +1152,11 @@ void SaveLoadManager::Poll() {
                 break;
             case kS_SongCacheCreateUnmountWrite:
                 if (TheCacheMgr->IsDone()) {
-                    UpdateStatus((SaveLoadMgrStatus)2);
-                    if (mLastCacheResult == 0) {
+                    UpdateStatus(kStatus_PhysicalWriteEnd);
+                    if (mLastCacheResult == kCache_NoError) {
                         mLastCacheResult = TheCacheMgr->GetLastResult();
                     }
-                    if (mLastCacheResult == 0) {
+                    if (mLastCacheResult == kCache_NoError) {
                         SetState(kS_SongCacheCreateDone);
                     } else {
                         SetState(kS_SongCacheCreateError);
@@ -1168,16 +1168,16 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     mLastCacheResult = TheCacheMgr->GetLastResult();
                     switch (mLastCacheResult) {
-                    case 0:
+                    case kCache_NoError:
                         TheCacheMgr->AddCacheID(mCacheID, kStrGlobalCacheName);
                         SetState(kS_GlobalCreateMountRead);
                         break;
-                    case 6:
+                    case kCache_ErrorCacheNotFound:
                         switch (mDeviceIDState) {
-                        case 0:
+                        case kDeviceID_Invalid:
                             SetState(kS_GlobalCreateChoose);
                             break;
-                        case 2:
+                        case kDeviceID_Chosen:
                             SetState(kS_GlobalCreateChooseAuto);
                             break;
                         default:
@@ -1201,13 +1201,13 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         mDeviceIDState = kDeviceID_Chosen;
                         mLastChosenDeviceID = mCacheID->GetDeviceID();
                         TheCacheMgr->AddCacheID(mCacheID, kStrGlobalCacheName);
                         SetState(kS_GlobalCreateMountWrite);
                         break;
-                    case 4:
+                    case kCache_ErrorUserCancel:
                         mDeviceIDState = kDeviceID_Declined;
                         SetState(kS_GlobalCreateNotFound_Msg);
                         break;
@@ -1230,13 +1230,13 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         SetState(kS_GlobalCreateRead);
                         break;
-                    case 7:
+                    case kCache_ErrorCorrupt:
                         SetState(kS_GlobalCreateCorrupt);
                         break;
-                    case 8:
+                    case kCache_ErrorStorageDeviceMissing:
                         SetState(kS_GlobalCreateMissing);
                         break;
                     default:
@@ -1254,19 +1254,19 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         SetState(kS_GlobalCreateWrite);
                         break;
-                    case 7:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                    case kCache_ErrorCorrupt:
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         SetState(kS_GlobalCreateCorrupt);
                         break;
-                    case 8:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                    case kCache_ErrorStorageDeviceMissing:
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         SetState(kS_GlobalCreateMissing);
                         break;
                     default:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         MILO_NOTIFY(
                             "SaveLoadManager - unknown error %d during state %d.",
                             (int)res,
@@ -1279,13 +1279,13 @@ void SaveLoadManager::Poll() {
                 break;
             case kS_GlobalCreateMountDelete:
                 if (TheCacheMgr->IsDone()) {
-                    UpdateStatus((SaveLoadMgrStatus)2);
+                    UpdateStatus(kStatus_PhysicalWriteEnd);
                     SetState(kS_GlobalCreateMountWrite);
                 }
                 break;
             case kS_GlobalCreateRead:
                 if (mCache->IsDone()) {
-                    if (mCache->GetLastResult() == 0) {
+                    if (mCache->GetLastResult() == kCache_NoError) {
                         int size = TheProfileMgr.GetGlobalOptionsSize();
                         FixedSizeSaveableStream stream(mData, size, true);
                         TheProfileMgr.LoadGlobalOptions(stream);
@@ -1300,13 +1300,13 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         mDeviceIDState = kDeviceID_Chosen;
                         mLastChosenDeviceID = mCacheID->GetDeviceID();
                         TheCacheMgr->AddCacheID(mCacheID, kStrGlobalCacheName);
                         SetState(kS_GlobalOptionsAutoMount);
                         break;
-                    case 4:
+                    case kCache_ErrorUserCancel:
                         mDeviceIDState = kDeviceID_Declined;
                         SetState(kS_GlobalOptionsMissing_Msg);
                         break;
@@ -1329,15 +1329,15 @@ void SaveLoadManager::Poll() {
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
                     switch (res) {
-                    case 0:
+                    case kCache_NoError:
                         SetState(kS_GlobalOptionsAutoWrite);
                         break;
-                    case 8:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                    case kCache_ErrorStorageDeviceMissing:
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         SetState(kS_GlobalOptionsMissing_Msg);
                         break;
                     default:
-                        UpdateStatus((SaveLoadMgrStatus)2);
+                        UpdateStatus(kStatus_PhysicalWriteEnd);
                         MILO_FAIL(
                             "SaveLoadManager - CacheMgr choose returned error %d",
                             (int)res
@@ -1351,41 +1351,41 @@ void SaveLoadManager::Poll() {
             case kS_GlobalCreateUnmount:
                 if (TheCacheMgr->IsDone()) {
                     CacheResult res = TheCacheMgr->GetLastResult();
-                    if (res == 0) {
-                        TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)1);
+                    if (res == kCache_NoError) {
+                        TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileLoaded);
                         SetState(kS_GlobalCreateDone);
                     } else {
-                        TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)2);
+                        TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileError);
                         SetState(kS_GlobalCreateDone);
                     }
                 }
                 break;
             case kS_GlobalCreateUnmountWrite:
                 if (TheCacheMgr->IsDone()) {
-                    UpdateStatus((SaveLoadMgrStatus)2);
-                    if (mLastCacheResult == 0) {
+                    UpdateStatus(kStatus_PhysicalWriteEnd);
+                    if (mLastCacheResult == kCache_NoError) {
                         mLastCacheResult = TheCacheMgr->GetLastResult();
                     }
-                    if (mLastCacheResult == 0) {
-                        TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)1);
+                    if (mLastCacheResult == kCache_NoError) {
+                        TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileLoaded);
                         SetState(kS_GlobalCreateDone);
                     } else {
-                        TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)2);
+                        TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileError);
                         SetState(kS_GlobalCreateDone);
                     }
                 }
                 break;
             case kS_GlobalOptionsAutoUnmountWrite:
                 if (TheCacheMgr->IsDone()) {
-                    UpdateStatus((SaveLoadMgrStatus)2);
-                    if (mLastCacheResult == 0) {
+                    UpdateStatus(kStatus_PhysicalWriteEnd);
+                    if (mLastCacheResult == kCache_NoError) {
                         mLastCacheResult = TheCacheMgr->GetLastResult();
                     }
-                    if (mLastCacheResult == 0) {
-                        TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)1);
+                    if (mLastCacheResult == kCache_NoError) {
+                        TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileLoaded);
                         SetState(kS_GlobalOptionsDone);
                     } else {
-                        TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)2);
+                        TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileError);
                         SetState(kS_GlobalOptionsDone);
                     }
                 }
@@ -1394,20 +1394,20 @@ void SaveLoadManager::Poll() {
             case kS_SaveOverwrite:
             case kS_SaveNoOverwrite:
                 if (!mWaiting) {
-                    UpdateStatus((SaveLoadMgrStatus)2);
+                    UpdateStatus(kStatus_PhysicalWriteEnd);
                     switch (mLastMCResult) {
-                    case 0:
+                    case kMCNoError:
                         SetState(kS_SaveLoadSuccess);
                         break;
-                    case 1:
+                    case kMCNoCard:
                         SetState(kS_SaveDeviceInvalid);
                         break;
-                    case 6:
+                    case kMCNotEnoughSpace:
                         mDeviceIDState = kDeviceID_Invalid;
                         mLastChosenDeviceID = 0;
                         SetState(kS_SaveNotEnoughSpace);
                         break;
-                    case 7:
+                    case kMCFileExists:
                         MILO_ASSERT(mState != kS_SaveOverwrite, 0x2ED);
                         SetState(kS_SaveConfirmOverwrite);
                         break;
@@ -1436,7 +1436,7 @@ void SaveLoadManager::Poll() {
                             TheCacheMgr->UnmountAsync(&mCache, nullptr);
                         }
                     } else if (TheCacheMgr->IsDone()) {
-                        if (mState == 0x65) {
+                        if (mState == kS_Abort) {
                             SetState(kS_Done);
                         } else {
                             SetState(kS_None);
@@ -1605,7 +1605,7 @@ void SaveLoadManager::SetState(State newState) {
                     Localize(song_info_cache_name, temp, TheLocale),
                     &mCacheID
                 )) {
-                if (TheCacheMgr->GetLastResult() != 0) {
+                if (TheCacheMgr->GetLastResult() != kCache_NoError) {
                     SetState(kS_SongCacheCreateChooseWaitOnGuide);
                 }
             }
@@ -1624,7 +1624,7 @@ void SaveLoadManager::SetState(State newState) {
         case kS_SongCacheCreateMountWrite:
         case kS_GlobalCreateMountWrite:
         case kS_GlobalOptionsAutoMount:
-            UpdateStatus((SaveLoadMgrStatus)1);
+            UpdateStatus(kStatus_PhysicalWriteStart);
             if (!TheCacheMgr->MountAsync(mCacheID, &mCache, nullptr)) {
                 MILO_FAIL(
                     "TheCacheMgr->MountAsync failed with CacheResult %d",
@@ -1634,7 +1634,7 @@ void SaveLoadManager::SetState(State newState) {
             break;
         case kS_SongCacheCreateMountDelete:
         case kS_GlobalCreateMountDelete:
-            UpdateStatus((SaveLoadMgrStatus)1);
+            UpdateStatus(kStatus_PhysicalWriteStart);
             if (!TheCacheMgr->DeleteAsync(mCacheID)) {
                 MILO_FAIL(
                     "TheCacheMgr->DeleteAsync failed with CacheResult %d",
@@ -1747,7 +1747,7 @@ void SaveLoadManager::SetState(State newState) {
                     Localize(global_options_cache_name, temp, TheLocale),
                     &mCacheID
                 )) {
-                if (TheCacheMgr->GetLastResult() != 0) {
+                if (TheCacheMgr->GetLastResult() != kCache_NoError) {
                     SetState(kS_GlobalCreateChooseWaitOnGuide);
                 }
             }
@@ -1791,7 +1791,7 @@ void SaveLoadManager::SetState(State newState) {
                     Localize(global_options_cache_name, temp, TheLocale),
                     &mCacheID
                 )) {
-                if (TheCacheMgr->GetLastResult() != 0) {
+                if (TheCacheMgr->GetLastResult() != kCache_NoError) {
                     SetState(kS_GlobalOptionsChooseWaitOnGuide);
                 }
             }
@@ -1810,7 +1810,7 @@ void SaveLoadManager::SetState(State newState) {
         }
         case kS_GlobalCreateWrite:
         case kS_GlobalOptionsAutoWrite: {
-            UpdateStatus((SaveLoadMgrStatus)1);
+            UpdateStatus(kStatus_PhysicalWriteStart);
             int size = TheProfileMgr.GetGlobalOptionsSize();
             mData = _MemAllocTemp(size, __FILE__, 0x6AD, "SaveLoadManager", 0);
             FixedSizeSaveableStream stream(mData, size, true);
@@ -1827,7 +1827,7 @@ void SaveLoadManager::SetState(State newState) {
         case kS_GlobalCreateUnmountWrite:
         case kS_GlobalOptionsAutoUnmountWrite:
             if (!TheCacheMgr->UnmountAsync(&mCache, nullptr)) {
-                if (TheCacheMgr->GetLastResult() != 8) {
+                if (TheCacheMgr->GetLastResult() != kCache_ErrorStorageDeviceMissing) {
                     MILO_NOTIFY(
                         "UnmountAsync failed with error %d",
                         (int)TheCacheMgr->GetLastResult()
@@ -1838,13 +1838,13 @@ void SaveLoadManager::SetState(State newState) {
         case kS_GlobalCreateDecline:
             mDeviceIDState = kDeviceID_Declined;
             mLastChosenDeviceID = 0;
-            TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)2);
+            TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileError);
             SetState(kS_GlobalCreateDone);
             break;
         case kS_GlobalCreateError:
             mDeviceIDState = kDeviceID_Invalid;
             mLastChosenDeviceID = 0;
-            TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)2);
+            TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileError);
             SetState(kS_GlobalCreateDone);
             break;
         case kS_GlobalCreateDone:
@@ -1856,7 +1856,7 @@ void SaveLoadManager::SetState(State newState) {
         case kS_GlobalOptionsError:
             mDeviceIDState = kDeviceID_Invalid;
             mLastChosenDeviceID = 0;
-            TheProfileMgr.SetGlobalOptionsSaveState((ProfileSaveState)2);
+            TheProfileMgr.SetGlobalOptionsSaveState(kMetaProfileError);
             SetState(kS_GlobalOptionsDone);
             break;
         case kS_SaveLoadError: {
@@ -1906,10 +1906,10 @@ void SaveLoadManager::SetState(State newState) {
             MILO_ASSERT(pProfile, 0x713);
             TheMemcardMgr.SaveLoadProfileComplete(pProfile, i16);
             switch (mMode) {
-            case 0:
+            case kAutoLoad:
                 SetState(kS_AutoloadFindNext);
                 break;
-            case 1:
+            case kAutoSave:
                 SetState(kS_AutosaveFindNext);
                 break;
             default:
@@ -1928,7 +1928,7 @@ void SaveLoadManager::SetState(State newState) {
             break;
         }
         case kS_SaveOverwrite: {
-            UpdateStatus((SaveLoadMgrStatus)1);
+            UpdateStatus(kStatus_PhysicalWriteStart);
             HamProfile *pProfile = mProfileCur;
             MILO_ASSERT(pProfile, 0x739);
             mWaiting = true;
@@ -1938,7 +1938,7 @@ void SaveLoadManager::SetState(State newState) {
             break;
         }
         case kS_SaveNoOverwrite: {
-            UpdateStatus((SaveLoadMgrStatus)1);
+            UpdateStatus(kStatus_PhysicalWriteStart);
             HamProfile *pProfile = mProfileCur;
             MILO_ASSERT(pProfile, 0x747);
             mWaiting = true;

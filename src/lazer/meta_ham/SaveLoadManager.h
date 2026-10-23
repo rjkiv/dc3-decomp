@@ -146,11 +146,11 @@ public:
 
     bool IsReasonToAutosave();
     bool IsReasonToAutoload();
-    void ManualSave(HamProfile *);
-    bool IsAutosaveEnabled(HamProfile *);
-    void EnableAutosave(HamProfile *);
-    void DisableAutosave(HamProfile *);
-    void HandleEventResponse(HamProfile *, int);
+    void ManualSave(HamProfile *pProfile);
+    bool IsAutosaveEnabled(HamProfile *pProfile);
+    void EnableAutosave(HamProfile *pProfile);
+    void DisableAutosave(HamProfile *pProfile);
+    void HandleEventResponse(HamProfile *pProfile, int iChoiceIndex);
     void Activate();
     void PrintoutSaveSizeInfo();
     Symbol GetDialogOpt1();
@@ -180,7 +180,7 @@ protected:
     HamProfile *GetAutosavableProfile();
     HamProfile *GetNewSigninProfile();
     void SetState(State);
-    void UpdateStatus(SaveLoadMgrStatus);
+    void UpdateStatus(SaveLoadMgrStatus status);
     void Start();
     void Finish();
     bool IsSafePlaceToSave() const;
@@ -214,5 +214,5 @@ extern SaveLoadManager *TheSaveLoadMgr;
 
 DECLARE_MESSAGE(SaveLoadMgrStatusUpdateMsg, "saveloadmgr_status_update_msg")
 SaveLoadMgrStatusUpdateMsg(int status) : Message(Type(), status) {}
-int Status() const { return mData->Int(2); }
+SaveLoadMgrStatus GetStatus() const { return (SaveLoadMgrStatus)mData->Int(2); }
 END_MESSAGE
