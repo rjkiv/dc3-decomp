@@ -29,6 +29,17 @@ void Vector2DESmoother::ForceValue(Vector2 value) {
 
 Vector2 Vector2DESmoother::Value() const { return Vector2(mX.Value(), mY.Value()); }
 
+void Vector2DESmoother::Smooth(Vector2 target, float dt, bool normalize) {
+    mX.Smooth(target.x, dt);
+    mY.Smooth(target.y, dt);
+    if (normalize) {
+        Vector2 value = Value();
+        float len = Length(value);
+        value *= len != 0 ? 1 / len : 0;
+        ForceValue(value);
+    }
+}
+
 Vector3DESmoother::Vector3DESmoother(Vector3 v, float alpha, float beta)
     : mX(v.x, alpha, beta), mY(v.y, alpha, beta), mZ(v.z, alpha, beta) {}
 
@@ -46,4 +57,16 @@ void Vector3DESmoother::ForceValue(Vector3 v) {
     mX.ForceValue(v.x);
     mY.ForceValue(v.y);
     mZ.ForceValue(v.z);
+}
+
+void Vector3DESmoother::Smooth(Vector3 target, float dt, bool normalize) {
+    mX.Smooth(target.x, dt);
+    mY.Smooth(target.y, dt);
+    mZ.Smooth(target.z, dt);
+    if (normalize) {
+        Vector3 value = Value();
+        Vector3 newValue;
+        Normalize(value, newValue);
+        ForceValue(newValue);
+    }
 }
