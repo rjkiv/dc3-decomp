@@ -408,7 +408,7 @@ DataNode HelpBarPanel::OnMsg(const ButtonDownMsg &msg) {
 }
 
 DataNode HelpBarPanel::OnMsg(const SaveLoadMgrStatusUpdateMsg &msg) {
-    switch (msg.Status()) {
+    switch (msg.GetStatus()) {
     case 1:
         if (mIsSaveDeactivationQueued) {
             mIsSaveDeactivationQueued = false;

@@ -132,7 +132,7 @@
             "lazer/meta_ham/PlaylistSortNode.cpp": "Matching",
             "lazer/meta_ham/PracticeChoosePanel.cpp": "Matching",
             "lazer/meta_ham/ProfileMgr.cpp": "NonMatching",
-            "lazer/meta_ham/SaveLoadManager.cpp": "NonMatching",
+            "lazer/meta_ham/SaveLoadManager.cpp": "Matching",
             "lazer/meta_ham/ShellInput.cpp": "Matching",
             "lazer/meta_ham/SigninScreen.cpp": "Matching",
             "lazer/meta_ham/SingleUserCrewSelectPanel.cpp": "Matching",
