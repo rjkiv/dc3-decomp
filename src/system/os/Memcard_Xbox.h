@@ -2,26 +2,6 @@
 #include "os/Memcard.h"
 #include "xdk/win_types.h"
 
-class MCContainerXbox;
-
-class MCFileXbox : public MCFile {
-public:
-    MCFileXbox(MCContainerXbox *mcx) : mContainer(mcx), mFile(INVALID_HANDLE_VALUE) {}
-    virtual ~MCFileXbox() {}
-    virtual MCResult Open(const char *, AccessType, CreateType);
-    virtual MCResult Read(void *, int);
-    virtual MCResult Write(const void *, int);
-    virtual MCResult Seek(int, SeekType);
-    virtual MCResult Close();
-    virtual bool IsOpen();
-
-    MCResult GetSize(int *);
-
-protected:
-    MCContainerXbox *mContainer; // 0x4
-    HANDLE mFile; // 0x8
-};
-
 class MCContainerXbox : public MCContainer {
 public:
     MCContainerXbox(const ContainerId &);
@@ -44,9 +24,26 @@ protected:
     String mDriveName; // 0x14
 };
 
+class MCFileXbox : public MCFile {
+public:
+    MCFileXbox(MCContainerXbox *mcx) : MCFile(mcx), mFile(INVALID_HANDLE_VALUE) {}
+    virtual ~MCFileXbox() {}
+    virtual MCResult Open(const char *, AccessType, CreateType);
+    virtual MCResult Read(void *, int);
+    virtual MCResult Write(const void *, int);
+    virtual MCResult Seek(int, SeekType);
+    virtual MCResult Close();
+    virtual bool IsOpen();
+
+    MCResult GetSize(int *pFileSize);
+
+protected:
+    HANDLE mFile; // 0x8
+};
+
 class MemcardXbox : public Memcard {
 public:
-    MemcardXbox() : unk156(0), unk158(0), unk15c(0) {}
+    MemcardXbox() : mWaitingForDevice(0), mShowDeviceCallbackObj(0), mDevice(0) {}
     virtual ~MemcardXbox() {}
     virtual void Init() { Memcard::Init(); }
     virtual void Terminate() { Memcard::Terminate(); }
@@ -60,17 +57,17 @@ public:
     virtual MCResult DeleteContainer(const ContainerId &);
     virtual MCContainer *CreateContainer(const ContainerId &);
 
-    String GenerateDriveName(DWORD, int);
-    MCResult FindValidUnit(ContainerId *);
+    String GenerateDriveName(DWORD deviceId, int padNum);
+    MCResult FindValidUnit(ContainerId *pCid);
     char *FileName() { return mFileName; }
     wchar_t *DisplayName() { return mDisplayName; }
 
 protected:
     char mFileName[XCONTENT_MAX_FILENAME_LENGTH]; // 0x2c
     wchar_t mDisplayName[XCONTENT_MAX_DISPLAYNAME_LENGTH]; // 0x56
-    bool unk156; // 0x156
-    Hmx::Object *unk158; // 0x158
-    DWORD unk15c; // 0x15c
+    bool mWaitingForDevice; // 0x156
+    Hmx::Object *mShowDeviceCallbackObj; // 0x158
+    DWORD mDevice; // 0x15c
     XOVERLAPPED mXOverlapped; // 0x160
 };
 

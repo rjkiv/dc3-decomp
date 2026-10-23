@@ -11,6 +11,7 @@
 #include "xdk/xapilibi/handleapi.h"
 #include "xdk/xapilibi/minwinbase.h"
 #include "xdk/xapilibi/timezoneapi.h"
+#include "xdk/xapilibi/winerror.h"
 #include "xdk/xapilibi/xbase.h"
 #include "xdk/xapilibi/xbox.h"
 
@@ -37,7 +38,7 @@ namespace {
 
 void ContainerId::Set(int idx, DWORD dw) {
     mUserIndex = idx;
-    unk8 = dw;
+    mSize = dw;
     mDeviceId = XCONTENTDEVICE_ANY;
 }
 
@@ -45,16 +46,16 @@ void ContainerId::Set(int idx, DWORD dw) {
 
 MCResult MCFileXbox::Open(const char *file, AccessType mode, CreateType createType) {
     MILO_ASSERT(mFile == INVALID_HANDLE_VALUE, 0x307);
-    DWORD access = mode == kAccessRead ? GENERIC_READ : GENERIC_WRITE;
+    DWORD access = mode == kOsModeRead ? GENERIC_READ : GENERIC_WRITE;
     DWORD creationDisposition = 0;
     switch (createType) {
-    case 0:
+    case kOsOpenExisting:
         creationDisposition = OPEN_EXISTING;
         break;
-    case 1:
+    case kOsOpenAlways:
         creationDisposition = OPEN_ALWAYS;
         break;
-    case 2:
+    case kOsCreateNew:
         creationDisposition = CREATE_ALWAYS;
         break;
     default:
@@ -106,13 +107,13 @@ MCResult MCFileXbox::Seek(int offset, SeekType seek) {
     MILO_ASSERT(mFile != INVALID_HANDLE_VALUE, 0x374);
     DWORD dwMoveMethod;
     switch (seek) {
-    case kSeekBegin:
+    case kOsSeekBegin:
         dwMoveMethod = FILE_BEGIN;
         break;
-    case kSeekCur:
+    case kOsSeekCur:
         dwMoveMethod = FILE_CURRENT;
         break;
-    case kSeekEnd:
+    case kOsSeekEnd:
         dwMoveMethod = FILE_END;
         break;
     default:
@@ -165,33 +166,34 @@ MCResult MCContainerXbox::Mount(CreateType createType) {
     MILO_ASSERT(!IsMounted(), 0x144);
     MILO_ASSERT(Cid().mDeviceId != XCONTENTDEVICE_ANY, 0x145);
     mDriveName = TheMC.GenerateDriveName(Cid().mDeviceId, Cid().mUserIndex);
-    XCONTENT_DATA data;
-    data.DeviceID = Cid().mDeviceId;
-    data.dwContentType = 1;
-    strncpy(data.szFileName, TheMC.FileName(), XCONTENT_MAX_FILENAME_LENGTH);
-    wcsncpy(data.szDisplayName, TheMC.DisplayName(), XCONTENT_MAX_DISPLAYNAME_LENGTH);
+    XCONTENT_DATA xcd;
+    xcd.DeviceID = Cid().mDeviceId;
+    xcd.dwContentType = 1;
+    strncpy(xcd.szFileName, TheMC.FileName(), XCONTENT_MAX_FILENAME_LENGTH);
+    wcsncpy(xcd.szDisplayName, TheMC.DisplayName(), XCONTENT_MAX_DISPLAYNAME_LENGTH);
     DWORD u5 = 0;
     switch (createType) {
-    case 0:
+    case kOsOpenExisting:
         u5 = 3;
         break;
-    case 1:
+    case kOsOpenAlways:
         u5 = 0x14;
         break;
-    case 2:
+    case kOsCreateNew:
         u5 = 0x12;
         break;
     }
     ULARGE_INTEGER u;
-    u.u.HighPart = Cid().unk8;
+    u.QuadPart = Cid().mSize;
 
     DWORD res = XContentCreateEx(
-        Cid().mUserIndex, mDriveName.c_str(), &data, u5, nullptr, nullptr, 0, u, nullptr
+        Cid().mUserIndex, mDriveName.c_str(), &xcd, u5, nullptr, nullptr, 0, u, nullptr
     );
     if (res == ERROR_SUCCESS) {
-        BOOL b = false;
-        if (XContentGetCreator(Cid().mUserIndex, &data, &b, nullptr, nullptr) == 0) {
-            if (!b) {
+        BOOL userIsCreator = false;
+        if (XContentGetCreator(Cid().mUserIndex, &xcd, &userIsCreator, nullptr, nullptr)
+            == ERROR_SUCCESS) {
+            if (!userIsCreator) {
                 XContentClose(mDriveName.c_str(), nullptr);
                 res = ERROR_FILE_CORRUPT;
             } else {
@@ -219,15 +221,9 @@ MCResult MCContainerXbox::Unmount() {
 
 MCResult MCContainerXbox::GetPathFreeSpace(const char *strPath, u64 *pFreeSpace) {
     MILO_ASSERT(IsMounted(), 0x1B4);
-    ULARGE_INTEGER u1;
-    ULARGE_INTEGER u2;
-    ULARGE_INTEGER u3;
-    u1.u.HighPart = 0;
-    u2.u.HighPart = 0;
-    u3.u.HighPart = 0;
-    u1.u.LowPart = 0;
-    u2.u.LowPart = 0;
-    u3.u.LowPart = 0;
+    ULARGE_INTEGER u1 = { 0 };
+    ULARGE_INTEGER u2 = { 0 };
+    ULARGE_INTEGER u3 = { 0 };
     String str = BuildPath(strPath);
     bool success = GetDiskFreeSpaceExA(str.c_str(), &u1, &u2, &u3);
     if (success == 0U) {
@@ -278,7 +274,7 @@ MCResult MCContainerXbox::MakeDir(const char *path) {
 
 MCResult MCContainerXbox::GetSize(const char *file, int *pFileSize) {
     MCFileXbox *fp = new MCFileXbox(this);
-    MCResult res = fp->Open(file, kAccessRead, kOsOpenExisting);
+    MCResult res = fp->Open(file, kOsModeRead, kOsOpenExisting);
     if (res == kMCNoError) {
         res = fp->GetSize(pFileSize);
         fp->Close();
@@ -383,17 +379,17 @@ MCResult MCContainerXbox::PrintDir(const char *path, bool recurse) {
 
 void MemcardXbox::Poll() {
     Memcard::Poll();
-    if (unk156 && mXOverlapped.InternalLow != 0x3E5) {
-        unk156 = false;
-        if (unk158) {
-            if (unk15c == 0) {
+    if (mWaitingForDevice && mXOverlapped.InternalLow != 0x3E5) {
+        mWaitingForDevice = false;
+        if (mShowDeviceCallbackObj) {
+            if (mDevice == 0) {
                 NoDeviceChosenMsg msg;
-                unk158->Handle(msg, false);
-                unk158 = nullptr;
+                mShowDeviceCallbackObj->Handle(msg, false);
+                mShowDeviceCallbackObj = nullptr;
             } else {
-                DeviceChosenMsg msg(unk15c);
-                unk158->Handle(msg, false);
-                unk158 = nullptr;
+                DeviceChosenMsg msg(mDevice);
+                mShowDeviceCallbackObj->Handle(msg, false);
+                mShowDeviceCallbackObj = nullptr;
             }
         }
     }
@@ -413,24 +409,21 @@ void MemcardXbox::ShowDeviceSelector(
     const ContainerId &cid, Hmx::Object *pCallbackObj, int padOverride, bool forceShow
 ) {
     memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
-    unk158 = pCallbackObj;
-    unk15c = 0;
+    ULARGE_INTEGER u = { 0 };
+    mDevice = 0;
+    mShowDeviceCallbackObj = pCallbackObj;
     int i1 = 0;
     if (forceShow) {
         i1 = 0x200;
     }
-    if (padOverride == -1) {
-        padOverride = cid.mUserIndex;
-    }
-    ULARGE_INTEGER u;
-    u.QuadPart = 0;
-    if (ThePlatformMgr.ShowDeviceSelectorUI(padOverride, 1, i1, u, &unk15c, &mXOverlapped)
-        == 0x3E5) {
-        unk156 = true;
-    } else if (unk158) {
+    int pad = padOverride != -1 ? padOverride : cid.mUserIndex;
+    if (ThePlatformMgr.ShowDeviceSelectorUI(pad, 1, i1, u, &mDevice, &mXOverlapped)
+        == ERROR_IO_PENDING) {
+        mWaitingForDevice = true;
+    } else if (mShowDeviceCallbackObj) {
         NoDeviceChosenMsg msg;
-        unk158->Handle(msg, false);
-        unk158 = nullptr;
+        mShowDeviceCallbackObj->Handle(msg, false);
+        mShowDeviceCallbackObj = nullptr;
     }
 }
 
@@ -470,39 +463,39 @@ MCResult MemcardXbox::FindValidUnit(ContainerId *pCid) {
         data.DeviceID = pCid->mDeviceId;
         i5 = XContentGetDeviceData(pCid->mDeviceId, &data) == ERROR_SUCCESS;
     }
+    HANDLE hEnum;
+    DWORD cReturned;
+    XCONTENT_DATA xcd;
     if (i5 == 0) {
         return kMCNoCard;
     } else {
-        HANDLE h1c0;
         DWORD enumRes = XContentCreateEnumerator(
-            pCid->mUserIndex, pCid->mDeviceId, 1, 0x1000, 1, nullptr, &h1c0
+            pCid->mUserIndex, pCid->mDeviceId, 1, 0x1000, 1, nullptr, &hEnum
         );
-        switch (XContentCreateEnumerator(
-            pCid->mUserIndex, pCid->mDeviceId, 1, 0x1000, 1, nullptr, &h1c0
-        )) {
-        case 0: {
+        if (enumRes != ERROR_SUCCESS) {
+            if (enumRes == ERROR_NO_MORE_FILES) {
+                return kMCFileNotFound;
+            } else {
+                return kMCGeneralError;
+            }
+        } else {
             int num = 0;
-            DWORD dw1bc = 0;
-            char buffer[64];
-            while (XEnumerate(h1c0, &buffer, 0x134, &dw1bc, nullptr) == 0) {
-                if (strncmp(buffer, TheMC.FileName(), 0x2A) == 0) {
+            cReturned = 0;
+            while (XEnumerate(hEnum, &xcd, sizeof(XCONTENT_DATA), &cReturned, nullptr)
+                   == ERROR_SUCCESS) {
+                if (strneq(xcd.szFileName, TheMC.FileName(), sizeof(xcd.szFileName))) {
                     num++;
-                    pCid->mDeviceId = (XCONTENTDEVICEID)buffer[0];
+                    pCid->mDeviceId = xcd.DeviceID;
                 }
             }
-            CloseHandle(h1c0);
+            CloseHandle(hEnum);
             if (num == 0) {
-                return kMCMultipleFilesFound;
+                return kMCFileNotFound;
             } else if (num == 1) {
                 return kMCFileExists;
             } else {
-                return kMCFileNotFound;
+                return kMCMultipleFilesFound;
             }
-        }
-        case 0x12:
-            return kMCFileNotFound;
-        default:
-            return kMCGeneralError;
         }
     }
 }

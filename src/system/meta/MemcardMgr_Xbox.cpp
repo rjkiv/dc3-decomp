@@ -163,8 +163,7 @@ MCResult MemcardMgr::ThreadCall_SaveGame() {
                     c->Unmount();
                 }
                 res = kMCNotEnoughSpace;
-            } else if (c->IsMounted() || (res = c->Mount(kOsOpenAlways)),
-                       res == kMCNoError) {
+            } else if (c->IsMounted() || (res = c->Mount(kOsOpenAlways)), res == kMCNoError) {
                 MCResult writeRes = PerformWrite(c);
                 res = c->Unmount();
                 if (writeRes != kMCNoError) {
@@ -304,7 +303,7 @@ MCResult MemcardMgr::PerformRead(MCContainer *container) {
                     mSaveDataBufferSize
                 );
             }
-            MCResult openRes = file->Open(kSaveFilename, kAccessRead, kOsOpenExisting);
+            MCResult openRes = file->Open(kSaveFilename, kOsModeRead, kOsOpenExisting);
             if (openRes != kMCNoError) {
                 container->DestroyMCFile(file);
                 return openRes;
@@ -322,7 +321,7 @@ MCResult MemcardMgr::PerformRead(MCContainer *container) {
 
 MCResult MemcardMgr::PerformWrite(MCContainer *container) {
     MCFile *file = container->CreateMCFile();
-    MCResult res = file->Open(kSaveFilename, kAccessWrite, kOsOpenAlways);
+    MCResult res = file->Open(kSaveFilename, kOsModeWrite, kOsOpenAlways);
     if (res != kMCNoError) {
         container->DestroyMCFile(file);
         return res;
@@ -339,7 +338,7 @@ MCResult MemcardMgr::ThreadCall_CheckForSaveContainer() {
     MCResult res = container->Mount(kOsOpenExisting);
     if (res == kMCNoError) {
         MCFile *file = container->CreateMCFile();
-        MCResult openRes = file->Open(kSaveFilename, kAccessWrite, kOsOpenExisting);
+        MCResult openRes = file->Open(kSaveFilename, kOsModeWrite, kOsOpenExisting);
         container->DestroyMCFile(file);
         res = container->Unmount();
         if (openRes != kMCNoError) {

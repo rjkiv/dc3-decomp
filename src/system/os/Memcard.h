@@ -6,8 +6,8 @@
 #include "xdk/XAPILIB.h"
 
 enum AccessType {
-    kAccessRead = 0,
-    kAccessWrite = 1
+    kOsModeRead = 0,
+    kOsModeWrite = 1
 };
 enum CreateType {
     kOsOpenExisting = 0,
@@ -15,9 +15,9 @@ enum CreateType {
     kOsCreateNew = 2,
 };
 enum SeekType {
-    kSeekBegin,
-    kSeekCur,
-    kSeekEnd
+    kOsSeekBegin = 0,
+    kOsSeekCur = 1,
+    kOsSeekEnd = 2
 };
 enum MCResult {
     kMCNoError = 0,
@@ -53,51 +53,56 @@ struct ContainerId {
     void Set(int userIdx, DWORD);
 
     int mUserIndex; // 0x0
-    XCONTENTDEVICEID mDeviceId; // 0x4
-    DWORD unk8; // 0x8 - size?
+    DWORD mDeviceId; // 0x4
+    DWORD mSize; // 0x8
+};
+
+class MCFile;
+
+class MCContainer {
+public:
+    MCContainer(const ContainerId &c) : mCid(c), mIsMounted(false) {}
+    virtual ~MCContainer() {}
+    virtual MCResult Mount(CreateType createType) = 0;
+    virtual MCResult Unmount() = 0;
+    virtual MCResult GetPathFreeSpace(const char *strPath, u64 *pFreeSpace) = 0;
+    virtual MCResult GetDeviceFreeSpace(u64 *pFreeSpace) = 0;
+    virtual MCResult Delete(const char *file) = 0;
+    virtual MCResult RemoveDir(const char *path) = 0;
+    virtual MCResult MakeDir(const char *path) = 0;
+    virtual MCResult GetSize(const char *file, int *pFileSize) = 0;
+    virtual MCResult Format() = 0;
+    virtual MCResult Unformat() = 0;
+    virtual MCFile *CreateMCFile() = 0;
+    virtual void DestroyMCFile(MCFile *pFile);
+    virtual String BuildPath(const char *path) { return path; }
+    virtual MCResult PrintDir(const char *path, bool recurse) = 0;
+
+    MEM_OVERLOAD(MCContainer, 0xFE);
+    bool IsMounted() const { return mIsMounted; }
+    void SetMounted(bool mount) { mIsMounted = mount; }
+    const ContainerId &Cid() const { return mCid; }
+
+private:
+    ContainerId mCid; // 0x4
+    bool mIsMounted; // 0x10
 };
 
 class MCFile {
 public:
-    MCFile() {}
+    MCFile(MCContainer *c) : mContainer(c) {}
     virtual ~MCFile() {}
-    virtual MCResult Open(const char *, AccessType, CreateType) = 0;
-    virtual MCResult Read(void *, int) = 0;
-    virtual MCResult Write(const void *, int) = 0;
-    virtual MCResult Seek(int, SeekType) = 0;
+    virtual MCResult Open(const char *file, AccessType mode, CreateType createType) = 0;
+    virtual MCResult Read(void *data, int size) = 0;
+    virtual MCResult Write(const void *data, int size) = 0;
+    virtual MCResult Seek(int offset, SeekType seek) = 0;
     virtual MCResult Close() = 0;
     virtual bool IsOpen() = 0;
 
     MEM_OVERLOAD(MCFile, 0x13C);
-};
 
-class MCContainer {
-public:
-    MCContainer(const ContainerId &c) : mContainerID(c), mMounted(false) {}
-    virtual ~MCContainer() {}
-    virtual MCResult Mount(CreateType) = 0;
-    virtual MCResult Unmount() = 0;
-    virtual MCResult GetPathFreeSpace(const char *, u64 *) = 0;
-    virtual MCResult GetDeviceFreeSpace(u64 *) = 0;
-    virtual MCResult Delete(const char *) = 0;
-    virtual MCResult RemoveDir(const char *) = 0;
-    virtual MCResult MakeDir(const char *) = 0;
-    virtual MCResult GetSize(const char *, int *) = 0;
-    virtual MCResult Format() = 0;
-    virtual MCResult Unformat() = 0;
-    virtual MCFile *CreateMCFile() = 0;
-    virtual void DestroyMCFile(MCFile *);
-    virtual String BuildPath(const char *cc) { return cc; }
-    virtual MCResult PrintDir(const char *, bool) = 0;
-
-    MEM_OVERLOAD(MCContainer, 0xFE);
-    bool IsMounted() const { return mMounted; }
-    void SetMounted(bool mount) { mMounted = mount; }
-    const ContainerId &Cid() const { return mContainerID; }
-
-private:
-    ContainerId mContainerID; // 0x4
-    bool mMounted; // 0x10
+protected:
+    MCContainer *mContainer; // 0x4
 };
 
 class Memcard : public Hmx::Object {
@@ -107,20 +112,22 @@ public:
     virtual void Init();
     virtual void Terminate();
     virtual void Poll();
-    virtual void SetContainerName(const char *) {}
-    virtual void SetContainerDisplayName(const wchar_t *) {}
+    virtual void SetContainerName(const char *containerName) {}
+    virtual void SetContainerDisplayName(const wchar_t *displayName) {}
     virtual const char *GetContainerName() { return ""; }
     virtual const wchar_t *GetDisplayName() { return L""; }
-    virtual void ShowDeviceSelector(const ContainerId &, Hmx::Object *, int, bool);
-    virtual bool IsDeviceValid(const ContainerId &) { return true; }
-    virtual MCResult DeleteContainer(const ContainerId &) = 0;
-    virtual MCContainer *CreateContainer(const ContainerId &) = 0;
-    virtual void DestroyContainer(MCContainer *);
+    virtual void ShowDeviceSelector(
+        const ContainerId &cid, Hmx::Object *pCallbackObj, int padOverride, bool forceShow
+    );
+    virtual bool IsDeviceValid(const ContainerId &cid) { return true; }
+    virtual MCResult DeleteContainer(const ContainerId &cid) = 0;
+    virtual MCContainer *CreateContainer(const ContainerId &cid) = 0;
+    virtual void DestroyContainer(MCContainer *pContainer);
 };
 
 #include "obj/Msg.h"
 DECLARE_MESSAGE(DeviceChosenMsg, "device_chosen")
-DeviceChosenMsg(int x) : Message(Type(), x) {}
+DeviceChosenMsg(int device) : Message(Type(), device) {}
 int Device() const { return mData->Int(2); }
 END_MESSAGE
 
