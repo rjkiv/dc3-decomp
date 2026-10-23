@@ -14,28 +14,30 @@ std::vector<String> gIgnoredContent;
 XboxContentMgr gContentMgr;
 const char *kContentRootFormat = "cnt%08x";
 
-XboxContent::XboxContent(const XCONTENT_CROSS_TITLE_DATA &data, int i2, int i3, bool b4)
-    : mOverlapped(0), mLicenseBits(0), mValidLicenseBits(0),
-      mRoot(MakeString(kContentRootFormat, i2)), unk150(MakeString("%s:", mRoot.c_str())),
-      mState(kUnmounted), mPadNum(i3), unk160(0), unk161(0), mLRM(0) {
+XboxContent::XboxContent(
+    const XCONTENT_CROSS_TITLE_DATA &data, int id, int padNum, bool discover
+)
+    : mOverlapped(0), mLicenseBits(0), mHasValidLicenseBits(0),
+      mRoot(MakeString(kContentRootFormat, id)), mDrive(MakeString("%s:", mRoot.c_str())),
+      mState(kUnmounted), mPadNum(padNum), mDelete(0), mCorrupt(0), mLRM(0) {
     MILO_ASSERT(mRoot.size() < kContentRootMaxLength, 0x6F);
     MILO_ASSERT(mPadNum < kNumberOfBuffers, 0x70);
-    mXData = data;
+    memcpy(&mData, &data, sizeof(mData));
     char filename[XCONTENT_MAX_FILENAME_LENGTH + 1];
-    memcpy(filename, mXData.szFileName, XCONTENT_MAX_FILENAME_LENGTH);
+    memcpy(filename, mData.szFileName, XCONTENT_MAX_FILENAME_LENGTH);
     filename[XCONTENT_MAX_FILENAME_LENGTH] = 0;
     mFilename = filename;
-    mState = (State)(b4 != 0);
+    mState = (State)(discover != 0);
 }
 
 XboxContent::~XboxContent() {
     switch (mState) {
-    case 0:
-    case 1:
-    case 3:
-    case 5:
-    case 6:
-    case 8:
+    case kUnmounted:
+    case kNeedsMounting:
+    case kUnmounting:
+    case kAlwaysMounted:
+    case kContentDeleting:
+    case kFailed:
         break;
     case kMounting:
     case kMounted:
@@ -50,7 +52,7 @@ XboxContent::~XboxContent() {
 
 ContentLocT XboxContent::Location() {
     XDEVICE_DATA deviceData;
-    XContentGetDeviceData(mXData.DeviceID, &deviceData);
+    XContentGetDeviceData(mData.DeviceID, &deviceData);
     if (deviceData.DeviceType == 2) {
         return kLocationRemovableMem;
     } else {
@@ -64,7 +66,7 @@ ContentLocT XboxContent::Location() {
 }
 
 void XboxContent::Poll() {
-    if (mState == 1) {
+    if (mState == kNeedsMounting) {
         MILO_LOG("Mounting content '%s'\n", FileName());
         int pad = mPadNum;
         if (pad == 4 || pad == 5) {
@@ -76,7 +78,7 @@ void XboxContent::Poll() {
         if (XContentCrossTitleCreate(
                 pad,
                 mRoot.c_str(),
-                &mXData,
+                &mData,
                 3,
                 nullptr,
                 &mLicenseBits,
@@ -84,35 +86,35 @@ void XboxContent::Poll() {
                 contentSize,
                 mOverlapped
             )
-            != 0x3E5) {
+            != ERROR_IO_PENDING) {
             RELEASE(mOverlapped);
-            mState = kContentDeleting;
+            mState = kFailed;
         } else {
             mState = kMounting;
         }
     }
-    if (mState == 2 || mState == 3) {
+    if (mState == kMounting || mState == kUnmounting) {
         DWORD res = XGetOverlappedResult(mOverlapped, nullptr, false);
-        if (res == 0x3E4)
+        if (res == ERROR_IO_INCOMPLETE)
             return;
-        if (res == 0) {
-            mValidLicenseBits = true;
+        if (res == ERROR_SUCCESS) {
+            mHasValidLicenseBits = true;
             mState = mState == kMounting ? kMounted : kUnmounted;
-            if (unk160) {
+            if (mDelete) {
                 Delete();
             }
         } else {
             unsigned short err = XGetOverlappedExtendedError(mOverlapped);
-            mState = kContentDeleting;
-            unk161 = err == 0x570;
+            mState = kFailed;
+            mCorrupt = err == ERROR_FILE_CORRUPT;
         }
         RELEASE(mOverlapped);
     }
-    if (mState == 6) {
+    if (mState == kContentDeleting) {
         DWORD res = XGetOverlappedResult(mOverlapped, nullptr, false);
-        if (res != 0x3E4) {
+        if (res != ERROR_IO_INCOMPLETE) {
             RELEASE(mOverlapped);
-            mState = res == 0 ? (State)7 : (State)8;
+            mState = res == ERROR_SUCCESS ? kDeleted : kFailed;
         }
     }
 }
@@ -120,9 +122,9 @@ void XboxContent::Poll() {
 void XboxContent::Mount() {
     if (mState == kUnmounted) {
         mState = kNeedsMounting;
-        static unsigned int count = 0;
-        count++;
-        mLRM = count;
+        static unsigned int lrmCounter = 0;
+        lrmCounter++;
+        mLRM = lrmCounter;
     }
 }
 
@@ -130,29 +132,29 @@ void XboxContent::Unmount() {
     if (mState == kMounted) {
         mOverlapped = new XOVERLAPPED;
         memset(mOverlapped, 0, sizeof(XOVERLAPPED));
-        if (XContentClose(mRoot.c_str(), mOverlapped) != 0x3E5) {
+        if (XContentClose(mRoot.c_str(), mOverlapped) != ERROR_IO_PENDING) {
             RELEASE(mOverlapped);
-            mState = kContentDeleting;
+            mState = kFailed;
             return;
         }
         mState = kUnmounting;
-    } else if (mState == kNeedsMounting || mState == kContentDeleting) {
+    } else if (mState == kNeedsMounting || mState == kFailed) {
         mState = kUnmounted;
     }
 }
 
 void XboxContent::Delete() {
-    unk160 = true;
-    if (mState == 4 || mState == 1) {
+    mDelete = true;
+    if (mState == kMounted || mState == kNeedsMounting) {
         Unmount();
-    } else if (mState == 0) {
+    } else if (mState == kUnmounted) {
         mOverlapped = new XOVERLAPPED;
         memset(mOverlapped, 0, sizeof(XOVERLAPPED));
-        if (XContentCrossTitleDelete(0xFF, &mXData, mOverlapped) != 0x3E5) {
+        if (XContentCrossTitleDelete(0xFF, &mData, mOverlapped) != ERROR_IO_PENDING) {
             RELEASE(mOverlapped);
-            mState = kContentDeleting;
+            mState = kFailed;
         } else {
-            mState = kNeedsBackup;
+            mState = kContentDeleting;
         }
     }
 }
@@ -166,10 +168,10 @@ BEGIN_HANDLERS(XboxContentMgr)
 END_HANDLERS
 
 void XboxContentMgr::Init() {
-    unk934 = 0;
-    unk938 = 0;
+    mId = 0;
+    mContentsToDiscover = 0;
     for (int i = 0; i < kNumberOfBuffers; i++) {
-        mOverlappeds[i] = nullptr;
+        mOverlapped[i] = nullptr;
     }
     ThePlatformMgr.AddSink(this);
     DataArray *cfg = SystemConfig("content_mgr");
@@ -184,30 +186,30 @@ void XboxContentMgr::Init() {
 void XboxContentMgr::Terminate() { ThePlatformMgr.RemoveSink(this); }
 
 void XboxContentMgr::StartRefresh() {
-    bool b10 = mDirty || (unk70 && unk71);
+    bool b10 = mDirty || (mPermissionsIncreased && mNeedsPermissions);
     if (b10) {
         mDirty = false;
-        unk70 = false;
-        unk71 = false;
-        if (mState == 2) {
+        mPermissionsIncreased = false;
+        mNeedsPermissions = false;
+        if (mState == kDiscoveryEnumerating) {
             for (int i = 0; i < kNumberOfBuffers; i++) {
-                if (mOverlappeds[i]) {
-                    XCancelOverlapped(mOverlappeds[i]);
-                    RELEASE(mOverlappeds[i]);
-                    CloseHandle(mEnumerators[i]);
+                if (mOverlapped[i]) {
+                    XCancelOverlapped(mOverlapped[i]);
+                    RELEASE(mOverlapped[i]);
+                    CloseHandle(mContentEnum[i]);
                 }
             }
-        } else if (mState != 1 && mState != 0) {
+        } else if (mState != kDone && mState != kInit) {
             RELEASE(mLoader);
             mCallbackFiles.clear();
         }
         FOREACH (it, mContents) {
-            if ((*it)->GetState() == 4) {
+            if ((*it)->GetState() == Content::kMounted) {
                 NotifyUnmounted(*it);
             }
         }
         DeleteAll(mContents);
-        unk938 = 0;
+        mContentsToDiscover = 0;
         mRootLoaded = 0;
         DataArray *cfg = SystemConfig("content_mgr", "roots");
         for (int i = 1; i < cfg->Size(); i++) {
@@ -218,7 +220,7 @@ void XboxContentMgr::StartRefresh() {
             mContents.push_back(new RootContent(it->c_str()));
             mRootLoaded++;
         }
-        mState = kDiscoveryMounting;
+        mState = kDiscoveryEnumerating;
         FOREACH (it, mCallbacks) {
             (*it)->ContentStarted();
         }
@@ -228,30 +230,30 @@ void XboxContentMgr::StartRefresh() {
                 DWORD res;
                 if (i == 4) {
                     res = XContentCreateCrossTitleEnumerator(
-                        0xFF, 0, 2, 0, 1, nullptr, &mEnumerators[i]
+                        0xFF, 0, 2, 0, 1, nullptr, &mContentEnum[i]
                     );
                 } else if (i == 5) {
                     res = XContentCreateCrossTitleEnumerator(
-                        0xFF, 0, 1, 0, 1, nullptr, &mEnumerators[i]
+                        0xFF, 0, 1, 0, 1, nullptr, &mContentEnum[i]
                     );
                 } else if (i == 6) {
                     res = XContentCreateCrossTitleEnumerator(
-                        0xFF, 0, 0x7000, 0, 1, nullptr, &mEnumerators[i]
+                        0xFF, 0, 0x7000, 0, 1, nullptr, &mContentEnum[i]
                     );
                 } else {
                     res = XContentCreateCrossTitleEnumerator(
-                        i, 0, 2, 0, 1, nullptr, &mEnumerators[i]
+                        i, 0, 2, 0, 1, nullptr, &mContentEnum[i]
                     );
                 }
                 if (res == 0) {
-                    mOverlappeds[i] = new XOVERLAPPED;
-                    memset(mOverlappeds[i], 0, sizeof(XOVERLAPPED));
+                    mOverlapped[i] = new XOVERLAPPED;
+                    memset(mOverlapped[i], 0, sizeof(XOVERLAPPED));
                     if (XEnumerateCrossTitle(
-                            mEnumerators[i], &mXDatas[i], 0x138, nullptr, mOverlappeds[i]
+                            mContentEnum[i], &mBuffer[i], 0x138, nullptr, mOverlapped[i]
                         )
-                        != 0x3E5) {
-                        RELEASE(mOverlappeds[i]);
-                        CloseHandle(mEnumerators[i]);
+                        != ERROR_IO_PENDING) {
+                        RELEASE(mOverlapped[i]);
+                        CloseHandle(mContentEnum[i]);
                     }
                 }
             }
@@ -260,16 +262,16 @@ void XboxContentMgr::StartRefresh() {
 }
 
 void XboxContentMgr::PollRefresh() {
-    if (mState == 2) {
-        mState = kDiscoveryLoading;
+    if (mState == kDiscoveryEnumerating) {
+        mState = kDiscoveryMounting;
         for (int i = 0; i < kNumberOfBuffers; i++) {
-            if (mOverlappeds[i]) {
+            if (mOverlapped[i]) {
                 DWORD dwResult;
-                DWORD res = XGetOverlappedResult(mOverlappeds[i], &dwResult, false);
-                if (res != 0x3E4) {
-                    if (res == 0) {
+                DWORD res = XGetOverlappedResult(mOverlapped[i], &dwResult, false);
+                if (res != ERROR_IO_INCOMPLETE) {
+                    if (res == ERROR_SUCCESS) {
                         for (int j = 0; j < dwResult; j++) {
-                            auto &curXData = mXDatas[i + j];
+                            auto &curXData = mBuffer[i + j];
                             if (std::find(
                                     gIgnoredContent.begin(),
                                     gIgnoredContent.end(),
@@ -295,67 +297,67 @@ void XboxContentMgr::PollRefresh() {
                                     }
                                 }
                                 if (b3) {
-                                    unk938++;
+                                    mContentsToDiscover++;
                                 }
                                 mContents.push_back(
-                                    new XboxContent(curXData, unk934++, i, b3)
+                                    new XboxContent(curXData, mId++, i, b3)
                                 );
                             } else {
                                 break;
                             }
                         }
-                        memset(mOverlappeds[i], 0, sizeof(XOVERLAPPED));
+                        memset(mOverlapped[i], 0, sizeof(XOVERLAPPED));
                         if (XEnumerateCrossTitle(
-                                mEnumerators[i],
-                                &mXDatas[i],
+                                mContentEnum[i],
+                                &mBuffer[i],
                                 0x138,
                                 nullptr,
-                                mOverlappeds[i]
+                                mOverlapped[i]
                             )
-                            == 0x3e5) {
-                            mState = kDiscoveryMounting;
+                            == ERROR_IO_PENDING) {
+                            mState = kDiscoveryEnumerating;
                             return;
                         }
                     } else {
-                        DWORD err = XGetOverlappedExtendedError(mOverlappeds[i]);
-                        if ((WORD)err != 0x12) {
+                        DWORD err = XGetOverlappedExtendedError(mOverlapped[i]);
+                        if ((WORD)err != ERROR_NO_MORE_FILES) {
                             MILO_NOTIFY("XEnumerateCrossTitle (%d) error: %d", i, err);
                         }
                     }
-                    RELEASE(mOverlappeds[i]);
-                    CloseHandle(mEnumerators[i]);
+                    RELEASE(mOverlapped[i]);
+                    CloseHandle(mContentEnum[i]);
                 } else {
-                    mState = kDiscoveryMounting;
+                    mState = kDiscoveryEnumerating;
                     return;
                 }
             }
         }
         FOREACH (it, mCallbacks) {
-            (*it)->ContentMountBegun(unk938);
+            (*it)->ContentMountBegun(mContentsToDiscover);
         }
-    } else if (mState == 3) {
+    } else if (mState == kDiscoveryMounting) {
         int count = 0;
         FOREACH (it, mContents) {
-            if ((*it)->GetState() == 4) {
+            if ((*it)->GetState() == Content::kMounted) {
                 count++;
             }
         }
         if (count >= 6) {
-            mState = kDiscoveryCheckIfDone;
+            mState = kDiscoveryLoading;
         }
-    } else if (mState == 5) {
+    } else if (mState == kDiscoveryCheckIfDone) {
         bool b3 = true;
         FOREACH (it, mContents) {
             Content::State cState = (*it)->GetState();
-            if (cState == 4) {
+            if (cState == Content::kMounted) {
                 (*it)->Unmount();
                 b3 = false;
             } else {
-                b3 = (cState != 1) ? b3 : false;
+                b3 = (cState != Content::kNeedsMounting) ? b3 : false;
             }
         }
         if (!b3) {
-            mState = kDiscoveryLoading;
+            mState = kDiscoveryMounting;
         }
     }
     ContentMgr::PollRefresh();
@@ -368,7 +370,7 @@ bool XboxContentMgr::MountContent(Symbol contentName) {
         if (contentName == (*it)->FileName()) {
             found = true;
             (*it)->Mount();
-            mState = kContentMgrState7;
+            mState = kMounting;
             if ((*it)->GetState() == 4) {
                 ret = true;
             }
@@ -386,10 +388,11 @@ bool XboxContentMgr::MountContent(Symbol contentName) {
         unsigned int i9 = -1;
         FOREACH (it, mContents) {
             Content::State cState = (*it)->GetState();
-            if (cState == 4 || cState == 2 || cState == 1) {
+            if (cState == Content::kMounted || cState == Content::kMounting
+                || cState == Content::kNeedsMounting) {
                 i11++;
                 if (contentName != (*it)->FileName() && (*it)->GetLRM() < i9
-                    && (*it)->GetState() != 2) {
+                    && (*it)->GetState() != Content::kMounting) {
                     cnt = *it;
                     i9 = cnt->GetLRM();
                 }
@@ -399,7 +402,7 @@ bool XboxContentMgr::MountContent(Symbol contentName) {
             cond = true;
         } else if (i11 > 6 && cnt) {
             cnt->Unmount();
-            mState = kContentMgrState7;
+            mState = kMounting;
         }
         i4 = i11;
         i11 = 0;
@@ -436,7 +439,7 @@ bool XboxContentMgr::DeleteContent(Symbol contentName) {
         if (contentName == (*it)->FileName()) {
             notFound = false;
             (*it)->Delete();
-            mState = kContentMgrState6;
+            mState = kDeleting;
             mDirty = true;
             break;
         }
@@ -453,7 +456,7 @@ bool XboxContentMgr::IsDeleteDone(Symbol contentName) {
         Content *cur = *it;
         if (contentName == cur->FileName()) {
             Content::State state = cur->GetState();
-            ret = state == 7 || state == 8;
+            ret = state == Content::kDeleted || state == Content::kFailed;
             break;
         }
     }
@@ -496,7 +499,7 @@ void XboxContentMgr::NotifyFailed(Content *c) {
     XboxContent *xc = dynamic_cast<XboxContent *>(c);
     MILO_ASSERT(xc, 0x2E0);
     if (!RefreshDone()) {
-        unk71 = true;
+        mNeedsPermissions = true;
     }
     FOREACH (it, mCallbacks) {
         (*it)->ContentFailed(xc->FileName().Str());
@@ -507,7 +510,7 @@ DataNode XboxContentMgr::OnMsg(const SigninChangedMsg &msg) {
     for (int i = 0; i < 4; i++) {
         if (((unsigned int)msg.GetChangedMask() >> i) & 1) {
             if (ThePlatformMgr.IsSignedIn(i)) {
-                unk70 = true;
+                mPermissionsIncreased = true;
             }
         }
     }
@@ -516,7 +519,7 @@ DataNode XboxContentMgr::OnMsg(const SigninChangedMsg &msg) {
 
 DataNode XboxContentMgr::OnMsg(const ConnectionStatusChangedMsg &msg) {
     if (msg.Connected()) {
-        unk70 = true;
+        mPermissionsIncreased = true;
     }
     return 0;
 }

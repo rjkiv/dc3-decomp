@@ -30,15 +30,15 @@ void ContentMgr::Init() {
     SetName("content_mgr", ObjectDir::Main());
     mRootLoaded = 0;
     mDirty = true;
-    mState = kDone;
+    mState = kInit;
     mReadFailureHandler = nullptr;
 }
 
-bool ContentMgr::RefreshDone() const { return mState == kDiscoveryEnumerating; }
+bool ContentMgr::RefreshDone() const { return mState == kDone; }
 
 bool ContentMgr::RefreshInProgress() {
-    return mState != kDone && mState != kDiscoveryEnumerating && mState != 7
-        && mState != 6;
+    return mState != kInit && mState != kDone && mState != kMounting
+        && mState != kDeleting;
 }
 
 Hmx::Object *ContentMgr::SetReadFailureHandler(Hmx::Object *handler) {
@@ -93,51 +93,61 @@ void ContentMgr::RecurseCallback(const char *dir, const char *file) {
 }
 
 void ContentMgr::PollRefresh() {
-    if (mState == 3 || mState == 7 || mState == 6) {
+    if (mState == kDiscoveryMounting || mState == kMounting || mState == kDeleting) {
         for (auto it = mContents.begin(); it != mContents.end();) {
             Content::State oldContentState = (*it)->GetState();
             (*it)->Poll();
             Content::State newContentState = (*it)->GetState();
-            if (newContentState == 8) {
+            if (newContentState == Content::kFailed) {
                 MILO_LOG("content operation failed!\n");
                 NotifyFailed(*it);
-                if (mState == 7) {
+                if (mState == kMounting) {
                     (*it)->Unmount();
                     ++it;
                     continue;
                 }
-                if (mState != 3) {
+                if (mState != kDiscoveryMounting) {
                     ++it;
                     continue;
                 }
                 it = mContents.erase(it);
             } else {
-                if (newContentState == 2 || newContentState == 3
-                    || newContentState == 6) {
+                if (newContentState == Content::kMounting
+                    || newContentState == Content::kUnmounting
+                    || newContentState == Content::kContentDeleting) {
                     return;
-                } else if (newContentState == 4 && oldContentState == 2) {
+                } else if (
+                    newContentState == Content::kMounted
+                    && oldContentState == Content::kMounting
+                ) {
                     NotifyMounted(*it);
                     return;
-                } else if (newContentState == 0 && oldContentState == 3) {
+                } else if (
+                    newContentState == Content::kUnmounted
+                    && oldContentState == Content::kUnmounting
+                ) {
                     NotifyUnmounted(*it);
                     return;
-                } else if (newContentState == 7 && oldContentState == 6) {
+                } else if (
+                    newContentState == Content::kDeleted
+                    && oldContentState == Content::kContentDeleting
+                ) {
                     NotifyDeleted(*it);
                     return;
                 }
                 ++it;
             }
         }
-        if (mState == 3) {
+        if (mState == kDiscoveryMounting) {
             FOREACH (it, mCallbacks) {
                 (*it)->ContentAllMounted();
             }
-            mState = kDiscoveryCheckIfDone; // 4
+            mState = kDiscoveryLoading;
         } else {
-            mState = kDiscoveryEnumerating; // 1
+            mState = kDone;
         }
     }
-    if (mState == 4) {
+    if (mState == kDiscoveryLoading) {
         if (mLoader) {
             if (!mLoader->IsLoaded())
                 return;
@@ -145,9 +155,9 @@ void ContentMgr::PollRefresh() {
             RELEASE(mLoader);
         } else if (mCallbackFiles.empty()) {
             FOREACH (it, mContents) {
-                auto curContentState = (*it)->GetState();
+                Content::State curContentState = (*it)->GetState();
 
-                if (curContentState == 5) {
+                if (curContentState == Content::kAlwaysMounted) {
                     if (mRootLoaded > 0) {
                     here:
                         FOREACH (cit, mCallbacks) {
@@ -191,11 +201,11 @@ void ContentMgr::PollRefresh() {
                                 }
                             }
                         }
-                        if (curContentState == 5) {
+                        if (curContentState == Content::kAlwaysMounted) {
                             mRootLoaded--;
                         }
                     }
-                } else if (curContentState == 4) {
+                } else if (curContentState == Content::kMounted) {
                     goto here;
                 }
             }
@@ -209,10 +219,10 @@ void ContentMgr::PollRefresh() {
             mCallbackFiles.pop_front();
             MILO_ASSERT(mLoader, 0xF4);
         } else {
-            mState = kMounting; // 5
+            mState = kDiscoveryCheckIfDone;
         }
-    } else if (mState == 5) {
-        mState = kDiscoveryEnumerating; // 1
+    } else if (mState == kDiscoveryCheckIfDone) {
+        mState = kDone;
         StartRefresh();
         if (!RefreshInProgress()) {
             FOREACH (it, mCallbacks) {

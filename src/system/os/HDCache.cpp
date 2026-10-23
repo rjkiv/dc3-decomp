@@ -186,7 +186,8 @@ void HDCache::WriteHdr() {
         for (int i = 0; i < numArkfiles; i++) {
             int blockSize = 0;
             if (mBlockState[i]) {
-                int numWords = (TheArchive->GetArkfileNumBlocks(i) + 31) / 32;
+                int numBlocks = TheArchive->GetArkfileNumBlocks(i);
+                int numWords = (numBlocks + 31) / 32;
                 blockSize = numWords * sizeof(int);
             }
             *mHdrBuf << blockSize;

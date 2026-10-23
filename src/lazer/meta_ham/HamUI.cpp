@@ -675,8 +675,8 @@ DataNode HamUI::OnMsg(const KinectGuideGestureMsg &msg) {
 
 DataNode HamUI::OnMsg(const ContentReadFailureMsg &msg) {
     static Message init("init", 0, 0);
-    init[0] = msg.GetBool();
-    init[1] = msg.GetStr();
+    init[0] = msg.Corrupt();
+    init[1] = msg.Package();
     static Symbol data_error("data_error");
     TheUIEventMgr->TriggerEvent(data_error, init);
     return 1;

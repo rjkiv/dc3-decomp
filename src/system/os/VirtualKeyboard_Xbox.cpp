@@ -4,20 +4,24 @@
 #include "utl/Symbol.h"
 #include "utl/UTF8.h"
 #include "xdk/XAPILIB.h"
+#include "xdk/xapilibi/winerror.h"
+#include "xdk/xapilibi/xbase.h"
 
 namespace {
-    bool gCheckOverlappedIoComplete;
+    char gCstrKeyboard[512];
+    wchar_t gResultText[512];
+    wchar_t gDefaultText[512];
+    wchar_t gDescrptionText[512];
+    wchar_t gWindowTitle[512];
     XOVERLAPPED *gXoKeyboard;
     wchar_t *gWstrKeyboard;
-    char gCstrKeyboard[512];
-    wchar_t *gDefaultText;
-    wchar_t *gWindowTitle;
-    wchar_t *gDescrptionText;
+    bool gCheckOverlappedIoComplete;
 }
 
 void VirtualKeyboard::PlatformPoll() {
-    if (gCheckOverlappedIoComplete && gXoKeyboard && gXoKeyboard->InternalLow != 0x3E5) {
-        if (XGetOverlappedExtendedError(gXoKeyboard) == 0) {
+    if (gCheckOverlappedIoComplete && gXoKeyboard
+        && gXoKeyboard->InternalLow != ERROR_IO_PENDING) {
+        if (XGetOverlappedExtendedError(gXoKeyboard) == ERROR_SUCCESS) {
             char buf[512];
             int ret = WideCharToMultiByte(
                 0xFDE9, 0, gWstrKeyboard, -1, buf, 0x200, nullptr, nullptr
@@ -28,11 +32,12 @@ void VirtualKeyboard::PlatformPoll() {
             RemoveSpaces(buf, 0x200, utf8buf);
             mCallbackMsg = buf;
             mMsgOk = true;
+            mCallbackReady = true;
         } else {
             mCallbackMsg = gNullStr;
             mMsgOk = false;
+            mCallbackReady = true;
         }
-        mCallbackReady = true;
         gCheckOverlappedIoComplete = false;
     }
 }
@@ -54,29 +59,44 @@ const char *VirtualKeyboard::GetInputString() {
 }
 
 DataNode VirtualKeyboard::ShowKeyboardUI(
-    int pad, int textLength, String strWindowTitle, String strDescription, String strDefaultText, int configType
+    int pad,
+    int textLength,
+    String strWindowTitle,
+    String strDescription,
+    String strDefaultText,
+    int configType
 ) {
     MILO_ASSERT(!mCallbackReady, 0x62);
-    RELEASE(gXoKeyboard);
-    RELEASE(gWstrKeyboard);
+    if (gXoKeyboard) {
+        RELEASE(gXoKeyboard);
+    }
+    if (gWstrKeyboard) {
+        RELEASE(gWstrKeyboard);
+    }
     wchar_t *newWStr = new wchar_t[textLength];
-    XOVERLAPPED *newXo = new XOVERLAPPED();
+    newWStr[0] = 0;
+    XOVERLAPPED *newXo = new XOVERLAPPED;
+    memset(newXo, 0, sizeof(XOVERLAPPED));
     MILO_ASSERT(pad != -1, 0x7F);
     UTF8toWChar_t(gDefaultText, strDefaultText.c_str());
     UTF8toWChar_t(gWindowTitle, strWindowTitle.c_str());
     UTF8toWChar_t(gDescrptionText, strDescription.c_str());
     DWORD flags = 0;
-    if (configType == 0) {
+    switch (configType) {
+    case kKeyboard_Normal:
         flags = 0x20000001;
-    } else if (configType == 1) {
+        break;
+    case kKeyboard_Numeric:
         flags = 0x20;
-    } else {
+        break;
+    default:
         MILO_ASSERT(false, 0x98);
+        break;
     }
     DWORD res = XShowKeyboardUI(
         pad, flags, gDefaultText, gWindowTitle, gDescrptionText, newWStr, textLength, newXo
     );
-    if (res != 0x3E5) {
+    if (res != ERROR_IO_PENDING) {
         delete newWStr;
         delete newXo;
         MILO_NOTIFY("Unable to show Keyboard UI.  XShowKeyboardUI returned %d.\n", res);

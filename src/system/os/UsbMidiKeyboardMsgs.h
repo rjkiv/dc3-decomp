@@ -2,52 +2,50 @@
 #include "obj/Msg.h"
 
 DECLARE_MESSAGE(KeyboardKeyPressedMsg, "keyboard_key_pressed");
-KeyboardKeyPressedMsg(int, int, int);
-int GetMidiNote() const { return mData->Int(2); }
-int GetNode3() const {
-    return mData->Int(3);
-} // fret button? but this is keys what frets are there
+KeyboardKeyPressedMsg(int keyNumber, int keyVel, int padNum);
+int GetKeyNum() const { return mData->Int(2); }
+int GetKeyVel() const { return mData->Int(3); }
 int GetPadNum() const { return mData->Int(4); }
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardKeyReleasedMsg, "keyboard_key_released")
-KeyboardKeyReleasedMsg(int, int);
-int GetMidiNote() const { return mData->Int(2); }
+KeyboardKeyReleasedMsg(int keyNumber, int padNum);
+int GetKeyNum() const { return mData->Int(2); }
 int GetPadNum() const { return mData->Int(3); }
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardModMsg, "keyboard_mod")
-KeyboardModMsg(int, int);
-int GetNode2() const { return mData->Int(2); } // pitch/velocity?
+KeyboardModMsg(int modVal, int padNum);
+int GetModVal() const { return mData->Int(2); }
 int GetPadNum() const { return mData->Int(3); }
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardExpressionPedalMsg, "keyboard_expression_pedal")
-KeyboardExpressionPedalMsg(int, int);
+KeyboardExpressionPedalMsg(int expressionPedal, int padNum);
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardConnectedAccessoriesMsg, "keyboard_connected_accessories")
-KeyboardConnectedAccessoriesMsg(int, int);
+KeyboardConnectedAccessoriesMsg(int connectedAccessories, int padNum);
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardSustainMsg, "keyboard_sustain")
-KeyboardSustainMsg(bool, int);
-int GetNode2() const { return mData->Int(2); }
+KeyboardSustainMsg(bool sustain, int padNum);
+bool GetSustain() const { return mData->Int(2); }
 int GetPadNum() const { return mData->Int(3); }
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardStompBoxMsg, "keyboard_stomp_box")
-KeyboardStompBoxMsg(bool, int);
+KeyboardStompBoxMsg(bool stompBox, int padNum);
 END_MESSAGE
 
 DECLARE_MESSAGE(KeysAccelerometerMsg, "keys_accelerometer")
-KeysAccelerometerMsg(int, int, int, int);
+KeysAccelerometerMsg(int accelX, int accelY, int accelZ, int padNum);
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardLowHandPlacementMsg, "keyboard_low_hand_placement")
-KeyboardLowHandPlacementMsg(int, int);
+KeyboardLowHandPlacementMsg(int keyNum, int padNum);
 END_MESSAGE
 
 DECLARE_MESSAGE(KeyboardHighHandPlacementMsg, "keyboard_high_hand_placement")
-KeyboardHighHandPlacementMsg(int, int);
+KeyboardHighHandPlacementMsg(int keyNum, int padNum);
 END_MESSAGE
