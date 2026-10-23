@@ -8,12 +8,12 @@ Licenses sLicense("system/src/math/SHA1.h", Licenses::kRequirementNotification);
 
 // shoutouts to clibs' implementation of sha1: https://github.com/clibs/sha1
 
-#define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
+#define rol(value, bits) _rotl(value, bits)
 #define blk0(i) m_block->l[i]
 #define blk(i)                                                                           \
     (m_block->l[i & 15] =                                                                \
-         rol(m_block->l[i & 15] ^ m_block->l[(i + 2) & 15]                               \
-                 ^ m_block->l[(i + 8) & 15] ^ m_block->l[(i + 13) & 15],                 \
+         rol(m_block->l[i & 15] ^ m_block->l[(i + 2) & 15] ^ m_block->l[(i + 8) & 15]    \
+                 ^ m_block->l[(i + 13) & 15],                                            \
              1))
 
 /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
@@ -130,30 +130,31 @@ void CSHA1::Transform(unsigned int *pState, const unsigned char *pBuffer) {
     pState[4] += e;
 }
 
-void CSHA1::Update(const unsigned char *data, unsigned int len) {
+void CSHA1::Update(const unsigned char *pData, unsigned int uLen) {
     unsigned int i, j;
 
-    j = m_count[0];
-    j = (j / 8) % 64;
-    m_count[0] += len * 8;
-    if (m_count[0] < len * 8) {
+    j = (m_count[0] / 8) % 64;
+    m_count[0] += uLen << 3;
+    if (m_count[0] < uLen << 3) {
         m_count[1]++;
     }
-    m_count[1] += (len >> 29);
+    m_count[1] += (uLen >> 29);
 
-    if ((j + len) > 63) {
+    if ((j + uLen) > 63) {
         i = 64 - j;
-        memcpy(&m_buffer[j], data, i);
+        memcpy(&m_buffer[j], pData, i);
         Transform(m_state, m_buffer);
-        for (; i + 63 < len; i += 64) {
-            Transform(m_state, &data[i]);
+        for (; i + 63 < uLen; i += 64) {
+            Transform(m_state, &pData[i]);
         }
         j = 0;
-    } else
+    } else {
         i = 0;
+    }
 
-    if (len - i != 0)
-        memcpy(&m_buffer[j], &data[i], len - i);
+    if (uLen - i != 0) {
+        memcpy(&m_buffer[j], &pData[i], uLen - i);
+    }
 }
 
 const CSHA1::Digest &CSHA1::Final() {
@@ -185,26 +186,26 @@ const CSHA1::Digest &CSHA1::Final() {
 
 void CSHA1::Digest::Copy(unsigned char *c) const { memcpy(c, this, 20); }
 
-void CSHA1::Digest::ReportHash(char *c1, unsigned char uc) const {
+void CSHA1::Digest::ReportHash(char *szReport, unsigned char uReportType) const {
     char buf[24];
-    unsigned int ui;
-    if (c1) {
-        if (uc == 0) {
+    unsigned char ui;
+    if (szReport) {
+        if (uReportType == 0) {
             sprintf(buf, "%02X", digits[0]);
-            strcpy(c1, buf);
-            for (ui = 1; ui < 0x14; ui++) {
-                sprintf(buf, "%02X", digits[ui & 0xFF]);
-                strcat(c1, buf);
+            strcpy(szReport, buf);
+            for (ui = 1; ui < 20; ui++) {
+                sprintf(buf, "%02X", digits[ui]);
+                strcat(szReport, buf);
             }
-        } else if (uc == 1) {
+        } else if (uReportType == 1) {
             sprintf(buf, "%u", digits[0]);
-            strcpy(c1, buf);
-            for (ui = 1; ui < 0x14; ui++) {
-                sprintf(buf, " %u", digits[ui & 0xFF]);
-                strcat(c1, buf);
+            strcpy(szReport, buf);
+            for (ui = 1; ui < 20; ui++) {
+                sprintf(buf, " %u", digits[ui]);
+                strcat(szReport, buf);
             }
         } else
-            strcpy(c1, "Error: Unknown report type!");
+            strcpy(szReport, "Error: Unknown report type!");
     }
 }
 

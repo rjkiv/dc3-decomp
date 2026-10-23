@@ -5,8 +5,8 @@ class CSHA1 {
 public:
     struct Digest {
         unsigned char digits[20];
-        void Copy(unsigned char *) const;
-        void ReportHash(char *, unsigned char) const;
+        void Copy(unsigned char *dst) const;
+        void ReportHash(char *szReport, unsigned char uReportType) const;
     };
 
     CSHA1();
@@ -20,7 +20,7 @@ public:
         m_count[0] = 0;
         m_count[1] = 0;
     }
-    void Update(const unsigned char *, unsigned int);
+    void Update(const unsigned char *pData, unsigned int uLen);
     const Digest &Final();
     void CopyDigest(unsigned char *uc) { m_digest.Copy(uc); }
 
@@ -29,7 +29,7 @@ private:
         unsigned char c[64];
         unsigned long l[16];
     };
-    void Transform(unsigned int *, const unsigned char *);
+    void Transform(unsigned int *pState, const unsigned char *pBuffer);
 
     unsigned int m_state[5]; // 0x0
     unsigned int m_count[2]; // 0x14
