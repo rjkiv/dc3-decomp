@@ -5,16 +5,22 @@
 #include <cstring>
 
 AsyncTask::AsyncTask(
-    ArkFile *owner, void *iBuffer, int arkfileNum, int iBlockNum, int iOffsetStart, int iOffsetEnd, const char *debugName
+    ArkFile *owner,
+    void *iBuffer,
+    int arkfileNum,
+    int iBlockNum,
+    int iOffsetStart,
+    int iOffsetEnd,
+    const char *debugName
 )
-    : mArkfileNum(arkfileNum), mBlockNum(iBlockNum), mOffsetStart(iOffsetStart), mOffsetEnd(iOffsetEnd),
-      mBuffer(iBuffer), mStr(debugName), mOwner(owner) {
+    : mArkfileNum(arkfileNum), mBlockNum(iBlockNum), mOffsetStart(iOffsetStart),
+      mOffsetEnd(iOffsetEnd), mBuffer(iBuffer), mDebugName(debugName), mOwner(owner) {
     MILO_ASSERT(mOwner, 0x1B);
 }
 
 AsyncTask::AsyncTask(int arkfileNum, int blockNum)
-    : mArkfileNum(arkfileNum), mBlockNum(blockNum), mOffsetStart(-1), mOffsetEnd(-1), mBuffer(0),
-      mStr(gNullStr), mOwner(0) {}
+    : mArkfileNum(arkfileNum), mBlockNum(blockNum), mOffsetStart(-1), mOffsetEnd(-1),
+      mBuffer(0), mDebugName(gNullStr), mOwner(0) {}
 
 bool AsyncTask::FillData() {
     char *data = TheBlockMgr.GetBlockData(mArkfileNum, mBlockNum);

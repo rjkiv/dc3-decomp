@@ -9,7 +9,8 @@ public:
     bool FillData();
     int GetArkfileNum() const { return mArkfileNum; }
     int GetBlockNum() const { return mBlockNum; }
-    const char *GetStr() const { return mStr; }
+    const char *GetDebugName() const { return mDebugName; }
+    bool IsOwnedBy(ArkFile *file) { return mOwner == file; }
 
 private:
     int mArkfileNum; // 0x0
@@ -17,6 +18,6 @@ private:
     int mOffsetStart; // 0x8
     int mOffsetEnd; // 0xc
     void *mBuffer; // 0x10
-    const char *mStr; // 0x14
+    const char *mDebugName; // 0x14
     ArkFile *mOwner; // 0x18
 };

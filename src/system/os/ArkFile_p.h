@@ -7,7 +7,7 @@
 
 class ArkFile : public File {
 public:
-    ArkFile(const char *, int);
+    ArkFile(const char *iFilename, int iMode);
     virtual ~ArkFile();
     virtual String Filename() const { return mFilename; }
     virtual int Read(void *, int);
@@ -33,6 +33,7 @@ public:
     static void *operator new(unsigned int s, void *place) { return place; }
     static void operator delete(void *v) { MemFree(v, __FILE__, 0x19, "ArkFile"); }
 
+private:
     int mArkfileNum; // 0x4
     u64 mByteStart; // 0x8
     int mSize; // 0x10

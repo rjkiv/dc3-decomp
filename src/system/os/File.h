@@ -23,24 +23,24 @@ public:
         class String str;
         return str;
     }
-    virtual int Read(void *, int) = 0;
-    virtual bool ReadAsync(void *, int) = 0;
-    virtual int Write(const void *, int) = 0;
-    virtual bool WriteAsync(const void *, int) { return false; }
-    virtual int Seek(int, int) = 0;
+    virtual int Read(void *iBuff, int iBytes) = 0;
+    virtual bool ReadAsync(void *iBuff, int iBytes) = 0;
+    virtual int Write(const void *iBuff, int iBytes) = 0;
+    virtual bool WriteAsync(const void *iBuff, int iBytes) { return false; }
+    virtual int Seek(int iOffset, int iMode) = 0;
     virtual int Tell() = 0;
     virtual void Flush() = 0;
     virtual bool Eof() = 0;
     virtual bool Fail() = 0;
     virtual int Size() = 0;
     virtual int UncompressedSize() = 0;
-    virtual bool ReadDone(int &) = 0;
-    virtual bool WriteDone(int &i) {
-        i = 0;
+    virtual bool ReadDone(int &oBytes) = 0;
+    virtual bool WriteDone(int &oBytes) {
+        oBytes = 0;
         return true;
     }
-    virtual bool GetFileHandle(void *&) = 0;
-    virtual bool Truncate(int) { return 0; }
+    virtual bool GetFileHandle(void *&handle) = 0;
+    virtual bool Truncate(int length) { return 0; }
 
     bool ReadDone() {
         int x;
