@@ -410,7 +410,7 @@
             "system/math/SHA1.cpp": "Matching",
             "system/math/Sort.cpp": "Matching",
             "system/math/StreamChecksum.cpp": "Matching",
-            "system/math/Trig.cpp": "NonMatching",
+            "system/math/Trig.cpp": "Matching",
             "system/math/mtx.cpp": "NonMatching",
             "system/math/vec.cpp": "Matching",
             "system/meta/Achievements.cpp": "Matching",

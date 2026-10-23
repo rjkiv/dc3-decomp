@@ -1665,7 +1665,7 @@ system/hamobj/HamAudio.cpp:
 	.pdata      start:0x822C93A0 end:0x822C9670
 	.text       start:0x82529118 end:0x8252C910
 	.data       start:0x82F0F42C end:0x82F0F4E8
-	.data       start:0x82F620DC end:0x82F631B0 rename:.bss
+	.data       start:0x82F620DC end:0x82F621A0 rename:.bss
 
 system/hamobj/MoveAsyncDetector.cpp:
 	.rdata      start:0x8205DF98 end:0x8205E2F8
@@ -1709,6 +1709,7 @@ system/math/Trig.cpp:
 	.rdata      start:0x8205EBA0 end:0x8205EBD4
 	.pdata      start:0x822C9AB0 end:0x822C9AF0
 	.text       start:0x82532740 end:0x82532D08
+	.data       start:0x82F621A0 end:0x82F631A0 rename:.bss
 
 system/math/Rot.cpp:
 	.rdata      start:0x8205EBD4 end:0x8205EC20
@@ -1728,7 +1729,7 @@ system/math/mtx.cpp:
 	.pdata      start:0x823212A8 end:0x823212C0
 	.text       start:0x82538B70 end:0x82539BB0
 	.text       start:0x82EDAF90 end:0x82EDB218 rename:.text$yc
-	.data       start:0x82F631B0 end:0x82F63270 rename:.bss
+	.data       start:0x82F631A0 end:0x82F63270 rename:.bss
 
 system/math/Rand.cpp:
 	.rdata      start:0x8205F1C0 end:0x8205F1CC

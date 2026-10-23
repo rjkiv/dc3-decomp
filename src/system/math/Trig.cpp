@@ -4,20 +4,23 @@
 #include "obj/DataFunc.h"
 #include <cmath>
 
-float gBigSinTable[512];
+struct SinEntry {
+    float val; // 0x0
+    float grad; // 0x4
+};
+
+static SinEntry gBigSinTable[512];
 
 void TrigTableInit() {
     int i;
     for (i = 0; i < 256; i++) {
-        float *ptr = &gBigSinTable[i * 2];
-        *ptr = sinf(0.024543693f * i);
+        SinEntry *entry = &gBigSinTable[i];
+        entry->val = sinf(0.024543693f * i);
         if (i != 0) {
-            ptr[-1] = ptr[0] - ptr[-2];
+            entry[-1].grad = entry[0].val - entry[-1].val;
         }
     }
-    float val = sinf(0.024543693f * i);
-    float *ptr = &gBigSinTable[(i - 1) * 2];
-    ptr[1] = val - ptr[0];
+    gBigSinTable[i - 1].grad = sinf(0.024543693f * i) - gBigSinTable[i - 1].val;
 }
 
 void TrigTableTerminate() {}
@@ -25,10 +28,10 @@ void TrigTableTerminate() {}
 float Lookup(float arg8) {
     float x = arg8 * 40.743664f;
     int temp_r5 = (int)x;
-    int idx = (temp_r5 & 0xFF) * 2;
-    float *offset = &gBigSinTable[idx];
+    unsigned char idx = temp_r5;
+    SinEntry &entry = gBigSinTable[idx];
     float res = x - (float)temp_r5;
-    return (res * offset[1]) + offset[0];
+    return (res * entry.grad) + entry.val;
 }
 
 float Sine(float arg8) {
@@ -40,37 +43,37 @@ float Sine(float arg8) {
 
 float FastSin(float f) {
     if (f < 0.0f) {
-        return -gBigSinTable[((int)(-40.743664f * f + 0.49999f) & 0xFF) * 2];
+        return -gBigSinTable[((int)(-40.743664f * f + 0.49999f) & 0xFF)].val;
     } else
-        return gBigSinTable[((int)(40.743664f * f + 0.49999f) & 0xFF) * 2];
+        return gBigSinTable[((int)(40.743664f * f + 0.49999f) & 0xFF)].val;
 }
 
-DataNode DataSin(DataArray *a) { return (float)sin(DegreesToRadians(a->Float(1))); }
-DataNode DataCos(DataArray *da) { return std::cos(DegreesToRadians(da->Float(1))); }
-DataNode DataTan(DataArray *da) { return std::tan(DegreesToRadians(da->Float(1))); }
+static DataNode DataSin(DataArray *a) { return sinf(DegreesToRadians(a->Float(1))); }
+static DataNode DataCos(DataArray *da) { return cosf(DegreesToRadians(da->Float(1))); }
+static DataNode DataTan(DataArray *da) { return tanf(DegreesToRadians(da->Float(1))); }
 
-DataNode DataASin(DataArray *da) {
+static DataNode DataASin(DataArray *da) {
     float f = da->Float(1);
     if (IsNaN(f))
         return 0.0f;
     else
-        return RadiansToDegrees(std::asin(f));
+        return RadiansToDegrees(asinf(f));
 }
 
-DataNode DataACos(DataArray *da) {
+static DataNode DataACos(DataArray *da) {
     float f = da->Float(1);
     if (IsNaN(f))
         return 0.0f;
     else
-        return RadiansToDegrees(std::acos(f));
+        return RadiansToDegrees(acosf(f));
 }
 
-DataNode DataATan(DataArray *da) {
+static DataNode DataATan(DataArray *da) {
     float f = da->Float(1);
     if (IsNaN(f))
         return 0.0f;
     else
-        return RadiansToDegrees(std::atan(f));
+        return RadiansToDegrees(atanf(f));
 }
 
 void TrigInit() {
