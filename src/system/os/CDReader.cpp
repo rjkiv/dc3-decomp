@@ -5,6 +5,7 @@
 #include "os/System.h"
 #include "xdk/xapilibi/errhandlingapi.h"
 #include "xdk/xapilibi/fileapi.h"
+#include "xdk/xapilibi/winerror.h"
 #include <vector>
 #include "xdk/XAPILIB.h"
 
@@ -92,23 +93,28 @@ int CDRead(int arkfileNum, int sector, int numSectors, void *buf) {
         if (ret) {
             return ret;
         }
-        gOverlapped.Offset = sector << 0xB;
-        gOverlapped.OffsetHigh = (sector << 0xB) >> 0x20;
+        s64 sector64 = sector;
+        u64 off = sector64 * 2048;
+        gOverlapped.OffsetHigh = (off) >> 0x20;
+        gOverlapped.Offset = static_cast<u32>(off);
         if (!ReadFile(
                 gArkFiles[arkfileNum], buf, numSectors << 0xB, nullptr, &gOverlapped
             )) {
             DWORD err = GetLastError();
-            if (err == ERROR_IO_PENDING || err == ERROR_IO_INCOMPLETE) {
-                MILO_NOTIFY("Disc error: ERROR_IO_INCOMPLETE, ignoring");
-                gPendingFile = arkfileNum;
-                return 0;
-            } else {
-                gErrorCode = err;
-                DiskErrorLoop();
-                return 1;
+            if (err != ERROR_IO_PENDING) {
+                if (err == ERROR_IO_INCOMPLETE) {
+                    TheDebugNotifier
+                        << MakeString("Disc error: ERROR_IO_INCOMPLETE, ignoring");
+                } else {
+                    gErrorCode = err;
+                    DiskErrorLoop();
+                    return 1;
+                }
             }
         }
     }
+    gPendingFile = arkfileNum;
+    return 0;
 }
 
 bool CDReadExternal(HANDLE &out_handle, int arkfileNum, u64 startByte) {
