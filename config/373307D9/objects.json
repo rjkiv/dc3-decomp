@@ -529,7 +529,7 @@
             "system/os/Keyboard_Xbox.cpp": "NonMatching",
             "system/os/MapFile_Xbox.cpp": "Matching",
             "system/os/Memcard.cpp": "Matching",
-            "system/os/Memcard_Xbox.cpp": "NonMatching",
+            "system/os/Memcard_Xbox.cpp": "Matching",
             "system/os/Memory_Xbox.cpp": "Matching",
             "system/os/NetStream.cpp": "Matching",
             "system/os/NetworkSocket.cpp": "Matching",

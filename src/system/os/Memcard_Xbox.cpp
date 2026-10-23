@@ -191,24 +191,26 @@ MCResult MCContainerXbox::Mount(CreateType createType) {
     );
     if (res == ERROR_SUCCESS) {
         BOOL userIsCreator = false;
-        if (XContentGetCreator(Cid().mUserIndex, &xcd, &userIsCreator, nullptr, nullptr)
-            == ERROR_SUCCESS) {
-            if (!userIsCreator) {
-                XContentClose(mDriveName.c_str(), nullptr);
-                res = ERROR_FILE_CORRUPT;
-            } else {
-                SetMounted(true);
-                return kMCNoError;
-            }
+        if ((res = XContentGetCreator(
+                 Cid().mUserIndex, &xcd, &userIsCreator, nullptr, nullptr
+             )) == ERROR_SUCCESS
+            && !userIsCreator) {
+            XContentClose(mDriveName.c_str(), nullptr);
+            res = ERROR_FILE_CORRUPT;
         }
     }
-    switch (res) {
-    case ERROR_PATH_NOT_FOUND:
-        return kMCFileNotFound;
-    case ERROR_ALREADY_EXISTS:
-        return kMCCorrupt;
-    default:
-        return TranslateCommonWinErrorToMCResult(res);
+    if (res != ERROR_SUCCESS) {
+        switch (res) {
+        case ERROR_PATH_NOT_FOUND:
+            return kMCFileNotFound;
+        case ERROR_ALREADY_EXISTS:
+            return kMCCorrupt;
+        default:
+            return TranslateCommonWinErrorToMCResult(res);
+        }
+    } else {
+        SetMounted(true);
+        return kMCNoError;
     }
 }
 
