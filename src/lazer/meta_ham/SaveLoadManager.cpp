@@ -1868,31 +1868,61 @@ void SaveLoadManager::SetState(State newState) {
             break;
         }
         case kS_AutoloadNoSaveFound_Msg:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_AutoloadMultipleSavesFound:
         case kS_AutoloadDeviceMissing:
+        case kS_SaveDeviceInvalid:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_AutoloadCorrupt:
         case kS_AutoloadNotOwner:
         case kS_AutoloadObsolete:
         case kS_AutoloadFuture:
+        case kS_SaveConfirmOverwrite:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_SongCacheCreateNotFound_Msg:
         case kS_SongCacheCreateMissing_Msg:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_SongCacheCreateCorrupt:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_GlobalCreateNotFound_Msg:
         case kS_GlobalCreateMissing_Msg:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_GlobalCreateCorrupt:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_GlobalOptionsMissing_Msg:
-        case kS_SaveConfirmOverwrite:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_SaveNotEnoughSpace:
         case kS_SaveNotEnoughSpacePS3:
-        case kS_SaveDeviceInvalid:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_SaveFailed:
         case kS_SaveDisabledByCheat:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_LoadFailed:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_ManualSaveNoDevice:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_ManualLoadConfirmUnsaved:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_ManualLoadConfirm:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_ManualLoadNoDevice:
         case kS_ManualLoadMissing:
+            TheUIEventMgr->TriggerEvent(saveload_dialog_event, nullptr);
+            break;
         case kS_ManualLoadNoFile:
         case kS_ManualLoadCorrupt:
         case kS_ManualLoadNotOwner:
