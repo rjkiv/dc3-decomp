@@ -43,19 +43,16 @@ void PrintDiscFile(const char *file) {
     }
     String fullPath(MakeString("%s/%s%s.%s", path, gen, base, ext));
     unsigned int last = fullPath.find_last_of('_');
-    bool lastFound = last != FixedString::npos;
-    if (lastFound) {
-        Symbol plat = PlatformSymbol(TheLoadMgr.GetPlatform());
-        lastFound = plat == fullPath.c_str() + last + 1;
-    }
+    bool lastFound = last != FixedString::npos
+        && PlatformSymbol(TheLoadMgr.GetPlatform()) == fullPath.c_str() + last + 1;
     fullPath = (lastFound) ? fullPath.substr(0, last) : fullPath;
     MILO_LOG("AsyncFile:   '%s'\n", fullPath);
     HolmesClientPrint(fullPath.c_str());
 }
 
 AsyncFile::AsyncFile(const char *iFilename, int iMode)
-    : mMode(iMode), mFail(false), mFilename(iFilename), mTell(0), mOffset(0), mSize(0), mUCSize(0),
-      mBuffer(0), mData(0), mBytesLeft(0), mBytesRead(0) {}
+    : mMode(iMode), mFail(false), mFilename(iFilename), mTell(0), mOffset(0), mSize(0),
+      mUCSize(0), mBuffer(0), mData(0), mBytesLeft(0), mBytesRead(0) {}
 
 AsyncFile::~AsyncFile() {}
 
@@ -92,12 +89,14 @@ bool AsyncFile::ReadAsync(void *iData, int iBytes) {
 }
 
 int AsyncFile::Write(const void *iData, int iBytes) {
-    WriteAsync((void *)iData, iBytes);
-    if (mFail)
+    WriteAsync(iData, iBytes);
+    if (mFail) {
         return 0;
-    else
-        while (!WriteDone(iBytes))
+    } else {
+        int tmp;
+        while (!WriteDone(tmp))
             ;
+    }
     return iBytes;
 }
 

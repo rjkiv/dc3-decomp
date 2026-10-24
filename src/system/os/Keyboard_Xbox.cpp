@@ -14,65 +14,66 @@ namespace {
             }
         }
         if (vk >= VK_F1 && vk <= VK_F12) {
+            // maps to HMX's KB_F1 - KB_F12
             ret = vk + 0x121;
         }
         switch (vk) {
         case VK_BACK:
-            ret = 8;
+            ret = KB_BACKSPACE;
             break;
         case VK_TAB:
-            ret = 9;
+            ret = KB_TAB;
             break;
         case VK_RETURN:
-            ret = 10;
+            ret = KB_ENTER;
             break;
         case VK_PAUSE:
-            ret = 0x12D;
+            ret = KB_PAUSE;
             break;
         case VK_CAPITAL:
-            ret = 0x122;
+            ret = KB_CAP_LOCK;
             break;
         case VK_ESCAPE:
-            ret = 0x12E;
+            ret = KB_ESCAPE;
             break;
         case VK_PRIOR:
-            ret = 0x13A;
+            ret = KB_PAGE_UP;
             break;
         case VK_NEXT:
-            ret = 0x13B;
+            ret = KB_PAGE_DOWN;
             break;
         case VK_END:
-            ret = 0x139;
+            ret = KB_END;
             break;
         case VK_HOME:
-            ret = 0x138;
+            ret = KB_HOME;
             break;
         case VK_LEFT:
-            ret = 0x140;
+            ret = KB_LEFT;
             break;
         case VK_UP:
-            ret = 0x142;
+            ret = KB_UP;
             break;
         case VK_RIGHT:
-            ret = 0x141;
+            ret = KB_RIGHT;
             break;
         case VK_DOWN:
-            ret = 0x143;
+            ret = KB_DOWN;
             break;
         case VK_PRINT:
-            ret = 300;
+            ret = KB_PRINT;
             break;
         case VK_INSERT:
-            ret = 0x136;
+            ret = KB_INSERT;
             break;
         case VK_DELETE:
-            ret = 0x137;
+            ret = KB_DELETE;
             break;
         case VK_NUMLOCK:
-            ret = 0x123;
+            ret = KB_NUM_LOCK;
             break;
         case VK_SCROLL:
-            ret = 0x124;
+            ret = KB_SCROLL_LOCK;
             break;
         }
         return ret;
