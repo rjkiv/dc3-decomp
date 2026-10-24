@@ -20,26 +20,30 @@
 
 void ReadError(const char *cc) {
     DWORD err = GetLastError();
-    String str;
-    if (FileIsLocal(cc) && TheContentMgr.Contains(cc, str)) {
-        MILO_LOG("ReadError in package '%s', err = 0x%08x\n", str, err);
-        TheContentMgr.OnReadFailure(
-            err == ERROR_FILE_CORRUPT || err == ERROR_DISK_CORRUPT, str.c_str()
-        );
-    } else if (UsingCD()) {
+    String package;
+    if (FileIsLocal(cc)) {
+        if (TheContentMgr.Contains(cc, package)) {
+            MILO_LOG("ReadError in package '%s', err = 0x%08x\n", package, err);
+            BOOL corruptErr = err == ERROR_FILE_CORRUPT || err == ERROR_DISK_CORRUPT;
+            TheContentMgr.OnReadFailure(corruptErr, package.c_str());
+        }
+        return;
+    } else if (!UsingCD()) {
+        return;
+    } else {
         ThePlatformMgr.SetDiskError(kDiskError);
     }
 }
 
 AsyncFileWin::AsyncFileWin(const char *filename, int mode)
-    : AsyncFile(filename, mode), mFile(INVALID_HANDLE_VALUE), fildes(-1),
+    : AsyncFile(filename, mode), mOverlappedHandle(INVALID_HANDLE_VALUE), mHandle(-1),
       mReadInProgress(0), mWriteInProgress(0) {}
 
 AsyncFileWin::~AsyncFileWin() { Terminate(); }
 
 bool AsyncFileWin::Truncate(int length) {
-    SetFilePointer(mFile, length, nullptr, 0);
-    return SetEndOfFile(mFile);
+    SetFilePointer(mOverlappedHandle, length, nullptr, 0);
+    return SetEndOfFile(mOverlappedHandle);
 }
 
 void AsyncFileWin::_OpenAsync() {
@@ -51,16 +55,16 @@ void AsyncFileWin::_OpenAsync() {
         return;
     }
     mSectorBytes = 0x800;
-    if (((mMode & 0x7fffe) << 0x20 | mMode & 0x40002) == 0) {
+    if ((mMode & 0x40002) == 0) {
         int _FileHandle = _open(mFilename.c_str(), mMode & 0xfffffffd | 0x8000, 0x180);
-        fildes = _FileHandle;
+        mHandle = _FileHandle;
         mFail = _FileHandle < 0;
         if (mFail)
             return;
-        mSize = _lseeki64(fildes, 0, 2);
+        mSize = _lseeki64(mHandle, 0, 2);
         if (mMode & 8)
             return;
-        _lseek(fildes, 0, 0);
+        _lseek(mHandle, 0, 0);
         return;
     }
     DWORD dwDesiredAccess;
@@ -76,7 +80,7 @@ void AsyncFileWin::_OpenAsync() {
             dwCreationDisposition = mMode & 0x100 ? 4 : 3;
         }
     }
-    mFile = CreateFileA(
+    mOverlappedHandle = CreateFileA(
         mFilename.c_str(),
         dwDesiredAccess,
         3,
@@ -85,16 +89,17 @@ void AsyncFileWin::_OpenAsync() {
         0x60000000,
         nullptr
     );
-    if (mFile == INVALID_HANDLE_VALUE) {
+    if (mOverlappedHandle == INVALID_HANDLE_VALUE) {
         DWORD err = GetLastError();
-        if (err != 2 && err != 3 && err != 0x15) {
+        if (err != ERROR_FILE_NOT_FOUND && err != ERROR_PATH_NOT_FOUND
+            && err != ERROR_NOT_READY) {
             ReadError(mFilename.c_str());
         }
         mFail = true;
         return;
     } else {
         mFail = false;
-        mSize = GetFileSize(mFile, nullptr);
+        mSize = GetFileSize(mOverlappedHandle, nullptr);
     }
 }
 
@@ -102,10 +107,10 @@ bool AsyncFileWin::_WriteDone() {
     if (!mWriteInProgress) {
         return true;
     } else {
-        if (mOverlapped.Internal != 0x103) {
+        if (mOverlapped.Internal != ERROR_NO_MORE_ITEMS) {
             mWriteInProgress = false;
             DWORD bytes[4];
-            if (GetOverlappedResult(mFile, &mOverlapped, bytes, false)) {
+            if (GetOverlappedResult(mOverlappedHandle, &mOverlapped, bytes, false)) {
                 return true;
             }
             mFail = true;
@@ -116,8 +121,8 @@ bool AsyncFileWin::_WriteDone() {
 
 void AsyncFileWin::_SeekToTell() {
     if (!(mMode & FILE_OPEN_READ)) {
-        if (fildes >= 0) {
-            if (_lseek(fildes, mTell, 0) < 0) {
+        if (mHandle >= 0) {
+            if (_lseek(mHandle, mTell, 0) < 0) {
                 mFail = true;
             }
         } else {
@@ -132,26 +137,26 @@ void AsyncFileWin::_SeekToTell() {
 
 void AsyncFileWin::_Close() {
     if (mMode & FILE_OPEN_READ) {
-        if (mFile == INVALID_HANDLE_VALUE)
+        if (mOverlappedHandle == INVALID_HANDLE_VALUE)
             return;
         while (!_ReadDone())
             ;
     } else {
-        if (fildes >= 0) {
-            _close(fildes);
+        if (mHandle >= 0) {
+            _close(mHandle);
         }
-        if (mFile == INVALID_HANDLE_VALUE)
+        if (mOverlappedHandle == INVALID_HANDLE_VALUE)
             return;
         while (!_WriteDone())
             ;
     }
-    CloseHandle(mFile);
-    mFile = INVALID_HANDLE_VALUE;
+    CloseHandle(mOverlappedHandle);
+    mOverlappedHandle = INVALID_HANDLE_VALUE;
 }
 
 void AsyncFileWin::_WriteAsync(const void *src, int count) {
-    if (fildes >= 0) {
-        int wrote = _write(fildes, src, count);
+    if (mHandle >= 0) {
+        int wrote = _write(mHandle, src, count);
         if (wrote >= count)
             return;
         if (wrote == -1 && errno == ENOSPC) {
@@ -170,7 +175,7 @@ void AsyncFileWin::_WriteAsync(const void *src, int count) {
                 && count % mSectorBytes == 0;
             MILO_ASSERT(aligned, 245);
             mOverlapped.Offset = Tell();
-            if (!WriteFile(mFile, src, count, 0, &mOverlapped)
+            if (!WriteFile(mOverlappedHandle, src, count, 0, &mOverlapped)
                 && GetLastError() != ERROR_IO_PENDING) {
                 mFail = true;
             }
@@ -181,29 +186,31 @@ void AsyncFileWin::_WriteAsync(const void *src, int count) {
 bool AsyncFileWin::_ReadDone() {
     if (gFakeFileErrors) {
         SetLastError(0x20000002);
-        ReadError(mFilename.c_str());
-        mReadInProgress = false;
-        mFail = true;
-        return false;
-    } else if (mReadInProgress == false) {
-        return true;
-    } else if (mOverlapped.Internal == 0x103) {
-        return false;
     } else {
-        DWORD btrans;
-        if (GetOverlappedResult(mFile, &mOverlapped, &btrans, false) == false) {
-            ReadError(mFilename.c_str());
-            mReadInProgress = false;
-            mFail = true;
+        if (mReadInProgress == false) {
+            return true;
+        } else if (mOverlapped.Internal == ERROR_NO_MORE_ITEMS) {
             return false;
+        } else {
+            DWORD bytesRead;
+            if (GetOverlappedResult(mOverlappedHandle, &mOverlapped, &bytesRead, false)) {
+                if (!mAlignedRead) {
+                    memcpy(
+                        mReadTarget,
+                        static_cast<char *>(mTempReadTarget) + mBytesToSkip,
+                        mBytesRequested
+                    );
+                    MemFree(mTempReadTarget);
+                }
+                mReadInProgress = false;
+                return true;
+            }
         }
-        if (mAlignedRead) {
-            memcpy(mReadTarget, static_cast<char *>(mTempReadTarget) + mBytesToSkip, mBytesRequested);
-            MemFree(mTempReadTarget);
-        }
-        mReadInProgress = false;
-        return true;
     }
+    ReadError(mFilename.c_str());
+    mReadInProgress = false;
+    mFail = true;
+    return false;
 }
 
 void AsyncFileWin::_ReadAsync(void *dst, int count) {
@@ -232,8 +239,8 @@ void AsyncFileWin::_ReadAsync(void *dst, int count) {
                 mTempReadTarget = mReadTarget;
             } else {
                 mOverlapped.Offset = (Tell() / mSectorBytes) * mSectorBytes;
-                int i =
-                    ((Tell() + mBytesRequested + mSectorBytes - 1) / mSectorBytes) * mSectorBytes;
+                int i = ((Tell() + mBytesRequested + mSectorBytes - 1) / mSectorBytes)
+                    * mSectorBytes;
                 bytesToRead = i - mOverlapped.Offset;
                 MILO_ASSERT(bytesToRead%mSectorBytes == 0, 0x16a);
                 mTempReadTarget =
@@ -241,7 +248,7 @@ void AsyncFileWin::_ReadAsync(void *dst, int count) {
                 mBytesToSkip = Tell() - mOverlapped.Offset;
             }
 
-            if (!ReadFile(mFile, mTempReadTarget, bytesToRead, 0, &mOverlapped)
+            if (!ReadFile(mOverlappedHandle, mTempReadTarget, bytesToRead, 0, &mOverlapped)
                 && GetLastError() != ERROR_IO_PENDING) {
                 ReadError(mFilename.c_str());
                 mFail = true;

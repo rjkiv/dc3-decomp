@@ -17,6 +17,7 @@
 #define ERROR_INVALID_NAME              0x007B
 #define ERROR_BUSY                      0x00AA
 #define ERROR_ALREADY_EXISTS            0x00B7
+#define ERROR_NO_MORE_ITEMS             0x0103
 #define ERROR_IO_INCOMPLETE             0x03E4
 #define ERROR_IO_PENDING                0x03E5
 #define ERROR_MEDIA_CHANGED             0x0456

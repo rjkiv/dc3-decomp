@@ -23,8 +23,8 @@ protected:
     virtual void _Close();
 
     int mSectorBytes; // 0x34
-    HANDLE mFile; // 0x38
-    int fildes; // 0x3c
+    HANDLE mOverlappedHandle; // 0x38
+    int mHandle; // 0x3c
     bool mReadInProgress; // 0x40
     bool mWriteInProgress; // 0x41
     OVERLAPPED mOverlapped; // 0x44
