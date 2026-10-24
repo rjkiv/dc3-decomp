@@ -1636,7 +1636,8 @@ bool MoveDir::InGracePeriod(int player) {
     if (!prop) {
         return false;
     } else {
-        return TheTaskMgr.GetSongPos().mMeasure < prop->Int();
+        int measure = TheTaskMgr.GetSongPos().mMeasure;
+        return measure < prop->Int();
     }
 }
 
