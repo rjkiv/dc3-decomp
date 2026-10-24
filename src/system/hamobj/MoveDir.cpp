@@ -343,7 +343,7 @@ BEGIN_HANDLERS(MoveDir)
     )
     HANDLE_EXPR(get_cur_move, mCurMove[_msg->Int(2)])
     HANDLE_EXPR(get_cur_measure, MoveIdx())
-    HANDLE_EXPR(get_cur_beat, TheTaskMgr.TotalBeat())
+    HANDLE_EXPR(get_cur_beat, TheTaskMgr.GetSongPos().mTotalBeat)
     HANDLE_EXPR(get_finishing_move_measure, mFinishingMoveMeasure)
     HANDLE_ACTION(clear_limb_feedback, ClearLimbFeedback(_msg->Int(2)))
     HANDLE_ACTION(beat, OnBeat())
@@ -709,7 +709,7 @@ void MoveDir::Poll() {
     SkeletonDir::Poll();
     mDancerViz->Poll();
     if (TheHamDirector) {
-        int curMeasure = TheTaskMgr.CurrentMeasure();
+        int curMeasure = TheTaskMgr.GetSongPos().mMeasure;
         for (int i = 0; i < 2; i++) {
             HamMove *oldMove = mCurMove[i];
             mCurMove[i] = nullptr;
@@ -953,7 +953,8 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float top_y) {
                 sFloat = (v.y - top_y) * 0.8f;
             }
             if (mSongPlayClip) {
-                top_y = DrawPlayClip(top_y, mSongPlayClip, TheTaskMgr.CurrentMeasure());
+                top_y =
+                    DrawPlayClip(top_y, mSongPlayClip, TheTaskMgr.GetSongPos().mMeasure);
             }
 
             TheRnd.DrawStringScreen(
@@ -990,7 +991,10 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float top_y) {
             f44 = DrawDetectedBar(
                 f44,
                 MakeString(
-                    "%i %s %s", TheTaskMgr.CurrentMeasure(), curMove->Name(), mirrorText
+                    "%i %s %s",
+                    TheTaskMgr.GetSongPos().mMeasure,
+                    curMove->Name(),
+                    mirrorText
                 ),
                 f34,
                 f49,
@@ -1056,8 +1060,8 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float top_y) {
                 DrawBeatLine(f33, f34, fI, sGray);
             }
 
-            float beat = TheTaskMgr.TotalBeat();
-            int measure = TheTaskMgr.CurrentMeasure() * 4;
+            float beat = TheTaskMgr.GetSongPos().mTotalBeat;
+            int measure = TheTaskMgr.GetSongPos().mMeasure * 4;
             float fMeasure = measure;
             float f38 = beat - fMeasure;
             float yRatio = TheRnd.YRatio() * sFloat * 0.5f;
@@ -1094,8 +1098,8 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float top_y) {
             DetectRange(
                 mMovePlayerData[0].mDetectFrames,
                 range,
-                TheTaskMgr.CurrentMeasure(),
-                TheTaskMgr.CurrentMeasure()
+                TheTaskMgr.GetSongPos().mMeasure,
+                TheTaskMgr.GetSongPos().mMeasure
             );
             if (fv->mType == kFilterVersionHam1) {
                 for (DetectFrame *it = range.first; it != range.second; ++it) {
@@ -1306,8 +1310,8 @@ HamMove *MoveDir::CurrentMove(int player) const {
     return mMovePlayerData[player].mCurMove;
 }
 
-int MoveDir::MoveIdx() const { return TheTaskMgr.CurrentMeasure(); }
-int MoveDir::MoveBeat() const { return TheTaskMgr.CurrentBeat(); }
+int MoveDir::MoveIdx() const { return TheTaskMgr.GetSongPos().mMeasure; }
+int MoveDir::MoveBeat() const { return TheTaskMgr.GetSongPos().mBeat; }
 
 void MoveDir::SetMoveOverlay(bool overlay) {
     if (!mFiltersEnabled && TheLoadMgr.EditMode()) {
@@ -1550,7 +1554,8 @@ void MoveDir::SetCurrentMove(int player, HamMove *move) {
     }
     mpd.mCurMove = move;
     if (move) {
-        float f8 = TheTaskMgr.TotalBeat() - TheTaskMgr.CurrentMeasure() * 4;
+        float f8 =
+            TheTaskMgr.GetSongPos().mTotalBeat - TheTaskMgr.GetSongPos().mMeasure * 4;
         float f9 = BeatToSeconds(f8);
         f9 = (BeatToSeconds(f8 + 4.0f) - f9) * 1000.0f;
         if (TheMaster && TheMaster->GetAudio()
@@ -1631,7 +1636,7 @@ bool MoveDir::InGracePeriod(int player) {
     if (!prop) {
         return false;
     } else {
-        return TheTaskMgr.CurrentMeasure() < prop->Int();
+        return TheTaskMgr.GetSongPos().mMeasure < prop->Int();
     }
 }
 
@@ -1648,8 +1653,8 @@ MoveFrame *MoveDir::ClosestMoveFrame() {
     if (!move)
         return nullptr;
 
-    int measure = TheTaskMgr.CurrentMeasure();
-    float beat = TheTaskMgr.TotalBeat();
+    int measure = TheTaskMgr.GetSongPos().mMeasure;
+    float beat = TheTaskMgr.GetSongPos().mTotalBeat;
     int measureBeats = measure * 4;
     std::vector<MoveFrame> &frames = move->GetMoveFrames();
     MoveFrame *ret = std::min_element(
@@ -1715,7 +1720,7 @@ void MoveDir::DetectRange(
 
 float MoveDir::DetectFrac(int player, int bar) {
     MILO_ASSERT_RANGE(player, 0, 2, 0x16A);
-    int u2 = TheTaskMgr.CurrentMeasure();
+    int u2 = TheTaskMgr.GetSongPos().mMeasure;
     if (bar == -1) {
         bar = u2;
     }
@@ -1753,7 +1758,7 @@ void MoveDir::EnqueueDetectFrames(
     MILO_ASSERT(TheHamDirector, 0x538);
 
     std::pair<DetectFrame *, DetectFrame *> range;
-    int measure = TheTaskMgr.CurrentMeasure();
+    int measure = TheTaskMgr.GetSongPos().mMeasure;
     DetectRange(detect_frames, range, measure - 1, measure + 1);
     CurrentMoveMode();
     DetectFrame *toInsert = nullptr;
@@ -1876,7 +1881,8 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
 
 void MoveDir::FinalPoseStateMachine() {
     int other_player = 1;
-    float f13 = TheTaskMgr.TotalBeat() - (float)(TheTaskMgr.CurrentMeasure() * 4);
+    float f13 = TheTaskMgr.GetSongPos().mTotalBeat
+        - (float)(TheTaskMgr.GetSongPos().mMeasure * 4);
     for (int player = 0; other_player > -1; player++, other_player--) {
         HamMove *curMove = mMovePlayerData[player].mCurMove;
         if (TheGameData->Player(player)->IsPlaying() && !InGracePeriod(player) && curMove
@@ -1903,7 +1909,7 @@ void MoveDir::FinalPoseStateMachine() {
                         mMovePlayerData[player].mState = 1;
                     }
                     if (mMovePlayerData[player].mState == 1) {
-                        float measure = TheTaskMgr.CurrentMeasure() * 4;
+                        float measure = TheTaskMgr.GetSongPos().mMeasure * 4;
                         float secs = BeatToSeconds(measure + backBeat);
                         float dist =
                             ScaleFullErrorDist(fv->mTimeErrorOp) + sLatencySeconds + secs;
@@ -1964,8 +1970,8 @@ void MoveDir::PostUpdateFilters() {
                         }
                         if (mAsyncDetector) {
                             mAsyncDetector->EnqueueDetectFrames(
-                                TheTaskMgr.CurrentMeasure(),
-                                TheTaskMgr.CurrentBeat(),
+                                TheTaskMgr.GetSongPos().mMeasure,
+                                TheTaskMgr.GetSongPos().mBeat,
                                 f32,
                                 i
                             );
@@ -2059,8 +2065,8 @@ void MoveDir::PostUpdateFilters() {
                         }
                     }
                 }
-                float f32 =
-                    TheTaskMgr.TotalBeat() - (float)(TheTaskMgr.CurrentMeasure() * 4);
+                float f32 = TheTaskMgr.GetSongPos().mTotalBeat
+                    - (float)(TheTaskMgr.GetSongPos().mMeasure * 4);
                 for (int i = 0; i < 2; i++) {
                     auto &mpd = mMovePlayerData[i];
                     HamMove *curMove = mpd.mCurMove;

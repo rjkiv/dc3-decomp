@@ -126,7 +126,8 @@ BEGIN_HANDLERS(Game)
     HANDLE_EXPR(get_realtime, mRealtime)
     HANDLE_ACTION(is_active_user, _msg->Obj<HamUser>(2))
     HANDLE_EXPR(
-        ms_per_beat, TheTempoMap ? TheTempoMap->GetTempo(TheTaskMgr.CurrentTick()) : 0.0f
+        ms_per_beat,
+        TheTempoMap ? TheTempoMap->GetTempo(TheTaskMgr.GetSongPos().mTick) : 0.0f
     )
     HANDLE_EXPR(get_result, GetResult(true))
     HANDLE_EXPR(get_result_for_user, (_msg->Obj<HamUser>(2), GetResult(true)))
@@ -323,8 +324,8 @@ void Game::SetHamMove(int i1, HamMove *move, bool b3) {
     if (mMoveDir) {
         HamMove *current = mMoveDir->CurrentMove(i1);
         if (current) {
-            int currentBeat = TheTaskMgr.CurrentBeat();
-            int currentMeasure = TheTaskMgr.CurrentMeasure();
+            int currentBeat = TheTaskMgr.GetSongPos().mBeat;
+            int currentMeasure = TheTaskMgr.GetSongPos().mMeasure;
             if (currentBeat == 0) {
                 currentMeasure--;
             } else if (currentBeat != 3) {

@@ -364,7 +364,6 @@ public:
     ObjPtrList(const ObjPtrList &);
     virtual ~ObjPtrList() { clear(); }
 
-private:
     // Node size: 0x14
     struct Node : public ObjRefConcrete<T1, T2> {
         Node() : ObjRefConcrete<T1, T2>(nullptr) {}
@@ -394,6 +393,8 @@ private:
         Node *next; // 0x14
         Node *prev; // 0x18
     };
+
+private:
     int mSize; // 0x4
     Node *mNodes; // 0x8
     ObjRefOwner *mOwner; // 0xc
@@ -409,6 +410,7 @@ private:
 public:
     class iterator {
         friend class ObjPtrList;
+
     public:
         iterator() : mNode(0) {}
         iterator(Node *node) : mNode(node) {}
