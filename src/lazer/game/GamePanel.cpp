@@ -673,7 +673,7 @@ void GamePanel::UpdateNowBar() {
         durVal = -durVal;
         operation = '+';
     }
-    int totalTick = TheTaskMgr.TotalTick();
+    int totalTick = TheTaskMgr.GetSongPos().mTotalTick;
     float val;
     if (0.0f < songDuration) {
         val = 100.0f;
@@ -685,9 +685,9 @@ void GamePanel::UpdateNowBar() {
     }
     *mNowBar << MakeString(
         "MBT %d:%d:%03d [%s %c%s %4.1f%%] (%.2fsec %dtk)\n",
-        TheTaskMgr.CurrentMeasure() + 1,
-        TheTaskMgr.CurrentBeat() + 1,
-        TheTaskMgr.CurrentTick(),
+        TheTaskMgr.GetSongPos().mMeasure + 1,
+        TheTaskMgr.GetSongPos().mBeat + 1,
+        TheTaskMgr.GetSongPos().mTick,
         FormatTimeMSH(seconds * 1000.0f),
         operation,
         FormatTimeMSH(durVal * 1000.0f),

@@ -68,18 +68,24 @@ ScriptTask::~ScriptTask() { mScript->Release(); }
 bool ScriptTask::Replace(ObjRef *from, Hmx::Object *to) {
     if (from == &mThis) {
         mThis = to;
-        if (mThis) {
-            return true;
+        if (!mThis) {
+            delete this;
         }
+        return true;
     } else {
-        if (from->Parent() != &mObjects) {
-            // mObjects = to;
+        ObjRef *r = from->Parent() != &mObjects ? from : nullptr;
+        if (r) {
+            if (to) {
+                ObjPtrList<Hmx::Object>::Node *n =
+                    reinterpret_cast<ObjPtrList<Hmx::Object>::Node *>(r);
+                n->SetObjConcrete(to);
+            } else {
+                delete this;
+            }
             return true;
         } else
             return Hmx::Object::Replace(from, to);
     }
-    delete this;
-    return true;
 }
 
 void ScriptTask::Poll(float f1) {
@@ -148,8 +154,11 @@ ThreadTask::ThreadTask(DataArray *script, DataArray *updateVarsObjs)
 
 bool ThreadTask::Replace(ObjRef *from, Hmx::Object *to) {
     if (mExecuting) {
-        if (&mObjects == from->Parent() && from) {
-            mObjects.remove(to);
+        ObjRef *r = from->Parent() == &mObjects ? from : nullptr;
+        if (r) {
+            ObjPtrList<Hmx::Object>::Node *n =
+                reinterpret_cast<ObjPtrList<Hmx::Object>::Node *>(r);
+            mObjects.erase(ObjPtrList<Hmx::Object>::iterator(n));
             return true;
         }
     }
@@ -246,12 +255,11 @@ DataNode ThreadTask::OnExit(DataArray *arr) {
 #pragma region TaskTimeline
 
 TaskTimeline::TaskTimeline() : mTime(0), mLastTime(0), mPollingTask(nullptr) {}
-TaskTimeline::~TaskTimeline() {}
 
 void TaskTimeline::ClearTasks() {
     FOREACH (it, mTasks) {
-        if (it->unk0 != mPollingTask) {
-            delete it->unk0;
+        if (it->task != mPollingTask) {
+            delete it->task;
         }
     }
 }
@@ -259,22 +267,22 @@ void TaskTimeline::ClearTasks() {
 void TaskTimeline::ResetTaskTime(float time) {
     float delta = time - mTime;
     FOREACH (it, mTasks) {
-        it->unk14 += delta;
+        it->start += delta;
     }
     FOREACH (it, mAddedTasks) {
-        it->unk14 += delta;
+        it->start += delta;
     }
     mTime += delta;
     mLastTime += delta;
 }
 
 void TaskTimeline::AddTask(const TaskInfo &info) {
-    if (info.unk14 > mTime || info.unk0) {
+    if (info.start > mTime || info.task) {
         if (mPollingTask) {
             mAddedTasks.push_back(info);
         } else {
             FOREACH (it, mTasks) {
-                if (info.unk14 < it->unk14) {
+                if (info.start < it->start) {
                     mTasks.insert(it, info);
                     return;
                 }
@@ -286,14 +294,14 @@ void TaskTimeline::AddTask(const TaskInfo &info) {
 
 void TaskTimeline::Poll() {
     for (std::list<TaskInfo>::iterator it = mTasks.begin(); it != mTasks.end();) {
-        if (it->unk14 > mTime)
+        if (it->start > mTime)
             break;
-        float f1 = it->unk14;
+        float f1 = it->start;
         float f2 = mTime;
         float diff = f2 - f1;
-        if ((*it).unk0) {
-            mPollingTask = (*it).unk0;
-            (*it).unk0->Poll(diff);
+        if (it->task) {
+            mPollingTask = it->task;
+            it->task->Poll(diff);
             ++it;
         } else {
             it = mTasks.erase(it);
@@ -311,7 +319,7 @@ void TaskTimeline::AddTask(Task *task, float f) { AddTask(TaskInfo(task, mTime +
 #pragma endregion
 #pragma region TaskMgr
 
-TaskMgr::TaskMgr() { mTimelines = new TaskTimeline[4]; }
+TaskMgr::TaskMgr() { mTimelines = new TaskTimeline[kTaskNumUnits]; }
 
 TaskMgr::~TaskMgr() {
     delete[] mTimelines;
@@ -399,10 +407,10 @@ void TaskMgr::Poll() {
     for (int i = 0; i < kTaskNumUnits; i++) {
         mTimelines[i].Poll();
     }
-    for (int i = 0; i < unk84.size(); i++) {
-        delete unk84[i];
+    for (int i = 0; i < mTasksToDelete.size(); i++) {
+        delete mTasksToDelete[i];
     }
-    unk84.clear();
+    mTasksToDelete.clear();
 }
 
 void TaskMgr::ClearTasks() {
@@ -500,11 +508,11 @@ void TaskMgr::Init() {
 
 void TaskMgr::QueueTaskDelete(Task *task) {
     if (task) {
-        for (int i = 0; i < unk84.size(); i++) {
-            if (unk84[i] == task)
+        for (int i = 0; i < mTasksToDelete.size(); i++) {
+            if (mTasksToDelete[i] == task)
                 return;
         }
-        unk84.push_back(ObjPtr<Task>(nullptr, task));
+        mTasksToDelete.push_back(ObjPtr<Task>(nullptr, task));
     }
 }
 

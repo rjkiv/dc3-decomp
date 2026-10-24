@@ -21,7 +21,7 @@ class Task : public Hmx::Object {
 public:
     Task() {}
     // virtual ~Task() {}
-    virtual void Poll(float) = 0;
+    virtual void Poll(float time) = 0;
 
     MEM_OVERLOAD(Task, 0x1A);
 };
@@ -40,7 +40,6 @@ public:
 class ScriptTask : public Task {
 public:
     struct Var {
-        Var(DataNode *np, const DataNode &n) : var(np), value(n) {}
         Var(DataNode *np) : var(np), value(*np) {}
         void Swap();
 
@@ -90,13 +89,12 @@ public:
 class TaskTimeline {
 public:
     struct TaskInfo {
-        TaskInfo(Task *t, float f) : unk0(nullptr, t), unk14(f) {}
-        ObjPtr<Task> unk0;
-        float unk14;
+        TaskInfo(Task *t, float f) : task(nullptr, t), start(f) {}
+        ObjPtr<Task> task; // 0x0
+        float start; // 0x14
     };
 
     TaskTimeline();
-    ~TaskTimeline();
     void Poll();
     void AddTask(Task *, float);
     void ClearTasks();
@@ -115,6 +113,10 @@ public:
         mLastTime = time - delta;
         mTime = time;
     }
+
+    // public: void ClearNamedTasks();
+    // public: float Time() const;
+    // public: float DeltaTime() const;
 
 private:
     std::list<TaskInfo> mTasks; // 0x0
@@ -164,14 +166,15 @@ public:
     void ResetTaskTime(float, float);
     void ResetSecondTaskTime(float);
     void ResetBeatTaskTime(float);
-    int CurrentMeasure() const { return mSongPos.GetMeasure(); }
-    int CurrentBeat() const { return mSongPos.GetBeat(); }
-    int CurrentTick() const { return mSongPos.GetTick(); }
-    float TotalBeat() const { return mSongPos.GetTotalBeat(); }
-    float TotalTick() const { return mSongPos.GetTotalTick(); }
+
+    bool GetAutoSecondsBeats() { return mAutoSecondsBeats; }
     void SetAutoSecondsBeats(bool b) { mAutoSecondsBeats = b; }
     void SetSongPos(const SongPos &pos) { mSongPos = pos; }
     const SongPos &GetSongPos() const { return mSongPos; }
+    float AVOffset() const { return mAVOffset; }
+
+    // public: void ClearNamedTasks();
+    // public: void SetTutorialSeconds(float, bool);
 
 private:
     DataNode OnTimeTilNext(DataArray *);
@@ -179,10 +182,9 @@ private:
     TaskTimeline *mTimelines; // 0x2c
     SongPos mSongPos; // 0x30
     bool mAutoSecondsBeats; // 0x48
-    int unk4c; // 0x4c
     Timer mTime; // 0x50
     float mAVOffset; // 0x80
-    std::vector<ObjPtr<Task> > unk84; // 0x84
+    std::vector<ObjPtr<Task> > mTasksToDelete; // 0x84
 };
 
 extern TaskMgr TheTaskMgr;
