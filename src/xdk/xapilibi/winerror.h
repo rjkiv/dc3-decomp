@@ -23,10 +23,11 @@
 #define ERROR_DEVICE_NOT_CONNECTED      0x048F
 #define ERROR_CANCELLED                 0x04C7
 #define ERROR_RETRY                     0x04D5
-#define ERROR_NO_SUCH_USER              0x0525       
+#define ERROR_NO_SUCH_USER              0x0525
 #define ERROR_FILE_CORRUPT              0x0570
 #define ERROR_DISK_CORRUPT              0x0571
 #define ERROR_DEVICE_REMOVED            0x0651
+#define ERROR_EMPTY                     0x10D2
 
 #define S_OK                            (long)0
 #define S_FALSE							(long)1

@@ -4,75 +4,74 @@
 #include <cctype>
 
 namespace {
-    // https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
     int TranslateVK(unsigned short vk, bool shifted) {
         int ret = 0;
-        if ((vk >= 0x30 && vk <= 0x39) || (vk >= 0x41 && vk <= 0x5A)) {
+        if ((vk >= VK_0 && vk <= VK_9) || (vk >= VK_A && vk <= VK_Z)) {
             if (shifted) {
                 ret = vk;
             } else {
                 ret = tolower(vk);
             }
         }
-        if (vk >= 0x70 && vk <= 0x7B) {
+        if (vk >= VK_F1 && vk <= VK_F12) {
             ret = vk + 0x121;
         }
         switch (vk) {
-        case 8:
+        case VK_BACK:
             ret = 8;
             break;
-        case 9:
+        case VK_TAB:
             ret = 9;
             break;
-        case 0xD:
+        case VK_RETURN:
             ret = 10;
             break;
-        case 0x13:
+        case VK_PAUSE:
             ret = 0x12D;
             break;
-        case 0x14:
+        case VK_CAPITAL:
             ret = 0x122;
             break;
-        case 0x1B:
+        case VK_ESCAPE:
             ret = 0x12E;
             break;
-        case 0x21:
+        case VK_PRIOR:
             ret = 0x13A;
             break;
-        case 0x22:
+        case VK_NEXT:
             ret = 0x13B;
             break;
-        case 0x23:
+        case VK_END:
             ret = 0x139;
             break;
-        case 0x24:
+        case VK_HOME:
             ret = 0x138;
             break;
-        case 0x25:
+        case VK_LEFT:
             ret = 0x140;
             break;
-        case 0x26:
+        case VK_UP:
             ret = 0x142;
             break;
-        case 0x27:
+        case VK_RIGHT:
             ret = 0x141;
             break;
-        case 0x28:
+        case VK_DOWN:
             ret = 0x143;
             break;
-        case 0x2A:
+        case VK_PRINT:
             ret = 300;
             break;
-        case 0x2D:
+        case VK_INSERT:
             ret = 0x136;
             break;
-        case 0x2E:
+        case VK_DELETE:
             ret = 0x137;
             break;
-        case 0x90:
+        case VK_NUMLOCK:
             ret = 0x123;
             break;
-        case 0x91:
+        case VK_SCROLL:
             ret = 0x124;
             break;
         }
@@ -86,7 +85,7 @@ void KeyboardTerminate() { KeyboardTerminateCommon(); }
 void KeyboardPoll() {
     XINPUT_KEYSTROKE keystroke;
     DWORD res = XInputGetKeystroke(XUSER_INDEX_ANY, 2, &keystroke);
-    if (res != 0x10D2 && res == 0) {
+    if (res != ERROR_EMPTY && res == ERROR_SUCCESS) {
         if (!(keystroke.Flags & 2)) {
             WCHAR w[2] = { keystroke.Unicode, 0 };
             char c;
