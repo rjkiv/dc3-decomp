@@ -25,10 +25,10 @@ private:
     void StreamRestart(int);
 
     SIVideo mVideo; // 0x30
-    void *unk44;
-    int unk48;
-    File *unk4c; // 0x4c
-    int unk50;
-    int unk54;
-    void *unk58;
+    char *mBuffer; // 0x44
+    int mMovieFrame; // 0x48
+    File *mStreamFile; // 0x4c
+    int mStreamOrigin; // 0x50
+    int mStreamOffset; // 0x54
+    char *mStreamAddr; // 0x58
 };

@@ -388,7 +388,7 @@ __GIVE_UP_WITH_STL(GCC_272);
                                               (__GNUC__ > 3))
 #        define _STLP_NATIVE_INCLUDE_PATH ../__GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__
 #      else
-#        define _STLP_NATIVE_INCLUDE_PATH ../__GNUC__.__GNUC_MINOR__
+#        define _STLP_NATIVE_INCLUDE_PATH xdk/LIBCMT
 #      endif
 #    endif
 #  endif

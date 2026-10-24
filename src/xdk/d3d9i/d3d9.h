@@ -399,6 +399,9 @@ D3DVertexDeclaration *
 D3DDevice_CreateVertexDeclaration(const D3DVERTEXELEMENT9 *pVertexElements);
 
 void D3DDevice_SetFVF(D3DDevice *pDevice, DWORD FVF);
+void D3DDevice_DrawVertices(
+    D3DDevice *pDevice, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT VertexCount
+);
 void D3DDevice_DrawVerticesUP(
     D3DDevice *pDevice,
     D3DPRIMITIVETYPE PrimitiveType,
@@ -786,7 +789,10 @@ struct D3DDevice { /* Size=0x2b00 */
     SetSamplerSeparateZFilterStates(DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
     HRESULT SetSamplerFilterStates(DWORD, DWORD, DWORD, DWORD, DWORD);
     HRESULT
-    DrawVertices(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT VertexCount);
+    DrawVertices(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT VertexCount) {
+        D3DDevice_DrawVertices(this, PrimitiveType, StartVertex, VertexCount);
+        return S_OK;
+    }
     HRESULT DrawIndexedVertices(
         D3DPRIMITIVETYPE PrimitiveType,
         INT BaseVertexIndex,

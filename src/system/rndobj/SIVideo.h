@@ -14,6 +14,8 @@ public:
     int Height() const { return mHeight; }
     int NumFrames() const { return mNumFrames; }
 
+    MEM_OVERLOAD(SIVideo, 5)
+
 private:
     unsigned int mWidth; // 0x0
     unsigned int mHeight; // 0x4
