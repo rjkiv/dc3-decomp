@@ -23,13 +23,13 @@ public:
     };
 
     DirLoader(
-        const FilePath &,
-        LoaderPos,
-        Loader::Callback *,
-        BinStream *,
-        class ObjectDir *,
-        bool,
-        class ObjectDir *
+        const FilePath &file,
+        LoaderPos pos,
+        Loader::Callback *callback,
+        BinStream *stream,
+        class ObjectDir *proxy,
+        bool subdir,
+        class ObjectDir *editorTargetDir
     );
     virtual ~DirLoader();
     virtual Hmx::Object *RefOwner() const { return nullptr; }
@@ -39,40 +39,46 @@ public:
     virtual const char *StateName() const;
 
     ObjectDir *GetDir();
-    void Cleanup(const char *);
+    void Cleanup(const char *msg);
 
+    // public: ObjectDir* GetDirWithoutTakingOwnership() const;
+    Callback *GetCallback() { return mCallback; }
     const char *ProxyName() const { return mProxyName; }
-    ObjectDir *ProxyDir() const { return mProxyDir; }
-    void SetDeleteSelf(bool set) { mDeleteSelf = set; }
-    void SetUnk99(bool b1) { unk99 = b1; }
+    ObjectDir *ProxyDir() { return mProxyDir; }
+    void SetProxyDir(ObjectDir *dir) { mProxyDir = dir; }
+    void SetDeleteSelf() { mDeleteSelf = true; }
+    void SetExternalFailed() { mExternalFailed = true; }
 
     POOL_OVERLOAD(DirLoader, 0x2A);
 
     static bool sPrintTimes;
     static void SetCacheMode(bool);
 
-    static Symbol GetDirClass(const char *);
-    static const char *CachedPath(const char *, bool);
+    static Symbol GetDirClass(const char *file);
+    static const char *CachedPath(const char *file, bool force);
     static bool ShouldBlockSubdirLoad(const FilePath &);
-    static bool SaveObjects(const char *, ObjectDir *, bool);
-    static void SaveObjects(BinStream &, ObjectDir *);
-    static void WriteTypeMemDump(TextFileStream *);
-    static Loader *New(const FilePath &path, LoaderPos pos) {
-        return new DirLoader(path, pos, nullptr, nullptr, nullptr, false, nullptr);
+    static bool SaveObjects(const char *file, ObjectDir *dir, bool saveEditorDir);
+    static void SaveObjects(BinStream &d, ObjectDir *dir);
+    static void WriteTypeMemDump(TextFileStream *file);
+    static Loader *New(const FilePath &file, LoaderPos pos) {
+        return new DirLoader(file, pos, nullptr, nullptr, nullptr, false, nullptr);
     }
-    static DirLoader *Find(const FilePath &);
-    static DirLoader *FindLast(const FilePath &);
-    static ObjectDir *LoadObjects(const FilePath &, Callback *, BinStream *);
+    static DirLoader *Find(const FilePath &file);
+    static DirLoader *FindLast(const FilePath &file);
+    static ObjectDir *
+    LoadObjects(const FilePath &file, Callback *callback, BinStream *stream);
     static void SetPathEvalFunc(PathEvalFunc *func) { sPathEval = func; }
     static ObjectDir *TopSaveDir() { return sTopSaveDir; }
 
 private:
     virtual void PollLoading() { (this->*mState)(); }
 
-    Symbol FixClassName(Symbol);
-    bool SetupDir(Symbol);
-    void DumpObjectMemDelta(const Hmx::Object *, const MemPointDelta &) const;
-    void AddTypeObjectMemDelta(const Hmx::Object *, const MemPointDelta &) const;
+    Symbol FixClassName(Symbol c);
+    bool SetupDir(Symbol className);
+    void
+    DumpObjectMemDelta(const Hmx::Object *object, const MemPointDelta &memDelta) const;
+    void
+    AddTypeObjectMemDelta(const Hmx::Object *object, const MemPointDelta &memDelta) const;
 
     void LoadObjs();
     void LoadDir();
@@ -95,13 +101,12 @@ private:
     bool mLoadDir; // 0x5d
     bool mDeleteSelf; // 0x5e
     const char *mProxyName; // 0x60
-    int unk64;
     Timer mTimer; // 0x68
-    bool unk98;
-    bool unk99;
-    bool unk9a;
-    bool unk9b;
-    class ObjectDir *unk9c;
+    bool mAccessed; // 0x98
+    bool mExternalFailed; // 0x99
+    bool mHasEditorDir; // 0x9a
+    bool mSubDir; // 0x9b
+    class ObjectDir *mEditorTargetDir; // 0x9c
     ObjOwnerPtr<ObjectDir> mProxyDir; // 0xa0
 
     static bool sCacheMode;

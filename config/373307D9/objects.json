@@ -467,7 +467,7 @@
             "system/obj/DataNode.cpp": "NonMatching",
             "system/obj/DataUtl.cpp": "Matching",
             "system/obj/Dir.cpp": "NonMatching",
-            "system/obj/DirLoader.cpp": "NonMatching",
+            "system/obj/DirLoader.cpp": "Matching",
             "system/obj/DirUnloader.cpp": "Matching",
             "system/obj/MessageTimer.cpp": "Matching",
             "system/obj/Msg.cpp": "NonMatching",

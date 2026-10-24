@@ -318,7 +318,7 @@ void FileMerger::DeleteCurLoader() {
     if (mCurLoader) {
         DirLoader *d = dynamic_cast<DirLoader *>(mCurLoader);
         if (d) {
-            d->SetUnk99(true);
+            d->SetExternalFailed();
         }
         delete mCurLoader;
     }
@@ -531,7 +531,7 @@ void FileMerger::PostMerge(FileMerger::Merger *merger, DirLoader *dl, bool b3) {
             LaunchNextLoader();
     }
     if (!b3 && dl && !dl->IsLoaded()) {
-        dl->SetDeleteSelf(true);
+        dl->SetDeleteSelf();
     }
 }
 

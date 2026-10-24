@@ -15538,7 +15538,7 @@ __iptostatemap$?ExecuteScript@DataArray@@QAA?AVDataNode@@HPAVObject@Hmx@@PBV1@H@
 __unwindtable$??5@YAAAVBinStream@@AAV0@AAPAVDataArray@@@Z = .rdata:0x82071A38; // type:object size:0x8 scope:global
 __ehfuncinfo$??5@YAAAVBinStream@@AAV0@AAPAVDataArray@@@Z = .rdata:0x82071A40; // type:object size:0x28 scope:global
 __iptostatemap$??5@YAAAVBinStream@@AAV0@AAPAVDataArray@@@Z = .rdata:0x82071A68; // type:object size:0x18 scope:global
-lbl_82071A80 = .rdata:0x82071A80; // type:object size:0x14
+gEditorDeadBytesMark = .rdata:0x82071A80; // type:object size:0x14
 ??_C@_0DB@POEOGIM@e?3?2lazer_build_gmc1?2system?2src?2u@ = .rdata:0x82071A94; // type:object size:0x34 scope:global
 ??_C@_0M@LEKCDPHE@ChunkStream?$AA@ = .rdata:0x82071AC8; // type:object size:0xC scope:global data:string
 ??_C@_0O@GHIJMJNK@DirLoader?4cpp?$AA@ = .rdata:0x82071AD4; // type:object size:0x10 scope:global
