@@ -80,48 +80,57 @@ namespace Holmes {
     }
 }
 
-bool UsingHolmes(int);
-int HolmesClientSysExec(const char *);
+bool UsingHolmes(int iMode);
+int HolmesClientSysExec(const char *cmdLine);
 void HolmesClientReInit();
-void HolmesClientPrint(const char *);
+void HolmesClientPrint(const char *s);
 void HolmesClientTerminate();
 void HolmesClientInit();
 NetAddress HolmesResolveIP();
 void HolmesClientPollKeyboard();
 unsigned int HolmesClientPollJoypad();
-int HolmesClientGetStat(const char *, FileStat &);
-int HolmesClientDelete(const char *);
-int HolmesClientMkDir(const char *);
+int HolmesClientGetStat(const char *filename, FileStat &stat);
+int HolmesClientDelete(const char *path);
+int HolmesClientMkDir(const char *path);
 const char *HolmesFileShare();
-void HolmesSetFileShare(const char *, const char *);
+void HolmesSetFileShare(const char *machineName, const char *shareName);
 void HolmesClientEnumerate(
-    const char *, void (*)(const char *, const char *), bool, const char *, bool
+    const char *dir,
+    void (*cb)(const char *, const char *),
+    bool recurse,
+    const char *pattern,
+    bool dirs
 );
-void HolmesClientStackTrace(const char *, struct StackData *, int, String &);
-void HolmesClientTruncate(int, int);
-bool HolmesClientOpen(const char *, int, unsigned int &, int &);
-void HolmesClientWrite(int, int, int, const void *);
-void HolmesClientRead(int, int, int, void *, File *);
-bool HolmesClientReadDone(File *);
-void HolmesClientClose(File *, int);
-bool CanUseHolmes(int);
-void HolmesToLocal(char *, const char *);
-char const *HolmesFileHostName();
+void HolmesClientStackTrace(
+    const char *file, struct StackData *stack, int stack_size, String &stack_desc
+);
+void HolmesClientTruncate(int file_handle, int length);
+bool HolmesClientOpen(
+    const char *filename, int mode, unsigned int &file_size, int &file_handle
+);
+void HolmesClientWrite(int file_handle, int start, int bytes, const void *buf);
+void HolmesClientRead(int file_handle, int start, int bytes, void *buf, File *requestor);
+bool HolmesClientReadDone(File *f);
+void HolmesClientClose(File *f, int file_handle);
+bool CanUseHolmes(int iMode);
+void HolmesToLocal(char *out, const char *file);
+const char *HolmesFileHostName();
 void HolmesClientPoll();
-DataNode DumpHolmesLog(DataArray *);
-void HolmesClientSendMessage(const Message &);
-CacheResourceResult HolmesClientCacheResource(const char *, const char *);
-bool HolmesClientCacheFile(char *, const char *);
+DataNode DumpHolmesLog(DataArray *array);
+void HolmesClientSendMessage(const Message &m);
+CacheResourceResult
+HolmesClientCacheResource(const char *filename, const char *cachedName);
+bool HolmesClientCacheFile(char *localName, const char *filename);
 
 // HolmesClient_NetSocket
 
 namespace HolmesClient {
     String PlatformGetHostName();
     NetAddress PlatformResolveIP();
-    BinStream *PlatformCreateServerStream(bool, const char *);
+    BinStream *PlatformCreateServerStream(bool iHolmesOptional, const char *iHolmesShare);
 }
 
 struct RecurseInfo {
-    String s1;
-    String s2;
+    String mDir;
+    String mFile;
 };

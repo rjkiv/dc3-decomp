@@ -37,12 +37,11 @@ namespace {
         Timer wait;
         Timer work;
         int count;
-        u32 pad;
     };
 
     struct ReadRequest {
         File *mRequestor;
-        void *mBuffer;
+        char *mBuffer;
         int mBytes;
     };
 
@@ -180,22 +179,21 @@ namespace {
     };
 
     bool CheckReads(bool isPolling) {
-        FOREACH (it, gRequests) {
+        while (!gRequests.empty()) {
             if (!CheckForResponse(Holmes::kReadFile, isPolling)) {
                 return false;
             }
             BeginCmd(Holmes::kReadFile, false);
-            ReadRequest &cur = *it;
+            ReadRequest &cur = gRequests.front();
             int i2 = gHolmesStream->ReadAsync(cur.mBuffer, cur.mBytes);
-            char *buffer = (char *)cur.mBuffer;
-            buffer += i2;
+            cur.mBuffer += i2;
             cur.mBytes -= i2;
             EndCmd(Holmes::kReadFile);
             if (i2 <= 0) {
                 return false;
             }
             if (cur.mBytes == 0) {
-                gRequests.erase(it);
+                gRequests.pop_front();
                 gPendingResponse = Holmes::kInvalidOpcode;
                 return true;
             }
@@ -552,14 +550,15 @@ bool HolmesClientOpen(
     } else {
         BeginCmd(Holmes::kOpenFile, true);
         unsigned char val = 3;
-        *gStreamBuffer << val << filename;
-        val = (mode >> 1) & 1;
+        bool m1 = mode & 0x2;
+        bool m8 = mode & 0x100;
+        bool m9 = mode & 0x200;
+        bool m12 = mode & 0x40000;
         *gStreamBuffer << val;
-        *gStreamBuffer << (unsigned char)((mode >> 0x12) & 1);
-        if (val == 0) {
-            *gStreamBuffer << (unsigned char)((mode >> 8) & 1);
-            val = (mode >> 9) & 1;
-            *gStreamBuffer << val;
+        *gStreamBuffer << filename;
+        *gStreamBuffer << m1 << m12;
+        if (m1 == 0) {
+            *gStreamBuffer << m8 << m9;
         }
         HolmesFlushStreamBuffer();
         WaitForResponse(Holmes::kOpenFile);
@@ -609,7 +608,7 @@ void HolmesClientRead(int file_handle, int start, int bytes, void *buf, File *re
 
         ReadRequest req;
         req.mRequestor = requestor;
-        req.mBuffer = buf;
+        req.mBuffer = (char *)buf;
         req.mBytes = bytes;
         gRequests.push_back(req);
         EndCmd(Holmes::kReadFile);
@@ -662,28 +661,33 @@ bool HolmesClientCacheFile(char *localName, const char *filename) {
     CritSecTracker tracker(&gCrit);
     AutoSlowFrame frame(__FUNCTION__, 20000);
     BeginCmd(Holmes::kCacheFile, true);
+    bool ret = false;
     String str(filename);
     HolmesToLocal(localName, str.c_str());
     if (*localName == '\0') {
         EndCmd(Holmes::kCacheFile);
         return false;
     } else {
-        FileStat curStat;
-        bool fileRes = GetFileAttributesExA(localName, GetFileExInfoStandard, &curStat);
-        u64 time = curStat.st_mtime;
+        WIN32_FILE_ATTRIBUTE_DATA data;
+        bool fileRes = GetFileAttributesExA(localName, GetFileExInfoStandard, &data);
+        FILETIME time = data.ftLastWriteTime;
         if (str == gLastCachedResource && (gLastCacheResult > 0 || fileRes)) {
             EndCmd(Holmes::kCacheFile);
             return true;
         } else {
-            *gStreamBuffer << (unsigned char)Holmes::kCacheFile << str << fileRes;
+            *gStreamBuffer << (unsigned char)Holmes::kCacheFile << str;
+            *gStreamBuffer << fileRes;
             if (fileRes) {
-                *gStreamBuffer >> time;
+                gStreamBuffer->WriteEndian(&time, sizeof(FILETIME));
             }
             HolmesFlushStreamBuffer();
             WaitForResponse(Holmes::kCacheFile);
-            bool ret;
-            *gHolmesStream >> ret;
+            bool b;
+            *gHolmesStream >> b;
             gPendingResponse = Holmes::kInvalidOpcode;
+            if (b) {
+                ret = true;
+            }
             EndCmd(Holmes::kCacheFile);
             return ret;
         }
@@ -692,7 +696,7 @@ bool HolmesClientCacheFile(char *localName, const char *filename) {
 
 void HolmesClientEnumerate(
     const char *dir,
-    void (*cb)(const char *, const char *), // param called cb in the pdb
+    void (*cb)(const char *, const char *),
     bool recurse,
     const char *pattern,
     bool dirs
@@ -710,11 +714,11 @@ void HolmesClientEnumerate(
         if (!b80)
             break;
         info.push_back(RecurseInfo());
-        *gHolmesStream >> info.back().s1 >> info.back().s2;
+        *gHolmesStream >> info.back().mDir >> info.back().mFile;
     }
     gPendingResponse = Holmes::kInvalidOpcode;
     for (int i = 0; i < info.size(); i++) {
-        cb(info[i].s1.c_str(), info[i].s2.c_str());
+        cb(info[i].mDir.c_str(), info[i].mFile.c_str());
     }
     EndCmd(Holmes::kEnumerate);
 }

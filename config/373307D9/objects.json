@@ -515,7 +515,7 @@
             "system/os/FileCache.cpp": "Matching",
             "system/os/File_Win.cpp": "Matching",
             "system/os/HDCache.cpp": "Matching",
-            "system/os/HolmesClient.cpp": "NonMatching",
+            "system/os/HolmesClient.cpp": "Matching",
             "system/os/HolmesClient_NetSocket.cpp": "Matching",
             "system/os/HolmesKeyboard.cpp": "Matching",
             "system/os/HolmesUtl.cpp": "Matching",

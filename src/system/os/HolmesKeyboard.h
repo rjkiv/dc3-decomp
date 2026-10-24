@@ -8,6 +8,10 @@ class CWnd;
 
 class HolmesInput : public Hmx::Object {
 public:
+    enum InputType {
+        kButtonDown = 0,
+        kButtonUp = 1
+    };
     HolmesInput(CWnd *);
     virtual ~HolmesInput();
     virtual DataNode Handle(DataArray *, bool);
@@ -17,9 +21,10 @@ public:
     void LoadKeyboard(BinStream &);
     void LoadJoypad(BinStream &);
 
+    // yep, this is public
+    bool mSubscribe; // 0x2c
 private:
-    int unk2c; // 0x2c
-    MemStream *mJoypadStream; // 0x30
-    MemStream *mKeyboardStream; // 0x34
-    CWnd *mCWnd; // 0x38
+    MemStream *mJoypadBuffer; // 0x30
+    MemStream *mKeyboardBuffer; // 0x34
+    CWnd *mOwner; // 0x38
 };

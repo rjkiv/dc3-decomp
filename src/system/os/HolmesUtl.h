@@ -2,4 +2,4 @@
 
 #include "utl/Str.h"
 
-String HolmesXboxPath(const char *, const char *);
+String HolmesXboxPath(const char *hostName, const char *filePath);
