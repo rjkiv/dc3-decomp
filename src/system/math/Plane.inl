@@ -21,10 +21,16 @@ void Multiply(const Plane &, const Transform &, Plane &);
 
 // is the sphere in front of or on the plane?
 inline bool operator>=(const Sphere &s, const Plane &p) {
-    return p.Dot(s.center) >= s.radius;
+    float a = p.a * s.center.x;
+    float c = p.c * s.center.z;
+    float b = p.b * s.center.y;
+    return a + b + c + p.d >= s.radius;
 }
 
 // is the sphere behind the plane?
 inline bool operator<(const Sphere &s, const Plane &p) {
-    return p.Dot(s.center) < -s.radius;
+    float a = p.a * s.center.x;
+    float c = p.c * s.center.z;
+    float b = p.b * s.center.y;
+    return a + b + c + p.d < -s.radius;
 }
