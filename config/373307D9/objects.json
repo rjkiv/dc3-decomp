@@ -504,7 +504,7 @@
             "system/os/AsyncFileHolmes.cpp": "Matching",
             "system/os/AsyncFile_Win.cpp": "NonMatching",
             "system/os/AsyncTask.cpp": "Matching",
-            "system/os/BlockMgr.cpp": "NonMatching",
+            "system/os/BlockMgr.cpp": "Matching",
             "system/os/CDReader.cpp": "Matching",
             "system/os/ContentMgr.cpp": "Matching",
             "system/os/ContentMgr_Xbox.cpp": "Matching",

@@ -1,5 +1,6 @@
 #include "CDReader.h"
 #include "obj/DataFunc.h"
+#include "os/Archive.h"
 #include "os/AsyncTask.h"
 #include "os/Block.h"
 #include "os/Debug.h"
@@ -40,15 +41,19 @@ namespace {
 
 int gCurrBuffNum;
 int Block::sCurrTimestamp;
-Timer gReadTime;
-BlockMgr TheBlockMgr;
 
-static int gNumPolls;
-static int gSeekCount;
-static float gSeekTimeMs;
+static int gLastBlockNum = -1;
+static int gLastArkNum = -1;
+
+static int gNumPolls = 0;
+static int gSeekCount = 0;
+static float gSeekTimeMs = 0;
 
 static const float kSeekTimeMsThresh = 240;
 static const float kSpinDownMs = 120000;
+
+Timer gReadTime;
+BlockMgr TheBlockMgr;
 
 int GetFreeBuffer() {
     MILO_ASSERT(gCurrBuffNum < kNumBlockBuffers, 0x46);
@@ -255,6 +260,84 @@ void BlockMgr::Poll() {
         }
         if (mReadingBlock) {
             gNumPolls++;
+            int err = ReadError();
+            if (err) {
+                MILO_LOG(" CD READING ERROR!!!  %x\n", err);
+                ReadBlock();
+                return;
+            }
+            bool done;
+            if (gReadHD) {
+                done = TheHDCache.ReadDone();
+            } else {
+                done = CDReadDone();
+            }
+            if (done) {
+                if (Archive::DebugArkOrder()) {
+                    gReadTime.Split();
+                    int dist = mReadingBlock->mBlockNum - gLastBlockNum;
+                    if (mReadingBlock->mArkfileNum != gLastArkNum) {
+                        dist = 99999;
+                    }
+                    if (dist != 1) {
+                        gSeekCount++;
+                        gSeekTimeMs += gReadTime.Ms();
+                    } else {
+                        gSeekCount = 0;
+                        gSeekTimeMs = 0;
+                    }
+                    if (gSeekCount >= 1 || gSeekTimeMs >= kSeekTimeMsThresh) {
+                        char buf[100];
+                        strncpy(buf, mReadingBlock->mDebugName, 99);
+                        buf[99] = '\0';
+                        MILO_LOG(
+                            "BlockMgr Seek: Ark: %2d  Dist: %5d  Seek Time: %3.0f ms  Suspect: %s\n",
+                            mReadingBlock->mArkfileNum,
+                            dist,
+                            gSeekTimeMs,
+                            buf
+                        );
+                    }
+                    gLastBlockNum = mReadingBlock->mBlockNum;
+                    gLastArkNum = mReadingBlock->mArkfileNum;
+                }
+                if (!gReadHD) {
+                    mSpinDownTimer.Restart();
+                }
+                mReadingBlock->UpdateTimestamp();
+                std::list<BlockRequest>::iterator request = mRequests.begin();
+                for (; request != mRequests.end(); ++request) {
+                    if (mReadingBlock->Matches(request->mArkfileNum, request->mBlockNum)) {
+                        break;
+                    }
+                }
+                MILO_ASSERT(request != mRequests.end(), 0x1EB);
+                mReadingBlock = nullptr;
+                FOREACH (it, request->mTasks) {
+                    it->FillData();
+                }
+                mRequests.erase(request);
+                if (!mWritingBlock) {
+                    WriteBlock();
+                }
+            }
+        }
+
+        if (!mReadingBlock && mRequests.size()) {
+            Block *block = FindLRUBlock(false);
+            BlockRequest &front = mRequests.front();
+            int arknum = front.mArkfileNum;
+            int blocknum = front.mBlockNum;
+            const char *debugname = front.mDebugName;
+            MILO_ASSERT(blocknum != -1, 0x20F);
+            mReadingBlock = block;
+            mReadingBlock->mBlockNum = blocknum;
+            mReadingBlock->mArkfileNum = arknum;
+            mReadingBlock->mWritten = false;
+            mReadingBlock->mDebugName = debugname;
+            gReadTime.Restart();
+            gNumPolls = 0;
+            ReadBlock();
         }
     }
 }
