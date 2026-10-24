@@ -3,7 +3,7 @@
 #include "obj/Object.h"
 
 Hmx::Object *gSource;
-ObjPtr<Hmx::Object> gOverride(0, 0);
+ObjPtr<Hmx::Object> gOverride(nullptr, nullptr);
 
 void KeyboardTerminateCommon() { RELEASE(gSource); }
 

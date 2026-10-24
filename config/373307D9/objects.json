@@ -526,7 +526,7 @@
             "system/os/Joypad_Xinput.cpp": "NonMatching",
             "system/os/Keyboard.cpp": "Matching",
             "system/os/KeyboardJoypadAdapter.cpp": "Matching",
-            "system/os/Keyboard_Xbox.cpp": "NonMatching",
+            "system/os/Keyboard_Xbox.cpp": "Matching",
             "system/os/MapFile_Xbox.cpp": "Matching",
             "system/os/Memcard.cpp": "Matching",
             "system/os/Memcard_Xbox.cpp": "Matching",

@@ -8,9 +8,9 @@ void KeyboardInit();
 void KeyboardTerminate();
 void KeyboardPoll();
 
-void KeyboardSubscribe(Hmx::Object *);
-void KeyboardUnsubscribe(Hmx::Object *);
-Hmx::Object *KeyboardOverride(Hmx::Object *);
+void KeyboardSubscribe(Hmx::Object *sink);
+void KeyboardUnsubscribe(Hmx::Object *sink);
+Hmx::Object *KeyboardOverride(Hmx::Object *override);
 void KeyboardSendMsg(int key, bool shift, bool ctrl, bool alt);
 
 #include "obj/Msg.h"
