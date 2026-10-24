@@ -500,7 +500,7 @@
             "system/os/AppChild.cpp": "Matching",
             "system/os/Archive.cpp": "NonMatching",
             "system/os/ArkFile.cpp": "NonMatching",
-            "system/os/AsyncFile.cpp": "NonMatching",
+            "system/os/AsyncFile.cpp": "Matching",
             "system/os/AsyncFileHolmes.cpp": "Matching",
             "system/os/AsyncFile_Win.cpp": "Matching",
             "system/os/AsyncTask.cpp": "Matching",
