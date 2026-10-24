@@ -16,58 +16,56 @@ static const D3DCMPFUNC sAlphaFuncs[] = {
     D3DCMP_NOTEQUAL, D3DCMP_GREATER, D3DCMP_GREATEREQUAL, D3DCMP_NEVER,
 };
 
-void RndRenderState::SetTextureFilter(unsigned int sampler, FilterMode filter, bool b3) {
-    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MINFILTER, filter);
-    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MAGFILTER, filter);
-    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MIPFILTER, filter);
+void RndRenderState::SetTextureFilter(uint idx, FilterMode m, bool __formal) {
+    TheDxRnd.Device()->SetSamplerState(idx, D3DSAMP_MINFILTER, m);
+    TheDxRnd.Device()->SetSamplerState(idx, D3DSAMP_MAGFILTER, m);
+    TheDxRnd.Device()->SetSamplerState(idx, D3DSAMP_MIPFILTER, m);
 }
 
-void RndRenderState::SetTextureClamp(unsigned int sampler, ClampMode clamp) {
-    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSU, clamp);
-    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSV, clamp);
-    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSW, clamp);
+void RndRenderState::SetTextureClamp(uint idx, ClampMode u) {
+    TheDxRnd.Device()->SetSamplerState(idx, D3DSAMP_ADDRESSU, u);
+    TheDxRnd.Device()->SetSamplerState(idx, D3DSAMP_ADDRESSV, u);
+    TheDxRnd.Device()->SetSamplerState(idx, D3DSAMP_ADDRESSW, u);
 }
 
-void RndRenderState::SetBorderColor(unsigned int sampler, bool black_or_white) {
-    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_BORDERCOLOR, black_or_white);
+void RndRenderState::SetBorderColor(uint idx, bool white) {
+    TheDxRnd.Device()->SetSamplerState(idx, D3DSAMP_BORDERCOLOR, white);
 }
 
 void RndRenderState::SetBlendEnable(bool b) {
     TheDxRnd.Device()->SetRenderState(D3DRS_ALPHABLENDENABLE, b);
 }
 
-void RndRenderState::SetBlendOp(BlendOp op) {
-    TheDxRnd.Device()->SetRenderState(D3DRS_BLENDOP, op);
+void RndRenderState::SetBlendOp(BlendOp m) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_BLENDOP, m);
 }
 
-void RndRenderState::SetBlend(
-    Blend srcblend, Blend dstblend, Blend srcblenda, Blend dstblenda
-) {
-    TheDxRnd.Device()->SetRenderState(D3DRS_SRCBLEND, srcblend);
-    TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLEND, dstblend);
-    TheDxRnd.Device()->SetRenderState(D3DRS_SRCBLENDALPHA, srcblenda);
-    TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLENDALPHA, dstblenda);
+void RndRenderState::SetBlend(Blend src, Blend dst, Blend srcAlpha, Blend dstAlpha) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_SRCBLEND, src);
+    TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLEND, dst);
+    TheDxRnd.Device()->SetRenderState(D3DRS_SRCBLENDALPHA, srcAlpha);
+    TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLENDALPHA, dstAlpha);
 }
 
-void RndRenderState::SetColorWriteMask(unsigned int mask) {
-    TheDxRnd.Device()->SetRenderState(D3DRS_COLORWRITEENABLE, mask);
+void RndRenderState::SetColorWriteMask(uint orBits) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_COLORWRITEENABLE, orBits);
 }
 
-void RndRenderState::SetFillMode(FillMode mode) {
-    TheDxRnd.Device()->SetRenderState(D3DRS_FILLMODE, mode);
+void RndRenderState::SetFillMode(FillMode m) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_FILLMODE, m);
 }
 
-void RndRenderState::SetCullMode(CullMode mode) {
-    TheDxRnd.Device()->SetRenderState(D3DRS_CULLMODE, mode);
+void RndRenderState::SetCullMode(CullMode m) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_CULLMODE, m);
 }
 
 void RndRenderState::SetAlphaTestEnable(bool b) {
     TheDxRnd.Device()->SetRenderState(D3DRS_ALPHATESTENABLE, b);
 }
 
-void RndRenderState::SetAlphaFunc(TestFunc tf, unsigned int ref) {
+void RndRenderState::SetAlphaFunc(TestFunc m, uint ref) {
     TheDxRnd.Device()->SetRenderState(D3DRS_ALPHAREF, ref);
-    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHAFUNC, sAlphaFuncs[tf]);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHAFUNC, sAlphaFuncs[m]);
 }
 
 void RndRenderState::SetDepthTestEnable(bool b) {
@@ -77,24 +75,24 @@ void RndRenderState::SetDepthWriteEnable(bool b) {
     TheDxRnd.Device()->SetRenderState(D3DRS_ZWRITEENABLE, b);
 }
 
-void RndRenderState::SetDepthFunc(TestFunc tf) {
-    TheDxRnd.Device()->SetRenderState(D3DRS_ZFUNC, sFuncs[TheDxRnd.InverseZ() * 8 + tf]);
+void RndRenderState::SetDepthFunc(TestFunc m) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_ZFUNC, sFuncs[TheDxRnd.InverseZ() * 8 + m]);
 }
 
 void RndRenderState::SetStencilTestEnable(bool b) {
     TheDxRnd.Device()->SetRenderState(D3DRS_STENCILENABLE, b);
 }
 
-void RndRenderState::SetStencilFunc(TestFunc tf, unsigned char ref) {
+void RndRenderState::SetStencilFunc(TestFunc m, u8 ref) {
     TheDxRnd.Device()->SetRenderState(D3DRS_STENCILREF, ref);
     TheDxRnd.Device()->SetRenderState(
-        D3DRS_STENCILFUNC, sFuncs[TheDxRnd.InverseZ() * 8 + tf]
+        D3DRS_STENCILFUNC, sFuncs[TheDxRnd.InverseZ() * 8 + m]
     );
 }
 
-void RndRenderState::SetStencilOp(StencilOp fail, StencilOp zfail, StencilOp pass) {
+void RndRenderState::SetStencilOp(StencilOp fail, StencilOp zFail, StencilOp pass) {
     TheDxRnd.Device()->SetRenderState(D3DRS_STENCILFAIL, fail);
-    TheDxRnd.Device()->SetRenderState(D3DRS_STENCILZFAIL, zfail);
+    TheDxRnd.Device()->SetRenderState(D3DRS_STENCILZFAIL, zFail);
     TheDxRnd.Device()->SetRenderState(D3DRS_STENCILPASS, pass);
 }
 

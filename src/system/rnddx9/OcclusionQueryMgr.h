@@ -49,7 +49,7 @@ private:
         MILO_ASSERT(queryIndex < kMaxQueries, 0x57);
         if (!mDXQueryArray[queryIndex][mCurrentFrameIndex]) {
             MILO_ASSERT(GetQueryState(queryIndex) == kQueryStateInvalid, 0x5D);
-            if (mDXQueryArray[queryIndex][mCurrentFrameIndex]) {
+            if (mDXQueryArray[queryIndex] + mCurrentFrameIndex != nullptr) {
                 TheDxRnd.Device()->CreateQueryTiled(
                     D3DQUERYTYPE_OCCLUSION,
                     1,

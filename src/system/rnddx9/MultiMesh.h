@@ -22,8 +22,8 @@ private:
     static D3DVertexDeclaration *sVertexDecl;
     static D3DVertexDeclaration *sMutableVertexDecl;
 
-    int unk5c;
-    int unk60;
-    D3DVertexBuffer *unk64[3];
-    D3DVertexBuffer *unk70[3];
+    RndMat *mLastMat; // 0x5c
+    int mFrame; // 0x60
+    D3DVertexBuffer *mMutableVertBuffer[3]; // 0x64
+    D3DVertexBuffer *mMutableIndexBuffer[3]; // 0x70
 };
