@@ -71,14 +71,16 @@ int ArkFile::Write(const void *iBuff, int iBytes) {
 }
 
 bool ArkFile::ReadAsync(void *iData, int iBytes) {
-    int ib8, ib4, ib0;
+    unsigned char *buf = (unsigned char *)iData;
+    int startBlock, numBlocks, blockSize;
     MILO_ASSERT(iBytes >= 0, 0x5D);
-    if (mTell == mSize || mNumOutstandingTasks != 0)
+    if (mTell == mSize || mNumOutstandingTasks != 0) {
         return false;
-    else {
+    } else {
         mBytesRead = 0;
-        if (iBytes == 0)
+        if (iBytes == 0) {
             return true;
+        }
         if (mReadAhead) {
             unsigned int last = mFilename.find_last_of('_');
             bool b6 = last != String::npos
@@ -99,29 +101,39 @@ bool ArkFile::ReadAsync(void *iData, int iBytes) {
             iBytes = mSize - mTell;
         }
         MILO_ASSERT(iBytes >= 0, 0x8B);
-        ib8 = 0;
-        ib4 = 0;
-        ib0 = 0;
-        u64 curPos = mTell + mByteStart;
-        TheBlockMgr.GetAssociatedBlocks(curPos, iBytes, ib8, ib4, ib0);
+        startBlock = 0;
+        numBlocks = 0;
+        blockSize = 0;
+        u64 byteOffset = mTell + mByteStart;
+        TheBlockMgr.GetAssociatedBlocks(
+            byteOffset, iBytes, startBlock, numBlocks, blockSize
+        );
         bool first = true;
-        int idiff = ib4 + ib8 - 1;
-        for (int i = ib8; i <= idiff; i++) {
-            int ivar8;
-            if (i == ib8) {
-                ivar8 = curPos % ib0;
+        int idiff = numBlocks + startBlock - 1;
+        for (int iBlockNum = startBlock; iBlockNum <= idiff; iBlockNum++) {
+            int iOffsetStart;
+            if (iBlockNum == startBlock) {
+                iOffsetStart = byteOffset % blockSize;
             } else {
-                ivar8 = 0;
+                iOffsetStart = 0;
             }
-            int ivar12 = ib0;
-            if (i == idiff && iBytes != 0) {
-                int mod = (curPos + iBytes) % ib0;
+            int iOffsetEnd = blockSize;
+            if (iBlockNum == idiff && iBytes != 0) {
+                int mod = (byteOffset + iBytes) % blockSize;
                 if (mod != 0) {
-                    ivar12 = mod;
+                    iOffsetEnd = mod;
                 }
             }
-            AsyncTask task(this, iData, mArkfileNum, i, ivar8, ivar12, mFilename.c_str());
-            iData = (void *)((int)iData - ivar8 + ivar12);
+            AsyncTask task(
+                this,
+                buf,
+                mArkfileNum,
+                iBlockNum,
+                iOffsetStart,
+                iOffsetEnd,
+                mFilename.c_str()
+            );
+            buf += iOffsetEnd - iOffsetStart;
             mNumOutstandingTasks++;
             if (!first || !task.FillData()) {
                 first = false;
