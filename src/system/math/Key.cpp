@@ -142,12 +142,26 @@ void QuatSpline(
         for (int i = 0; i < 4; i++) {
             float q3 = q[3][i];
             float q2 = q[2][i];
-            float q1 = q[1][i];
             float q0 = q[0][i];
-            ret[i] = (t3 * (q3 + -(q2 * 3 - (q1 * 3 - q0)))
-                      + (tsq * ((q2 * 4 + (q0 * 2 - q1 * 5)) - q3)
-                         + (q1 * 2 + (t * (q2 - q0)))))
-                / 2;
+            float q1 = q[1][i];
+
+            float temp1 = q1 * 5;
+            float temp2 = q1 * 3 - q0;
+            float temp3 = q2 - q0;
+
+            float temp4 = q0 * 2 - temp1;
+            float temp5 = temp2 - q2 * 3;
+
+            temp4 = q2 * 4 + temp4;
+            temp5 = temp5 + q3;
+            temp4 = temp4 - q3;
+
+            float result = temp5 * t3;
+            result = temp4 * tsq + result;
+            result = temp3 * t + result;
+            result = q1 * 2 + result;
+
+            ret[i] = result / 2;
         }
         Normalize(ret, ret);
     }

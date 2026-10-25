@@ -122,7 +122,7 @@ ChunkStream::ChunkStream(
       mChunkInfo(compress), mIsCached(cached), mBufSize(-1), mCurReadBuffer(nullptr),
       mRecommendedChunkSize(chunkSize), mLastWriteMarker(0), mCurBufferIdx(-1),
       mCurBufOffset(0), mChunkInfoPending(false), mCurChunk(nullptr), mChunkEnd(nullptr),
-      mTell(0) {
+      mTotalRead(0) {
     SetPlatform(plat);
     for (int bufCnt = 0; bufCnt < 3; bufCnt++) {
         mBuffersState[bufCnt] = kInvalid;
@@ -202,14 +202,14 @@ void ChunkStream::ReadImpl(void *data, int bytes) {
     MILO_ASSERT(mCurBufOffset + bytes <= (*mCurChunk & kChunkSizeMask), 0x1D6);
     memcpy(data, (void *)(mCurReadBuffer + mCurBufOffset), bytes);
     mCurBufOffset += bytes;
-    mTell += bytes;
+    mTotalRead += bytes;
 }
 
 void ChunkStream::SeekImpl(int, SeekType) { MILO_FAIL("Can't seek on chunkstream"); }
 
 int ChunkStream::Tell() {
     if (mType == kRead) {
-        return mTell;
+        return mTotalRead;
     } else {
         MILO_FAIL("Can't tell on chunkstream");
         return 0;
@@ -246,7 +246,7 @@ int ChunkStream::WriteChunk() {
 BinStream &MarkChunk(BinStream &bs) {
     ChunkStream *cs = dynamic_cast<ChunkStream *>(&bs);
     if (cs)
-        cs->PotentiallyWriteChunk();
+        cs->MaybeWriteChunk();
     return bs;
 }
 
@@ -264,31 +264,31 @@ void ChunkStream::DecompressChunk(DecompressTask &task) {
     int data = *task.mChunkSize;
     int compressedSize = data & kChunkSizeMask;
     MILO_ASSERT((data & ~kChunkSizeMask) == 0, 0x3c5);
-    int uncompressedSize = task.mUncompressedSize;
+    int uncompressedSize = task.mBufSize;
     if (task.mID == CHUNKSTREAM_Z_ID3) {
         DecompressMemHelper(
-            (char *)task.mUncompressedData + (uncompressedSize - compressedSize),
+            task.mBuffer + (uncompressedSize - compressedSize),
             compressedSize,
-            task.mUncompressedData,
+            task.mBuffer,
             uncompressedSize,
-            task.mFilename
+            task.mDebugFile
         );
     } else if (task.mID == CHUNKSTREAM_Z_ID2) {
         DecompressMem(
-            (char *)task.mUncompressedData + (uncompressedSize - compressedSize) + 10,
+            task.mBuffer + (uncompressedSize - compressedSize) + 10,
             compressedSize - 18,
-            task.mUncompressedData,
+            task.mBuffer,
             uncompressedSize,
-            task.mFilename
+            task.mDebugFile
         );
     } else {
         MILO_ASSERT(task.mID == CHUNKSTREAM_Z_ID, 0x3d7);
         DecompressMem(
-            (char *)task.mUncompressedData + (task.mUncompressedSize - compressedSize),
+            task.mBuffer + (task.mBufSize - compressedSize),
             compressedSize,
-            task.mUncompressedData,
+            task.mBuffer,
             uncompressedSize,
-            task.mFilename
+            task.mDebugFile
         );
     }
     *task.mChunkSize = uncompressedSize;
@@ -296,25 +296,26 @@ void ChunkStream::DecompressChunk(DecompressTask &task) {
 }
 
 void ChunkStream::DecompressChunkAsync() {
-    int idx = 1;
-    BufferState *cur;
-    for (; idx < 4; idx++) {
-        cur = &mBuffersState[(mCurBufferIdx + idx) % 3];
-        if (*cur == kReading) {
+    int chunkIdx = 1;
+    int bufIdx;
+    for (; chunkIdx < 4; chunkIdx++) {
+        bufIdx = (mCurBufferIdx + chunkIdx) % 3;
+        if (mBuffersState[bufIdx] == kReading) {
             break;
         }
     }
-    if (*cur == kReading) {
-        int val = mCurChunk[idx];
-        if (mChunkInfo.mID == 0xCABEDEAF || (val >> 24) & 1) {
-            *cur = kReady;
+    if (mBuffersState[bufIdx] == kReading) {
+        unsigned int val = mCurChunk[chunkIdx];
+        bool check = (val >> 24) & 1;
+        if (mChunkInfo.mID == 0xCABEDEAF || check) {
+            mBuffersState[bufIdx] = kReady;
         } else {
-            *cur = kDecompressing;
+            mBuffersState[bufIdx] = kDecompressing;
             {
                 DecompressTask task(
-                    &mCurChunk[idx],
-                    mBuffers[idx],
-                    cur,
+                    &mCurChunk[chunkIdx],
+                    mBuffers[bufIdx],
+                    &mBuffersState[bufIdx],
                     mBufSize,
                     mChunkInfo.mID,
                     mFilename.c_str()

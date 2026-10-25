@@ -12,28 +12,6 @@
 #define CHUNKSTREAM_Z_ID3 0xCDBEDEAF
 #define kChunkIDMask 0xC0BEDEAF
 
-enum BufferState {
-    kInvalid,
-    kReading,
-    kDecompressing,
-    kReady,
-};
-
-struct DecompressTask {
-    DecompressTask(
-        int *size, char *data, BufferState *state, int out, int id, const char *name
-    )
-        : mChunkSize(size), mUncompressedData(data), mState(state),
-          mUncompressedSize(out), mID(id), mFilename(name) {}
-
-    int *mChunkSize; // 0x0
-    void *mUncompressedData; // 0x4
-    BufferState *mState; // 0x8
-    int mUncompressedSize; // 0xc
-    int mID; // 0x10
-    const char *mFilename; // 0x14
-};
-
 class ChunkStream : public BinStream {
 public:
     class ChunkInfo {
@@ -50,6 +28,12 @@ public:
         int mChunks[512]; // offset 0x10, size 0x800
     };
 
+    enum BufferState {
+        kInvalid,
+        kReading,
+        kDecompressing,
+        kReady,
+    };
     enum FileType {
         kRead = 0,
         kWrite = 1,
@@ -74,7 +58,7 @@ public:
 
     MEM_TEMP_OVERLOAD(ChunkStream, 0x31)
 
-    void PotentiallyWriteChunk() { MaybeWriteChunk(false); } // so dumb
+    void MaybeWriteChunk() { MaybeWriteChunk(false); } // so dumb
     static bool PollDecompressionWorker();
 
 private:
@@ -82,13 +66,13 @@ private:
     virtual void WriteImpl(const void *data, int bytes);
     virtual void SeekImpl(int, SeekType);
 
-    static void DecompressChunk(DecompressTask &);
+    static void DecompressChunk(struct DecompressTask &);
     void DecompressChunkAsync();
     int WriteChunk();
 
     void SetPlatform(Platform);
     void ReadChunkAsync();
-    void MaybeWriteChunk(bool);
+    void MaybeWriteChunk(bool force);
 
     File *mFile; // 0x10
     String mFilename; // 0x14
@@ -110,11 +94,33 @@ private:
     bool mChunkInfoPending; // 0x8a8
     int *mCurChunk; // 0x8ac
     int *mChunkEnd; // 0x8b0
-    int mTell; // 0x8b4
+    int mTotalRead; // 0x8b4
 };
 
-BinStream &MarkChunk(BinStream &);
+struct DecompressTask {
+    DecompressTask(
+        int *size,
+        char *data,
+        ChunkStream::BufferState *state,
+        int out,
+        int id,
+        const char *name
+    )
+        : mChunkSize(size), mBuffer(data), mState(state), mBufSize(out), mID(id),
+          mDebugFile(name) {}
+
+    int *mChunkSize; // 0x0
+    char *mBuffer; // 0x4
+    ChunkStream::BufferState *mState; // 0x8
+    int mBufSize; // 0xc
+    int mID; // 0x10
+    const char *mDebugFile; // 0x14
+};
+
+BinStream &MarkChunk(BinStream &s);
 void SetActiveChunkObject(Hmx::Object *obj);
-BinStream &ReadChunks(BinStream &, void *, int, int);
-BinStream &WriteChunks(BinStream &, const void *, int, int);
-void DecompressMemHelper(const void *, int, void *, int &, const char *);
+BinStream &ReadChunks(BinStream &s, void *data, int bytes, int chunkLen);
+BinStream &WriteChunks(BinStream &s, const void *data, int bytes, int chunkLen);
+void DecompressMemHelper(
+    const void *src, int srcLen, void *dst, int &dstLen, const char *fileHint
+);

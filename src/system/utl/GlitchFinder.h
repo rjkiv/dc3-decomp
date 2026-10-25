@@ -25,6 +25,7 @@ public:
     void PollAveragesRecurse(bool);
     void Dump(TextStream &, int);
     void ClearData();
+    float TotalTime();
 
     static float smLastDumpTime;
     static bool smDumpLeaves;
