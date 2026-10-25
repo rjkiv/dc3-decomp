@@ -284,14 +284,14 @@ private:
 };
 
 #ifdef MILO_DEBUG
-#define START_AUTO_TIMER_CALLBACK(name, func, context)                                   \
+#define START_AUTO_TIMER_CALLBACK(name, thresh, func, context)                           \
     static Timer *_t = AutoTimer::GetTimer(name);                                        \
-    AutoTimer _at(_t, 50.0f, func, context)
+    AutoTimer _at(_t, thresh, func, context)
 #else
 #define START_AUTO_TIMER_CALLBACK(name, func, context) (void)0
 #endif
 
-#define START_AUTO_TIMER(name) START_AUTO_TIMER_CALLBACK(name, NULL, NULL)
+#define START_AUTO_TIMER(name) START_AUTO_TIMER_CALLBACK(name, 50, NULL, NULL)
 
 #define TIMER_ACTION(name, action)                                                       \
     {                                                                                    \

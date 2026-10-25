@@ -460,7 +460,7 @@
             "system/moviebink/BinkMovieImpl_Xbox.cpp": "Matching",
             "system/moviebink/BinkMovieSys.cpp": "Matching",
             "system/moviebink/BinkMovieSys_Xbox.cpp": "Matching",
-            "system/obj/DataArray.cpp": "NonMatching",
+            "system/obj/DataArray.cpp": "Matching",
             "system/obj/DataFile.cpp": "NonMatching",
             "system/obj/DataFlex.c": "NonMatching",
             "system/obj/DataFunc.cpp": "NonMatching",

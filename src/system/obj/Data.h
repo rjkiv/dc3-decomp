@@ -290,10 +290,11 @@ private:
     /** unused, supposedly node number in dtb, for debugging */
     short mDeprecated; // 0xE
 
+    static DataFunc *sDefaultHandler;
+
     ~DataArray();
 
 public:
-    static DataFunc *sDefaultHandler;
     static void SetFile(Symbol);
 
     const char *File() const { return mFile.Str(); }

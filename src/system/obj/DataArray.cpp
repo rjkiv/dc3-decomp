@@ -570,17 +570,18 @@ void DataArray::RandomSortNodes() {
 
 DataNode DataArray::Execute(bool fail) {
     DataCallStackFrame frame(this);
-    START_AUTO_TIMER_CALLBACK("array_exec", DataArrayGlitchCB, this);
+    START_AUTO_TIMER_CALLBACK("array_exec", 17, DataArrayGlitchCB, this);
     DataNode &node = (DataNode &)Evaluate(0);
     switch (node.Type()) {
     case kDataFunc: {
         return node.FuncValue()(this);
     }
     case kDataObject: {
-        if (node.ObjectValue()) {
+        if (!(int)node.ObjectValue()) {
+            break;
+        } else {
             return node.ObjectValue()->Handle(this, true);
         }
-        break;
     }
     case kDataSymbol: {
         const char *str = node.StringValue();
@@ -597,7 +598,8 @@ DataNode DataArray::Execute(bool fail) {
         break;
     }
     case kDataString: {
-        Hmx::Object *object = gDataDir->FindObject(node.StringValue(), true, true);
+        Hmx::Object *object =
+            gDataDir->FindObject(node.VarValue()->StringValue(), true, true);
         if (object) {
             return object->Handle(this, true);
         }
