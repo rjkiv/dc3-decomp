@@ -108,9 +108,10 @@ bool MsgSinks::Replace(ObjRef *from, Hmx::Object *to) {
         }
     }
     FOREACH (it, mEventSinks) {
-        FOREACH (elem, it->sinks) {
+        auto &cur = *it;
+        FOREACH (elem, cur.sinks) {
             if (&elem->obj == from) {
-                it->sinks.erase(elem);
+                cur.sinks.erase(elem);
                 return true;
             }
         }
@@ -123,22 +124,23 @@ BEGIN_CUSTOM_PROPSYNC(MsgSinks)
     SYNC_PROP(event_sinks, o.mEventSinks)
 END_PROPSYNCS
 
-Symbol MsgSinks::GetPropSyncHandler(DataArray *arr) {
+static bool PropMatch(DataArray *a1, DataArray *a2) {
+    if (a1->Size() != a2->Size()) {
+        return false;
+    }
+    for (int i = 0; i < a1->Size(); i++) {
+        if (a1->Node(i).IntValue() != a2->Node(i).IntValue()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+Symbol MsgSinks::GetPropSyncHandler(DataArray *path) {
     if (mPropertySinks) {
         for (int i = 0; i < mPropertySinks->Size(); i += 2) {
             DataArray *array = mPropertySinks->Array(i);
-            bool ret;
-            if (array->Size() != arr->Size()) {
-                for (int j = 0; j < array->Size(); j++) {
-                    if (array->Node(j).IntValue() != arr->Node(j).IntValue()) {
-                        return 0;
-                    }
-                }
-                ret = true;
-            } else {
-                ret = false;
-            }
-            if (ret) {
+            if (PropMatch(array, path)) {
                 return mPropertySinks->Sym(i + 1);
             }
         }
@@ -294,7 +296,6 @@ void MsgSinks::RemovePropertySink(Hmx::Object *o1, DataArray *a2) {
 
 void MsgSinks::Export(DataArray *a) {
     mExporting++;
-    Symbol curExport = sCurrentExportEvent;
     for (auto it = mSinks.begin(); it != mSinks.end();) {
         if (it->obj) {
             it->Export(a);
@@ -305,6 +306,7 @@ void MsgSinks::Export(DataArray *a) {
             ++it;
         }
     }
+    Symbol curExport = sCurrentExportEvent;
     sCurrentExportEvent = a->Sym(1);
     FOREACH (it, mEventSinks) {
         if (it->event == a->Sym(1)) {
@@ -321,7 +323,9 @@ void MsgSinks::Export(DataArray *a) {
                 }
             }
             a->Node(1) = n;
-            it->sinks.clear();
+            if (it->sinks.empty()) {
+                mEventSinks.erase(it);
+            }
             break;
         }
     }

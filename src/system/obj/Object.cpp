@@ -334,7 +334,7 @@ void Hmx::Object::ChainSource(Hmx::Object *source, Hmx::Object *o2) {
     MILO_ASSERT(source, 0x29D);
     if (!o2)
         o2 = this;
-    if (mSinks && !mSinks->Sinks().empty()) {
+    if (mSinks && mSinks->HasSinks()) {
         source->AddSink(this);
     } else if (o2->mSinks) {
         o2->mSinks->ChainEventSinks(source, this);

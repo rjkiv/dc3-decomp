@@ -233,8 +233,8 @@ public:
     MsgSinks(Hmx::Object *owner);
     ~MsgSinks();
     bool Replace(ObjRef *from, Hmx::Object *to);
-    void RemovePropertySink(Hmx::Object *, DataArray *);
-    bool HasPropertySink(Hmx::Object *, DataArray *);
+    void RemovePropertySink(Hmx::Object *o, DataArray *path);
+    bool HasPropertySink(Hmx::Object *o, DataArray *path);
     void RemoveSink(Hmx::Object *s, Symbol event);
     void AddSink(
         Hmx::Object *s,
@@ -243,14 +243,14 @@ public:
         Hmx::Object::SinkMode mode = Hmx::Object::kHandle,
         bool chainProxy = true
     );
-    void AddPropertySink(Hmx::Object *, DataArray *, Symbol);
+    void AddPropertySink(Hmx::Object *o, DataArray *path, Symbol handler);
     void MergeSinks(Hmx::Object *from);
-    Symbol GetPropSyncHandler(DataArray *);
-    void Export(DataArray *);
-    bool HasSink(Hmx::Object *) const;
-    void ChainEventSinks(Hmx::Object *from, Hmx::Object *to);
+    Symbol GetPropSyncHandler(DataArray *path);
+    void Export(DataArray *a);
+    bool HasSink(Hmx::Object *obj) const;
+    void ChainEventSinks(Hmx::Object *source, Hmx::Object *sink);
+    bool HasSinks() const { return !mSinks.empty(); }
 
-    ObjList<Sink> &Sinks() { return mSinks; }
     static Symbol CurrentExportEvent() { return sCurrentExportEvent; }
 
     MEM_OVERLOAD(MsgSinks, 0xAF);
