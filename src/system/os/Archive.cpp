@@ -13,6 +13,7 @@
 #include "utl/Option.h"
 #include <cstdio>
 
+Archive *TheArchive;
 bool gDebugArkOrder;
 
 #pragma region ArkHash
@@ -69,18 +70,22 @@ void ArkHash::Read(BinStream &s, int heap_headroom) {
     int i40;
     s >> i40;
     int iSizeBytes = i40 + heap_headroom;
-    char *mem = (char *)MemAlloc(iSizeBytes, __FILE__, 0x112, "ArkHash");
-    mHeap = mem;
-    mFree = mem + i40;
-    mHeapEnd = mem + iSizeBytes;
-    s.Read(mem, iSizeBytes);
+    mHeap = (char *)MemAlloc(iSizeBytes, __FILE__, 0x112, "ArkHash");
+    mFree = mHeap + i40;
+    mHeapEnd = mHeap + iSizeBytes;
+    s.Read(mHeap, i40);
     memset(mFree, 0, mHeapEnd - mFree);
     s >> mTableSize;
     mTable = (char **)MemAlloc(mTableSize * 4, __FILE__, 0x11A, "ArkHash");
-    for (char *p = *mTable; p != mTable[mTableSize]; p++) {
+    char **end = mTable + mTableSize;
+    for (char **p = mTable; p != end; p++) {
         int offset;
         s >> offset;
-        p = offset == 0 ? nullptr : mHeap + offset;
+        if (offset != 0) {
+            *p = mHeap + offset;
+        } else {
+            *p = nullptr;
+        }
     }
 }
 
@@ -115,7 +120,7 @@ void Archive::GetGuid(HxGuid &guid) const { guid = mGuid; }
 BinStream &operator>>(BinStream &bs, FileEntry &entry) {
     bs >> entry.mOffset >> entry.mHashedName >> entry.mHashedPath >> entry.mSize
         >> entry.mUCSize;
-    return bs; ////////////////////////////////////////////////////////////////////////////////////
+    return bs;
 }
 
 void Archive::Enumerate(
@@ -126,21 +131,41 @@ void Archive::Enumerate(
 ) {
     char dtbPath[256];
     char folderPath[256];
-    if (pattern) {
-        const char *str = strstr(pattern, ".dta");
-        if (str) {
-            sprintf(dtbPath, "%s/gen/%s.dtb", FileGetPath(pattern), FileGetBase(pattern));
-            pattern = dtbPath;
-            if (!recurse) {
-                sprintf(folderPath, "%s/gen/", dir);
-                dir = folderPath;
-            }
+    bool b3 = false;
+    if (pattern && strstr(pattern, ".dta")) {
+        b3 = true;
+        sprintf(dtbPath, "%s/gen/%s.dtb", FileGetPath(pattern), FileGetBase(pattern));
+        pattern = dtbPath;
+        if (!recurse) {
+            sprintf(folderPath, "%s/gen", dir);
+            dir = folderPath;
         }
     }
-    for (std::vector<FileEntry>::iterator it = mFileEntries.begin();
-         it != mFileEntries.end();
-         ++it) {
-        const char *cur = mHashTable[it->mHashedPath];
+    int dirLen = strlen(dir);
+    const char *last = nullptr;
+    bool b2 = false;
+    FOREACH (it, mFileEntries) {
+        const char *path = mHashTable[it->mHashedPath];
+        if (last != path) {
+            last = path;
+            if (recurse) {
+                b2 = strneq(path, dir, dirLen);
+            } else {
+                b2 = streq(path, dir);
+            }
+        }
+        if (b2) {
+            const char *name = mHashTable[it->mHashedName];
+            if (pattern) {
+                if (!FileMatch(MakeString("%s/%s", path, name), pattern))
+                    continue;
+            }
+            if (b3) {
+                path = FileGetPath(path);
+                name = MakeString("%s.dta", FileGetBase(name));
+            }
+            cb(path, name);
+        }
     }
 }
 
@@ -172,40 +197,44 @@ bool Archive::GetFileInfo(
     int &fileSize,
     int &fileUCSize
 ) {
-    if (file && *file) {
-        String name(FileGetName(file));
-        String path(FileGetPath(file));
-        int nameValue = mHashTable.GetHashValue(name.c_str());
-        int pathValue = mHashTable.GetHashValue(path.c_str());
-        if (nameValue != -1 && pathValue != -1) {
-            FileEntry entry;
-            entry.mHashedName = nameValue;
-            entry.mHashedPath = pathValue;
-            auto it = std::lower_bound(mFileEntries.begin(), mFileEntries.end(), entry);
-            if (it != mFileEntries.end() && it->mHashedName == nameValue
-                && it->mHashedPath == pathValue) {
-                arkfileNum = 0;
-                u64 u7 = 0;
-                for (; arkfileNum < mNumArkfiles; arkfileNum++) {
-                    u64 u6 = mArkfileSizes[arkfileNum] + u7;
-                    if (it->mOffset < u6)
-                        break;
-                    u7 = u6;
-                }
-                MILO_ASSERT(arkfileNum < mNumArkfiles, 0x183);
-                byteOffset = it->mOffset - u7;
-                fileSize = it->mSize;
-                fileUCSize = it->mUCSize;
-                return true;
-            }
-            arkfileNum = 0;
-            byteOffset = 0;
-            fileSize = 0;
-            fileUCSize = 0;
-            return false;
-        }
+    if (!file || !*file) {
+        return false;
     }
-    return false;
+
+    String name(FileGetName(file));
+    String path(FileGetPath(file));
+    int nameValue = mHashTable.GetHashValue(name.c_str());
+    int pathValue = mHashTable.GetHashValue(path.c_str());
+    if (nameValue == -1 || pathValue == -1) {
+        return false;
+    }
+
+    FileEntry entry;
+    entry.mHashedName = nameValue;
+    entry.mHashedPath = pathValue;
+    auto it = std::lower_bound(mFileEntries.begin(), mFileEntries.end(), entry);
+    if (it == mFileEntries.end() || it->mHashedName != nameValue
+        || it->mHashedPath != pathValue) {
+        arkfileNum = 0;
+        byteOffset = 0;
+        fileSize = 0;
+        fileUCSize = 0;
+        return false;
+    }
+
+    arkfileNum = 0;
+    u64 u7 = 0;
+    for (; arkfileNum < mNumArkfiles; arkfileNum++) {
+        u64 u6 = mArkfileSizes[arkfileNum] + u7;
+        if (it->mOffset < u6)
+            break;
+        u7 = u6;
+    }
+    MILO_ASSERT(arkfileNum < mNumArkfiles, 0x183);
+    byteOffset = it->mOffset - u7;
+    fileSize = it->mSize;
+    fileUCSize = it->mUCSize;
+    return true;
 }
 
 void Archive::Read(int heap_headroom) {

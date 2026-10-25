@@ -498,7 +498,7 @@
             "system/oggvorbis/synthesis.c": "Matching",
             "system/oggvorbis/window.c": "Matching",
             "system/os/AppChild.cpp": "Matching",
-            "system/os/Archive.cpp": "NonMatching",
+            "system/os/Archive.cpp": "Matching",
             "system/os/ArkFile.cpp": "NonMatching",
             "system/os/AsyncFile.cpp": "Matching",
             "system/os/AsyncFileHolmes.cpp": "Matching",
