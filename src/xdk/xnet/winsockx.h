@@ -14,19 +14,46 @@ extern "C" {
     (IOC_IN | (((long)sizeof(t) & IOCPARAM_MASK) << 16) | ((x) << 8) | (y))
 // #define FIONBIO _IOW('f', 126, unsigned long)
 
+// possible values for ioctlsocket's cmd
 #define FIONBIO 0x8004667E
+#define FIONREAD 0x4004667F
+#define SIOCATMARK 0x40047307
 
+// possible values for socket's af
 #define AF_INET 2
-#define PF_INET AF_INET
-#define INVALID_SOCKET (SOCKET)(~0)
+#define AF_INET6 23
+#define AF_BTH 32
+#define AF_UNIX 1
+#define AF_IRDA 26
+#define AF_UNSPEC 0
+
+// possible values for socket's type
 #define SOCK_STREAM 1
 #define SOCK_DGRAM 2
-#define IPPROTO_UDP 17
-#define TCP_NODELAY 1
+#define SOCK_RAW 3
+
+// possible values for socket's protocol
 #define IPPROTO_TCP 6
+#define IPPROTO_UDP 17
+#define BTHPROTO_RFCOMM 3
+#define IPPROTO_ICMP 1
+#define IPPROTO_ICMPV6 58
+
+// for TCP over IPv4: socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
+// for UDP over IPv6: socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)
+// for letting the system decide: socket(AF_INET, SOCK_STREAM, 0)
+
+#define PF_INET AF_INET
+#define INVALID_SOCKET (SOCKET)(~0)
+#define TCP_NODELAY 1
 
 #define SOL_SOCKET 0xffff
 #define SO_SNDBUF 0x1001
+
+// possible values for shutdown's how
+#define SD_RECEIVE 0
+#define SD_SEND 1
+#define SD_BOTH 2
 
 // https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
 

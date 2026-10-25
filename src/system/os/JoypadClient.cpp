@@ -10,10 +10,9 @@
 #include "os/UserMgr.h"
 #include <vector>
 
-float gDefaultHoldMs = -1.0f;
-float gDefaultRepeatMs = -1.0f;
-
 namespace {
+    float gDefaultHoldMs = -1.0f;
+    float gDefaultRepeatMs = -1.0f;
     bool gInited = false;
     std::vector<JoypadClient *> gClients;
 

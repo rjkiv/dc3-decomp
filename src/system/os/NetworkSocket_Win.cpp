@@ -11,30 +11,30 @@ bool WinSockSocket::sInit = false;
 WinSockSocket::WinSockSocket(bool streaming) : mStreaming(streaming), mFail(false) {
     Init();
     if (!mStreaming) {
-        mSocket = socket(AF_INET, 2, 0x11);
+        mSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     } else {
-        mSocket = socket(AF_INET, 1, 6);
+        mSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     }
     MILO_ASSERT(mSocket != INVALID_SOCKET, 0xA8);
-    unsigned long ul = 1;
-    ioctlsocket(mSocket, 0x8004667E, &ul);
+    unsigned long mode = 1; // when in FIONBIO mode, 1 == non-blocking, 0 == blocking
+    ioctlsocket(mSocket, FIONBIO, &mode);
 }
 
-WinSockSocket::WinSockSocket(unsigned int s, bool streaming)
+WinSockSocket::WinSockSocket(SOCKET s, bool streaming)
     : mSocket(s), mStreaming(streaming), mFail(false) {
-    unsigned long ul = 1;
-    ioctlsocket(mSocket, 0x8004667E, &ul);
+    unsigned long mode = 1; // when in FIONBIO mode, 1 == non-blocking, 0 == blocking
+    ioctlsocket(mSocket, FIONBIO, &mode);
 }
 
 WinSockSocket::~WinSockSocket() { Disconnect(); }
 
 bool WinSockSocket::Connect(unsigned int ip, unsigned short port) {
     sockaddr_in addr;
-    addr.sin_family = 2;
+    addr.sin_family = AF_INET;
     addr.sin_port = port;
     addr.sin_addr.s_un.s_addr = ip;
     int res = connect(mSocket, (const sockaddr *)&addr, 0x10);
-    if (res == -1 && WSAGetLastError() != 0x2733) {
+    if (res == -1 && WSAGetLastError() != WSAEWOULDBLOCK) {
         mFail = true;
     }
     return res == 0;
@@ -63,7 +63,7 @@ bool WinSockSocket::Fail() const {
 
 void WinSockSocket::Disconnect() {
     if (mSocket != INVALID_SOCKET) {
-        shutdown(mSocket, 2);
+        shutdown(mSocket, SD_BOTH);
         closesocket(mSocket);
         mSocket = INVALID_SOCKET;
     }
@@ -71,9 +71,9 @@ void WinSockSocket::Disconnect() {
 
 void WinSockSocket::Bind(unsigned short port) {
     int val = 1;
-    setsockopt(mSocket, 0xFFFF, 4, (char *)&val, 4);
+    setsockopt(mSocket, SOL_SOCKET, 4, (char *)&val, 4);
     sockaddr_in addr;
-    addr.sin_family = 2;
+    addr.sin_family = AF_INET;
     addr.sin_port = port;
     addr.sin_addr.s_un.s_addr = 0;
     int ret = bind(mSocket, (sockaddr *)&addr, 0x10);
@@ -172,7 +172,7 @@ int WinSockSocket::SendTo(
     const void *data, unsigned int len, unsigned int ip, unsigned short port
 ) {
     sockaddr_in addr;
-    addr.sin_family = 2;
+    addr.sin_family = AF_INET;
     addr.sin_port = port;
     addr.sin_addr.s_un.s_addr = ip;
     int res = sendto(mSocket, (const char *)data, len, 0, (sockaddr *)&addr, 16);
@@ -194,7 +194,7 @@ int WinSockSocket::SendTo(
 
 int WinSockSocket::BroadcastTo(const void *data, unsigned int len, unsigned short port) {
     int val = 1;
-    setsockopt(mSocket, 0xFFFF, 32, (const char *)&val, 4);
+    setsockopt(mSocket, SOL_SOCKET, 32, (const char *)&val, 4);
     return SendTo(data, len, -1, port);
 }
 
@@ -223,7 +223,7 @@ int WinSockSocket::RecvFrom(
 
 bool WinSockSocket::SetNoDelay(bool enabled) {
     int val = enabled ? 1 : 0;
-    return setsockopt(mSocket, 6, 1, (const char *)&val, 4) == 0;
+    return setsockopt(mSocket, IPPROTO_TCP, 1, (const char *)&val, 4) == 0;
 }
 
 void WinSockSocket::Init() {

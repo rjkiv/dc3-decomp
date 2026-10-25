@@ -28,7 +28,7 @@ public:
     static void Init();
 
 private:
-    WinSockSocket(unsigned int, bool);
+    WinSockSocket(SOCKET, bool);
 
 protected:
     SOCKET mSocket; // 0x4
