@@ -149,10 +149,10 @@ void DxMovie::SetFrame(float frame, float blend) {
                     mStreamAddr = mBuffer + mStreamOffset;
                     StreamNextBuffer();
                 } else {
-                    StreamRestart(frame_i);
+                    StreamRestart(i4);
                 }
             } else {
-                mStreamAddr = mVideo.Frame(frame_i);
+                mStreamAddr = mVideo.Frame(i4);
             }
             Update();
             return;

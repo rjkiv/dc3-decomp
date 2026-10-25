@@ -556,7 +556,7 @@
             "system/rnddx9/Lit.cpp": "Matching",
             "system/rnddx9/Mat.cpp": "Matching",
             "system/rnddx9/Mesh.cpp": "NonMatching",
-            "system/rnddx9/Movie.cpp": "NonMatching",
+            "system/rnddx9/Movie.cpp": "Matching",
             "system/rnddx9/MultiMesh.cpp": "NonMatching",
             "system/rnddx9/Part.cpp": "NonMatching",
             "system/rnddx9/RenderState.cpp": "NonMatching",

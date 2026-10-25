@@ -9,17 +9,16 @@ public:
     virtual ~MetaMusicManager();
     virtual DataNode Handle(DataArray *, bool);
 
-    Symbol GetSceneForScreen(Symbol) const;
-    MetaMusicScene *GetScene(Symbol) const;
-
-    bool SceneExists(Symbol s) const { return GetScene(s); }
-    bool SceneForScreenExists(Symbol s) const { return GetSceneForScreen(s) != gNullStr; }
+    Symbol GetSceneForScreen(Symbol i_symScreen) const;
+    MetaMusicScene *GetScene(Symbol i_symScene) const;
 
 private:
-    void Init(DataArray *);
     void Cleanup();
-    bool IsScreenInSceneMap(Symbol) const;
-    void ConfigureMetaMusicSceneData(DataArray *);
+    void Init(DataArray *i_pConfig);
+    bool IsScreenInSceneMap(Symbol i_symScreen) const;
+    void ConfigureMetaMusicSceneData(DataArray *i_pConfig);
+
+    bool HasScene(Symbol i_symScene) const { return GetScene(i_symScene); }
 
     std::map<Symbol, MetaMusicScene *> m_mapScenes; // 0x2c
     std::map<Symbol, Symbol> m_mapScreenToScene; // 0x44
