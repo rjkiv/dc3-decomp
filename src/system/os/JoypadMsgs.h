@@ -20,10 +20,11 @@ int GetPadNum() const { return mData->Int(5); }
 END_MESSAGE
 
 DECLARE_MESSAGE(JoypadConnectionMsg, "joypad_connect")
-JoypadConnectionMsg(LocalUser *user, bool connected, int, int);
+JoypadConnectionMsg(LocalUser *user, bool connected, int type, int padNum);
 LocalUser *GetUser() const;
-bool Connected() const { return mData->Int(3); }
-// second int == padnum?
+bool GetConnected() const { return mData->Int(3); }
+JoypadType GetType() const { return (JoypadType)mData->Int(4); }
+int GetPadNum() const { return mData->Int(5); }
 END_MESSAGE
 
 DECLARE_MESSAGE(JoypadBreedDataReadMsg, "joypad_breed_data_read")

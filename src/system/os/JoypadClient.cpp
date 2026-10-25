@@ -105,23 +105,29 @@ int JoypadClient::OnMsg(const ButtonDownMsg &msg) {
 
     JoypadButton btn = msg.GetButton();
     if (mVirtualDpad && MovedLeftStick(btn)) {
-        JoypadButton dpadbtn = LeftStickToDpad(btn);
+        btn = LeftStickToDpad(btn);
         mSink->Handle(
-            ButtonDownMsg(btnUser, dpadbtn, msg.GetAction(), msg.GetPadNum()), false
+            ButtonDownMsg(btnUser, btn, msg.GetAction(), msg.GetPadNum()), false
         );
     } else {
         mSink->Handle(msg, false);
     }
-    if (!btnUser)
-        return 0;
-    if (((1 << btn) & mBtnMask)) {
-        mRepeats[btnUser->GetPadNum()].Start(btn, msg.GetAction(), msg.GetPadNum());
-        if (DirectionalAction(msg.GetAction())) {
+    int padNum = msg.GetPadNum();
+    if (btnUser) {
+        padNum = btnUser->GetPadNum();
+    }
+    if (mBtnMask & (1 << btn)) {
+        mRepeats[padNum].Start(btn, msg.GetAction(), msg.GetPadNum());
+        JoypadAction a = msg.GetAction();
+        if (a == kAction_Down || a == kAction_Up || a == kAction_Left
+            || a == kAction_Right) {
             for (int i = 0; i < 4; i++) {
-                if (i != btnUser->GetPadNum()) {
-                    if (DirectionalAction(ButtonToAction(
-                            mRepeats[i].mLastBtn, JoypadControllerTypePadNum(i)
-                        ))) {
+                if (i != padNum) {
+                    a = ButtonToAction(
+                        mRepeats[i].mLastBtn, JoypadControllerTypePadNum(i)
+                    );
+                    if (a == kAction_Up || a == kAction_Down || a == kAction_Right
+                        || a == kAction_Left) {
                         mRepeats[i].mHoldTimer.Reset();
                         mRepeats[i].mRepeatTimer.Reset();
                     }
@@ -135,24 +141,23 @@ int JoypadClient::OnMsg(const ButtonDownMsg &msg) {
 int JoypadClient::OnMsg(const ButtonUpMsg &msg) {
     if (mFilterAllButStart && msg.GetAction() != kAction_Start)
         return 0;
-    if (msg.GetUser()) {
-        LocalUser *btnUser = msg.GetUser();
-        if (mUser && btnUser != mUser)
-            return 0;
-        JoypadButton btn = msg.GetButton();
-        if (mVirtualDpad && MovedLeftStick(btn)) {
-            JoypadButton dpadbtn = LeftStickToDpad(btn);
-            mSink->Handle(
-                ButtonUpMsg(btnUser, dpadbtn, msg.GetAction(), msg.GetPadNum()), false
-            );
-        } else {
-            mSink->Handle(msg, false);
-        }
-        if (!btnUser)
-            return 0;
-        if (((1 << btn) & mBtnMask)) {
-            mRepeats[btnUser->GetPadNum()].Reset(btn);
-        }
+    LocalUser *btnUser = msg.GetUser();
+    if (mUser && btnUser != mUser)
+        return 0;
+
+    JoypadButton btn = msg.GetButton();
+    if (mVirtualDpad && MovedLeftStick(btn)) {
+        btn = LeftStickToDpad(btn);
+        mSink->Handle(ButtonUpMsg(btnUser, btn, msg.GetAction(), msg.GetPadNum()), false);
+    } else {
+        mSink->Handle(msg, false);
+    }
+    int padNum = msg.GetPadNum();
+    if (btnUser) {
+        padNum = btnUser->GetPadNum();
+    }
+    if (mBtnMask & (1 << btn)) {
+        mRepeats[padNum].Reset(btn);
     }
     return 0;
 }
@@ -191,7 +196,7 @@ void JoypadClient::Init() {
 
 void JoypadClientPoll() {
     for (int i = 0; i < gClients.size(); i++) {
-        gClients[i]->PollClient();
+        gClients[i]->Poll();
     }
 }
 

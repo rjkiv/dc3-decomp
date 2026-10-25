@@ -309,11 +309,6 @@ bool JoypadTypeHasLeftyFlip(Symbol type);
 bool JoypadIsShiftButton(int padNum, JoypadButton btn);
 
 inline bool MovedLeftStick(JoypadButton btn) {
-    return btn == kPad_LStickUp || btn == kPad_LStickRight || btn == kPad_LStickDown
-        || btn == kPad_LStickLeft;
-}
-
-inline bool DirectionalAction(JoypadAction a) {
-    return a == kAction_Up || a == kAction_Down || a == kAction_Right
-        || a == kAction_Left;
+    return btn == kPad_LStickUp || btn == kPad_LStickDown || btn == kPad_LStickLeft
+        || btn == kPad_LStickRight;
 }

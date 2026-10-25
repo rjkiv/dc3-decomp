@@ -453,7 +453,7 @@ DataNode ShellInput::OnMsg(const ButtonDownMsg &msg) {
 }
 
 DataNode ShellInput::OnMsg(const JoypadConnectionMsg &msg) {
-    if (TheGestureMgr->InControllerMode() && !msg.Connected()) {
+    if (TheGestureMgr->InControllerMode() && !msg.GetConnected()) {
         if (msg->Int(5) == TheHamUI.GetLastButtonDownPadNum())
             ExitControllerMode(false);
     }

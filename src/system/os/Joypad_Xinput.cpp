@@ -51,7 +51,9 @@ void TranslateButtons(unsigned int *out, unsigned short digButs) {
     }
 }
 
-bool JoypadGetCachedXInputCaps(int xinput_id, XINPUT_CAPABILITIES *pxcaps, bool forceFreshGet) {
+bool JoypadGetCachedXInputCaps(
+    int xinput_id, XINPUT_CAPABILITIES *pxcaps, bool forceFreshGet
+) {
     if (gCapsValid[xinput_id] && !forceFreshGet) {
         *pxcaps = gCaps[xinput_id];
     } else {
