@@ -10,12 +10,12 @@
 #include "utl/BinStream.h"
 #include "utl/Std.h"
 
+static float gBSPPosTol = 0.01f;
+static float gBSPDirTol = 0.985f;
+static int gBSPMaxDepth = 20;
+static int gBSPMaxCandidates = 40;
+static float gBSPCheckScale = 1.1f;
 float gUnitsPerMeter = 39.370079f;
-float gBSPPosTol = 0.01f;
-float gBSPDirTol = 0.985f;
-int gBSPMaxDepth = 20;
-int gBSPMaxCandidates = 40;
-float gBSPCheckScale = 1.1f;
 
 void NumNodes(const BSPNode *node, int &num, int &maxDepth) {
     static int depth = 0;
@@ -138,7 +138,10 @@ bool Box::Clamp(Vector3 &v) {
 
 void Normalize(const Plane &in, Plane &out) {
     float mult = 0;
-    float len = std::sqrt(in.a * in.a + in.b * in.b + in.c * in.c);
+    float a = in.a * in.a;
+    float b = in.b * in.b;
+    float c = in.c * in.c;
+    float len = sqrtf(a + b + c);
     if (len != 0) {
         mult = 1 / len;
     }
@@ -167,15 +170,12 @@ void ClosestPoint(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3, Vecto
 }
 
 void Plane::Set(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3) {
-    Vector3 diff21, diff31, cross;
-    Subtract(v2, v1, diff21);
-    Subtract(v3, v1, diff31);
-    Cross(diff21, diff31, cross);
+    Vector3 tmp, cross;
+    Subtract(v2, v1, tmp);
+    Subtract(v3, v1, cross);
+    Cross(tmp, cross, cross);
     Normalize(cross, cross);
-    a = cross.x;
-    b = cross.y;
-    c = cross.z;
-    d = -::Dot(cross, v1);
+    Set(v1, cross);
 }
 
 void SetBSPParams(float f1, float f2, int r3, int r4, float f3) {
@@ -193,12 +193,13 @@ DataNode SetBSPParams(DataArray *da) {
 
 void GeoInit() {
     DataArray *cfg = SystemConfig("math");
-    float scale = cfg->FindArray("bsp_check_scale")->Float(1);
-    int candidates = cfg->FindArray("bsp_max_candidates")->Int(1);
-    int depth = cfg->FindArray("bsp_max_depth")->Int(1);
-    float dirtol = cfg->FindArray("bsp_dir_tol")->Float(1);
-    float postol = cfg->FindArray("bsp_pos_tol")->Float(1);
-    SetBSPParams(postol, dirtol, depth, candidates, scale);
+    SetBSPParams(
+        cfg->FindArray("bsp_pos_tol")->Float(1),
+        cfg->FindArray("bsp_dir_tol")->Float(1),
+        cfg->FindArray("bsp_max_depth")->Int(1),
+        cfg->FindArray("bsp_max_candidates")->Int(1),
+        cfg->FindArray("bsp_check_scale")->Float(1)
+    );
     DataRegisterFunc("set_bsp_params", SetBSPParams);
 }
 
