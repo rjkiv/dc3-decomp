@@ -28,6 +28,15 @@ extern "C" {
 #define SOL_SOCKET 0xffff
 #define SO_SNDBUF 0x1001
 
+// https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
+
+#define WSA_INVALID_HANDLE 6
+#define WSA_NOT_ENOUGH_MEMORY 8
+#define WSA_INVALID_PARAMETER 87
+#define WSA_OPERATION_ABORTED 995
+#define WSA_IO_INCOMPLETE 996
+#define WSA_IO_PENDING 997
+
 #define WSABASEERR 10000
 #define WSAEINTR WSABASEERR + 4
 #define WSAEBADF WSABASEERR + 9

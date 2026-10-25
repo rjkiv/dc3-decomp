@@ -533,7 +533,7 @@
             "system/os/Memory_Xbox.cpp": "Matching",
             "system/os/NetStream.cpp": "Matching",
             "system/os/NetworkSocket.cpp": "Matching",
-            "system/os/NetworkSocket_Win.cpp": "NonMatching",
+            "system/os/NetworkSocket_Win.cpp": "Matching",
             "system/os/OnlineID.cpp": "Matching",
             "system/os/PlatformMgr.cpp": "Matching",
             "system/os/PlatformMgr_Xbox.cpp": "NonMatching",
