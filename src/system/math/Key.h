@@ -435,24 +435,35 @@ namespace Hmx {
 }
 
 // math functions defined in math/Key.cpp:
-void SplineTangent(const Keys<Vector3, Vector3> &, int, Vector3 &);
+void SplineTangent(const Keys<Vector3, Vector3> &keys, int i, Vector3 &r);
 void InterpTangent(
-    const Vector3 &, const Vector3 &, const Vector3 &, const Vector3 &, float, Vector3 &
+    const Vector3 &va,
+    const Vector3 &ta,
+    const Vector3 &vb,
+    const Vector3 &tb,
+    float r,
+    Vector3 &t
 );
 void InterpVector(
-    const Keys<Vector3, Vector3> &,
-    const Key<Vector3> *,
-    const Key<Vector3> *,
-    float,
-    bool,
-    Vector3 &,
-    Vector3 *
+    const Keys<Vector3, Vector3> &keys,
+    const Key<Vector3> *a,
+    const Key<Vector3> *b,
+    float t,
+    bool spline,
+    Vector3 &r,
+    Vector3 *tangent
 );
-void InterpVector(const Keys<Vector3, Vector3> &, bool, float, Vector3 &, Vector3 *);
+void InterpVector(
+    const Keys<Vector3, Vector3> &keys,
+    bool spline,
+    float frame,
+    Vector3 &r,
+    Vector3 *tangent
+);
 void QuatSpline(
-    const Keys<Hmx::Quat, Hmx::Quat> &,
-    const Key<Hmx::Quat> *,
-    const Key<Hmx::Quat> *,
-    float,
-    Hmx::Quat &
+    const Keys<Hmx::Quat, Hmx::Quat> &keys,
+    const Key<Hmx::Quat> *a,
+    const Key<Hmx::Quat> *b,
+    float t,
+    Hmx::Quat &ret
 );

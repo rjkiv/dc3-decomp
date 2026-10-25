@@ -28,8 +28,18 @@ namespace Hmx {
             w = wIn;
         }
 
+        //  public: const float* AsArray() const;
+        //  public: float* AsArray();
+        //  public: void SetSmallAngle(const Vector3&);
+        //  public: void Identity();
+        //  public: void AddIdentity(float);
+
         float operator*(const Quat &q) const {
             return x * q.x + y * q.y + z * q.z + w * q.w;
+        }
+
+        bool operator==(const Hmx::Quat &q) const {
+            return x == q.x && y == q.y && z == q.z && w == q.w;
         }
 
         bool operator!=(const Quat &q) const {
