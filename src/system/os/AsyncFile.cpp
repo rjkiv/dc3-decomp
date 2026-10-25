@@ -285,10 +285,12 @@ AsyncFile *AsyncFile::New(const char *filename, int mode) {
         char buffer[256];
         if (HolmesClientCacheFile(buffer, filename)) {
             filename = buffer;
+            goto lol;
         }
         syncFile = new AsyncFileHolmes(filename, mode);
     }
     if (!syncFile) {
+    lol:
         syncFile = new AsyncFileWin(filename, mode);
     }
     syncFile->Init();
