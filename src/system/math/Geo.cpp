@@ -1,5 +1,6 @@
 #include "math/Geo.h"
 #include "Vec.h"
+#include "math/Frustum.h"
 #include "math/Mtx.h"
 #include "math/Sphere.h"
 #include "math/Utl.h"
@@ -36,9 +37,9 @@ void NumNodes(const BSPNode *node, int &num, int &maxDepth) {
 
 template <>
 TextStream &operator<<(TextStream &ts, const std::vector<Vector2> &vec) {
-    ts << "( size: " << vec.size() << ")";
+    ts << "(size:" << vec.size() << ")";
     FOREACH_CONST (v2, vec) {
-        ts << "\n" << vec.end() - v2 << "\t" << *v2;
+        ts << "\n" << v2 - vec.begin() << "\t" << *v2;
     }
     return ts;
 }
@@ -114,11 +115,13 @@ float Box::Volume() const {
 
 void Multiply(const Box &in, float scalar, Box &out) {
     Vector3 midpoint;
-    Interp(in.mMin, in.mMax, 0.5, midpoint);
+    Interp(in.mMin, in.mMax, 0.5f, midpoint);
     Subtract(in.mMax, midpoint, out.mMax);
+    Scale(out.mMax, scalar, out.mMax);
+    Add(out.mMax, midpoint, out.mMax);
     Subtract(in.mMin, midpoint, out.mMin);
-    ScaleAdd(midpoint, out.mMax, scalar, out.mMax);
-    ScaleAdd(midpoint, out.mMin, scalar, out.mMin);
+    Scale(out.mMin, scalar, out.mMin);
+    Add(out.mMin, midpoint, out.mMin);
 }
 
 void Box::GrowToContain(const Vector3 &vec, bool b) {
@@ -317,15 +320,14 @@ void MultiplyEq(BSPNode *n, const Transform &t) {
     }
 }
 
-void Intersect(const Hmx::Ray &ray1, const Hmx::Ray &ray2, Vector2 &vec) {
-    float dot = ray1.dir.y * ray2.dir.x - ray1.dir.x * ray2.dir.y;
-    if (dot != 0.0f) {
-        float s = ((ray2.base.y - ray1.base.y) * ray1.dir.x
-                   + (ray1.base.x - ray2.base.x) * ray1.dir.y)
-            / dot;
-        vec.Set(s * ray2.dir.x + ray2.base.x, s * ray2.dir.y + ray2.base.y);
+void Intersect(const Hmx::Ray &s1, const Hmx::Ray &s2, Vector2 &v) {
+    float cross = Cross(s2.dir, s1.dir);
+    if (cross != 0) {
+        Vector2 baseDiff(s1.base.x - s2.base.x, s1.base.y - s2.base.y);
+        cross = Cross(baseDiff, s1.dir) / cross;
+        v.Set(cross * s2.dir.x + s2.base.x, cross * s2.dir.y + s2.base.y);
     } else {
-        vec = ray1.base;
+        v = s1.base;
     }
 }
 
@@ -397,4 +399,67 @@ bool Intersect(const Segment &seg, const Triangle &tri, bool b, float &out) {
         return false;
     }
     return true;
+}
+
+void Frustum::Set(float nearDist, float farDist, float yFov, float yRatio) {
+    front.Set(0, 1, 0, -nearDist);
+    back.Set(0, -1, 0, farDist);
+    float sinFov = sinf(yFov / 2);
+    float cosFov = cosf(yFov / 2);
+    float sinRatio = sinFov / yRatio;
+    top.Set(0, sinFov, -cosFov, 0);
+    bottom.Set(0, sinFov, cosFov, 0);
+    float len = sqrtf(sinRatio * sinRatio + cosFov * cosFov);
+    float f1;
+    if (len != 0) {
+        f1 = 1 / len;
+    } else {
+        f1 = 0;
+    }
+    left.Set(f1 * cosFov, f1 * sinRatio, 0, 0);
+    right.Set(-(f1 * cosFov), f1 * sinRatio, 0, 0);
+    if (yFov == 0) {
+        right.d = 1;
+        left.d = 1;
+        top.d = yRatio;
+        bottom.d = yRatio;
+    }
+}
+
+void BSPFace::Set(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3) {
+    Subtract(p2, p1, t.m.x);
+    Normalize(t.m.x, t.m.x);
+    Subtract(p3, p1, t.m.y);
+
+    Cross(t.m.x, t.m.y, t.m.z);
+    Normalize(t.m.z, t.m.z);
+    Cross(t.m.z, t.m.x, t.m.y);
+
+    t.v = p1;
+    p.points.clear();
+
+    Vector3 v;
+    MultiplyTranspose(p1, t, v);
+    p.points.push_back(Vector2(v.x, v.y));
+    MultiplyTranspose(p2, t, v);
+    p.points.push_back(Vector2(v.x, v.y));
+    MultiplyTranspose(p3, t, v);
+    p.points.push_back(Vector2(v.x, v.y));
+    Update();
+}
+
+void Multiply(const Plane &a, const Transform &b, Plane &c) {
+    Hmx::Matrix3 m;
+    FastInvert(b.m, m);
+    Vector3 v(a.a, a.b, a.c);
+
+    Vector3 vmult;
+    Multiply(m, v, vmult);
+
+    Scale(v, -(a.d / LengthSquared(v)), v);
+
+    Vector3 on;
+    Multiply(v, b, on);
+
+    c.Set(on, vmult);
 }

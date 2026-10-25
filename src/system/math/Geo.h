@@ -45,7 +45,8 @@ namespace Hmx {
 
     class Ray {
     public:
-        Vector2 base, dir;
+        Vector2 base; // 0x0
+        Vector2 dir; // 0x8
     };
 }
 
