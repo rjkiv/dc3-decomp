@@ -2,6 +2,7 @@
 #include "math/SHA1.h"
 #include "math/Utl.h"
 #include "os/Archive.h"
+#include "os/Block.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
 #include "os/File.h"
@@ -44,7 +45,7 @@ void HDCache::UnlockCache() {
 
 int HDCache::HdrSize() {
     int size = 32;
-    int numArkfiles = TheArchive->NumArkFiles();
+    int numArkfiles = TheArchive->GetNumArkfiles();
     for (int i = 0; i < numArkfiles; i++) {
         if (TheArchive->GetArkfileCachePriority(i) >= 0) {
             int numBlocks = TheArchive->GetArkfileNumBlocks(i);
@@ -181,7 +182,7 @@ void HDCache::WriteHdr() {
         HxGuid guid;
         TheArchive->GetGuid(guid);
         *mHdrBuf << guid;
-        int numArkfiles = TheArchive->NumArkFiles();
+        int numArkfiles = TheArchive->GetNumArkfiles();
         *mHdrBuf << numArkfiles;
         for (int i = 0; i < numArkfiles; i++) {
             int blockSize = 0;
@@ -224,7 +225,7 @@ void HDCache::WriteHdr() {
 void HDCache::OpenFiles(int numCachedArkfiles) {
     if (mFileFmt.empty())
         return;
-    int numArkfiles = TheArchive->NumArkFiles();
+    int numArkfiles = TheArchive->GetNumArkfiles();
     MILO_ASSERT(numCachedArkfiles <= numArkfiles, 0x22F);
     FileMkDir(FileGetPath(mFileFmt.c_str()));
     std::vector<int> pendingArkfiles;
@@ -304,7 +305,7 @@ void HDCache::Init() {
             Flush();
         }
 
-        int numArkfiles = TheArchive->NumArkFiles();
+        int numArkfiles = TheArchive->GetNumArkfiles();
         mReadArkFiles.resize(numArkfiles);
         mWriteArkFiles.resize(numArkfiles);
 

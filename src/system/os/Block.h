@@ -79,3 +79,4 @@ private:
 };
 
 extern BlockMgr TheBlockMgr;
+extern const int kArkBlockSize;

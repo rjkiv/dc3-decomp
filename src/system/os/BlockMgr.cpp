@@ -11,6 +11,8 @@
 
 #define kNumBlockBuffers 0x13
 
+const int kArkBlockSize = 0x10000;
+
 // static bool gReadHD; // RVA=0x1098f58
 // static char* gTempBlock; // RVA=0x1098f5c
 // static char gBuffers[1245184]; // RVA=0xf68f58

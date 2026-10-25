@@ -357,7 +357,7 @@ void AppendStackTrace(FixedString &msg, void *context) {
         HolmesClientStackTrace(mapName.c_str(), data, stackIdx, strf8);
         msg += strf8.c_str();
         parse = !strf8.empty();
-    } else if (TheArchive && TheArchive->Patched()) {
+    } else if (TheArchive && TheArchive->IsPatched()) {
         parse = false;
     } else {
         parse = (*ParseStack)(mapName.c_str(), data, stackIdx, msg);

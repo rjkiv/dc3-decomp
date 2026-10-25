@@ -14,7 +14,15 @@ public:
     void Read(BinStream &, int);
     int AddString(const char *);
     const char *operator[](int idx) const;
+    int GetHeapSize() const { return mFree - mHeap; }
 
+    //   public: ArkHash(int32_t);
+    //   public: void Write(BinStream&) const;
+    //   public: void Read(BinStream&, int32_t);
+    //   public: int32_t GetHeapSize() const;
+    //   public: int32_t GetNumStrings() const;
+
+private:
     char *mHeap; // 0x0
     char *mHeapEnd; // 0x4
     char *mFree; // 0x8
@@ -23,24 +31,22 @@ public:
 };
 
 class FileEntry {
-    friend BinStream &operator>>(BinStream &, FileEntry &);
-    friend class Archive;
-
 public:
-    int HashedPath() const { return mHashedPath; }
-    int Size() const { return mSize; }
-    int HashedName() const { return mHashedName; }
+    FileEntry() {}
+    FileEntry(int name, int path, u64 offset, int size, int ucSize)
+        : mOffset(offset), mHashedName(name), mHashedPath(path), mSize(size),
+          mUCSize(ucSize) {}
+
     bool operator<(const FileEntry &e) const {
         return mHashedPath < e.mHashedPath
             || (mHashedPath == e.mHashedPath && mHashedName < e.mHashedName);
     }
 
-private:
-    u64 mOffset;
-    int mHashedName;
-    int mHashedPath;
-    int mSize;
-    int mUCSize;
+    u64 mOffset; // 0x0
+    int mHashedName; // 0x8
+    int mHashedPath; // 0xc
+    int mSize; // 0x10
+    int mUCSize; // 0x14
 };
 
 const int preinitArk = 1;
@@ -74,12 +80,29 @@ public:
     int GetArkfileNumBlocks(int filenum) const;
     void SetLocationHardDrive();
     void Merge(Archive &shadow);
-    bool Patched() const { return mIsPatched; }
-    int NumArkFiles() const { return mNumArkfiles; }
+    bool IsPatched() const { return mIsPatched; }
+    int GetNumArkfiles() const { return mNumArkfiles; }
+    int GetHeapSize() const { return mHashTable.GetHeapSize(); }
 
     static bool DebugArkOrder();
 
     MEM_OVERLOAD(Archive, 100);
+
+    // clang-format off
+
+    //  public: void AddFile(const String&, int32_t, int32_t);
+    //  public: void Write(bool);
+    //  public: void Print(TextStream&);
+    //  public: void FindFilesInRange(uint64_t, uint64_t, stlpmtx_std::list<String,stlpmtx_std::StlNodeAlloc<String> >&);
+    //  public: void Verify();
+    //  public: bool IsValidBlock(int32_t, int32_t);
+    //  public: bool IsArkSplitEntry(const FileEntry&);
+
+    //  public: const char* GetArkfileBaseName(int32_t) const;
+    //  public: int32_t GetHeapSize() const;
+    //  public: int32_t GetNumStrings() const;
+    //  public: void SetBasename(const char*);
+    // clang-format on
 
 private:
     void Read(int heap_headroom);
@@ -101,5 +124,3 @@ private:
 
 extern Archive *TheArchive;
 void ArchiveInit();
-
-extern const int kArkBlockSize;

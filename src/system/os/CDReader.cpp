@@ -23,8 +23,8 @@ namespace {
 
     int ArkFilesInit() {
         if (gArkFiles.empty()) {
-            gArkFiles.resize(TheArchive->NumArkFiles());
-            gExternalArkFiles.resize(TheArchive->NumArkFiles());
+            gArkFiles.resize(TheArchive->GetNumArkfiles());
+            gExternalArkFiles.resize(TheArchive->GetNumArkfiles());
             memset(&gOverlapped, 0, sizeof(gOverlapped));
             for (int i = 0; i < gArkFiles.size(); i++) {
                 const char *arkFileName = TheArchive->GetArkfileName(i);
