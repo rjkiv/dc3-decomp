@@ -14,11 +14,6 @@ public:
     virtual const char *GetCacheSearchPath(const char *);
     virtual unsigned int GetDeviceID() const { return mContentData.DeviceID; }
 
-    const char *Name() const { return mStrCacheName.c_str(); }
-    XCONTENT_DATA *ContentData() { return &mContentData; }
-    void SetName(const String &name) { mStrCacheName = name; }
-
-private:
     String mStrCacheName; // 0x4
     XCONTENT_DATA mContentData; // 0xc
 };
@@ -27,7 +22,7 @@ class CacheXbox : public Cache, public ThreadCallback {
 public:
     CacheXbox(const CacheIDXbox &);
     virtual ~CacheXbox() {}
-    virtual const char *GetCacheName() { return mCacheID.Name(); }
+    virtual const char *GetCacheName() { return mCacheID.mStrCacheName.c_str(); }
     virtual void Poll() {}
     virtual bool IsConnectedSync();
     virtual bool GetFileSizeAsync(const char *, unsigned int *, Hmx::Object *);
