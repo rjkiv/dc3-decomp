@@ -329,16 +329,18 @@ void ChunkStream::DecompressChunkAsync() {
 }
 
 bool ChunkStream::PollDecompressionWorker() {
-    CritSecTracker t(&gDecompressionCritSec);
-    if (gDecompressionQueue.size() != 0) {
-        DecompressTask task = gDecompressionQueue.front();
-        gDecompressionQueue.pop_front();
-        gDecompressionCritSec.Exit(); // wat do here
-        DecompressChunk(task);
-        return true;
-    } else {
-        return false;
+    DecompressTask task;
+    {
+        CritSecTracker t(&gDecompressionCritSec);
+        if (gDecompressionQueue.size() != 0) {
+            task = gDecompressionQueue.front();
+            gDecompressionQueue.pop_front();
+        } else {
+            return false;
+        }
     }
+    DecompressChunk(task);
+    return true;
 }
 
 BinStream &WriteChunks(BinStream &bs, const void *v, int i1, int i2) {

@@ -21,8 +21,6 @@ public:
 
 class CritSecTracker {
 public:
-    CriticalSection *mCritSec;
-
     CritSecTracker(CriticalSection *section) {
         mCritSec = section;
         if (section != 0) {
@@ -35,4 +33,7 @@ public:
             mCritSec->Exit();
         }
     }
+
+private:
+    CriticalSection *mCritSec;
 };

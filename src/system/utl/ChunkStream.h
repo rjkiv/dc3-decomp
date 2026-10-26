@@ -98,6 +98,7 @@ private:
 };
 
 struct DecompressTask {
+    DecompressTask() {}
     DecompressTask(
         int *size,
         char *data,
