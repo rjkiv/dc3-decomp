@@ -14,6 +14,7 @@
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "math/Rot.h"
+#include "meta/ConnectionStatusPanel.h"
 #include "meta/HAQManager.h"
 #include "meta_ham/BlacklightPanel.h"
 #include "meta_ham/HamScreen.h"
@@ -688,6 +689,8 @@ DataNode HamUI::OnMsg(const ButtonDownMsg &msg) {
     mLastButtonDownPadNum = msg.GetPadNum();
     return DATA_UNHANDLED;
 }
+
+DataNode HamUI::OnMsg(const ConnectionStatusChangedMsg &msg) { return 1; }
 
 bool ToggleDrawSkeletons() {
     MILO_ASSERT(TheSkeletonViz, 0xe2);
