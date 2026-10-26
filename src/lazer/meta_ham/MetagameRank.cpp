@@ -561,13 +561,11 @@ bool compare_deferred_points(DeferredPoints a, DeferredPoints b) {
     return aIndex < bIndex;
 }
 
-// whoever solves this will gain us 0x2194 bytes for lazer:
-// https://decomp.me/scratch/m3yNS
 void MetagameRank::UpdateScore(
     int songID,
     const HamPlayerData *playerData,
     const SongStatusMgr *statusMgr,
-    int i4,
+    int score,
     int stars
 ) {
     if (!TheHamProvider->Property("is_in_party_mode")->Int()
@@ -638,8 +636,9 @@ void MetagameRank::UpdateScore(
         static Symbol campaign_completed_on_hard("campaign_completed_on_hard");
         static Symbol five_star_a_characters_songlist("five_star_a_characters_songlist");
 
-        if (mFirstTime) {
-            mFirstTime = false;
+        bool &first = mFirstTime;
+        if (first) {
+            first = false;
             AwardPointsForTask(play_first_time);
         }
 
@@ -891,9 +890,8 @@ void MetagameRank::UpdateScore(
                                 AwardPointsForTask(new_era_completed_campaign_10s);
                             }
                         } else if (eraName == Symbol("era_tan_battle")) {
-                            switch (
-                                TheGameData->Player(playerData->Unk40())->GetDifficulty()
-                            ) {
+                            switch (TheGameData->Player(playerData->Unk40())
+                                        ->GetDifficulty()) {
                             case kDifficultyEasy:
                                 AwardPointsForTask(campaign_completed_on_easy_3);
                                 break;
@@ -968,7 +966,7 @@ void MetagameRank::UpdateScore(
             static Symbol challenge_met_disp("challenge_met_disp");
             if (TheGameMode->InMode(challenge)) {
                 std::vector<int> vec;
-                if (TheChallenges->GetBeatenChallengeXPs(playerData, i4, vec)) {
+                if (TheChallenges->GetBeatenChallengeXPs(playerData, score, vec)) {
                     if (vec.size() != 0) {
                         for (int i = 0; i < vec.size(); i++) {
                             AwardPoints(vec[i], challenge_met_disp);
