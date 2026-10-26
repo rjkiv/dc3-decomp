@@ -8,10 +8,12 @@
 unsigned short WToLower(unsigned short w) {
     if ((w >= 0x41 && w <= 0x5A) || (w >= 0xC0 && w <= 0xDE)) {
         w += 0x20;
-    } else if ((w >= 0x100 && w <= 0x137 && (w & 1) == 0)
-               || (w >= 0x139 && w <= 0x148 && (w & 1) == 1)
-               || (w >= 0x14A && w <= 0x177 && (w & 1) == 0)
-               || (w >= 0x179 && w <= 0x17E && (w & 1) == 1)) {
+    } else if (
+        (w >= 0x100 && w <= 0x137 && (w & 1) == 0)
+        || (w >= 0x139 && w <= 0x148 && (w & 1) == 1)
+        || (w >= 0x14A && w <= 0x177 && (w & 1) == 0)
+        || (w >= 0x179 && w <= 0x17E && (w & 1) == 1)
+    ) {
         w += 1;
     } else if (w == 0x178) {
         return 0xFF;
@@ -22,10 +24,12 @@ unsigned short WToLower(unsigned short w) {
 unsigned short WToUpper(unsigned short w) {
     if ((w >= 0x61 && w <= 0x7A) || (w >= 0xE0 && w <= 0xFE)) {
         w -= 0x20;
-    } else if ((w >= 0x100 && w <= 0x137 && (w & 1) == 1)
-               || (w >= 0x139 && w <= 0x148 && (w & 1) == 0)
-               || (w >= 0x14A && w <= 0x177 && (w & 1) == 1)
-               || (w >= 0x179 && w <= 0x17E && (w & 1) == 0)) {
+    } else if (
+        (w >= 0x100 && w <= 0x137 && (w & 1) == 1)
+        || (w >= 0x139 && w <= 0x148 && (w & 1) == 0)
+        || (w >= 0x14A && w <= 0x177 && (w & 1) == 1)
+        || (w >= 0x179 && w <= 0x17E && (w & 1) == 0)
+    ) {
         w -= 1;
     } else if (w == 0xFF) {
         return 0x178;
@@ -38,9 +42,8 @@ int WStrniCmp(const unsigned short *a, const unsigned short *b, int n) {
     const unsigned short *p2 = b;
     for (; n != 0; n--) {
         unsigned short char1 = WToLower(*p1);
-        unsigned short char2 = WToLower(*p2);
+        unsigned short char2 = WToLower(*p2++);
         p1++;
-        p2++;
         if (char1 != char2) {
             return char1 - char2;
         }
@@ -134,8 +137,9 @@ void ASCIItoUTF8(char *out, int len, const char *in) {
     memset(out, 0, len);
     String str;
     char *p = out;
-    for (int i = 0; (char)in[i] != '\0'; i++) {
-        int utf8 = EncodeUTF8(str, (unsigned char)in[i]);
+    for (; *in != '\0'; in++) {
+        unsigned char c = *in;
+        int utf8 = EncodeUTF8(str, c);
         if ((p - out) + utf8 >= (unsigned int)len) {
             return;
         }
