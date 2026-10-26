@@ -818,7 +818,7 @@
             "system/utl/MemStream.cpp": "Matching",
             "system/utl/MemTrack.cpp": "NonMatching",
             "system/utl/MemTracker.cpp": "NonMatching",
-            "system/utl/MultiTempoTempoMap.cpp": "NonMatching",
+            "system/utl/MultiTempoTempoMap.cpp": "Matching",
             "system/utl/NetCacheLoader.cpp": "Matching",
             "system/utl/NetCacheMgr.cpp": "NonMatching",
             "system/utl/NetCacheMgr_Xbox.cpp": "Matching",

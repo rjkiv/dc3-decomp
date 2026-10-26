@@ -42,6 +42,6 @@ private:
     std::vector<TempoInfoPoint> mTempoPoints; // 0x4
     float mStartLoopTick; // 0x10
     float mEndLoopTick; // 0x14
-    float mStartLoopMs; // 0x18
-    float mEndLoopMs; // 0x1c
+    float mStartLoopTime; // 0x18
+    float mEndLoopTime; // 0x1c
 };
