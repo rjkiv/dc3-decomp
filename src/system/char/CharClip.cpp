@@ -1031,37 +1031,26 @@ CharBoneDir *CharClip::GetResource() const {
     return dir;
 }
 
-void CharClip::LockAndDelete(CharClip **const clips, int i2, int remaining) {
+void CharClip::LockAndDelete(CharClip **const deathRow, int count, int remaining) {
     MILO_ASSERT(remaining >= 0, 0x42A);
-
-    if (i2 >= remaining) {
-        remaining = i2;
+    if (count < remaining) {
+        remaining = count;
     }
-
-    int i = 0;
-    if (i2 > 0) {
-        for (int j = 0; j < i2; j++) {
-            CharClip *clip = clips[j];
-            if ((clip->mPlayFlags & 0x8000) == 0) {
-                clips[i] = clips[j];
-                clips[i2 + i] = clip;
-                i++;
-            }
+    for (int i = 0; i < count; i++) {
+        CharClip *clip = deathRow[i];
+        if (clip->mPlayFlags & 0x10000U) {
+            deathRow[i] = deathRow[--count];
+            deathRow[count] = clip;
+            remaining--;
+            i--;
         }
     }
-
-    if (remaining > i2) {
-        for (int k = i; k < remaining - i2; k++) {
-            clips[i2 + k]->mPlayFlags |= 0x8000;
-        }
+    while (remaining > 0) {
+        CharClip *clip = deathRow[--count];
+        clip->mPlayFlags |= 0x10000;
+        remaining--;  // It fit pretty well with band 3, except that Xenon is awful.
     }
-
-    if (i2 > 0) {
-        for (int k = 0; k < i2; k++) {
-            CharClip *clip = clips[i2 + k];
-            if (clip != nullptr) {
-                clip->Release(nullptr);
-            }
-        }
+    while (count > 0) {
+        delete deathRow[--count];
     }
 }
