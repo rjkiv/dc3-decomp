@@ -38,8 +38,8 @@ enum CacheResourceResult {
 
 class CacheDirEntry {
 public:
-    String mFullFileName; // 0x0
-    DateTime mLastWriteTime; // 0x8
+    String mStrRemotePath; // 0x0
+    DateTime mTimeLastAccess; // 0x8
     DWORD mFileSize; // 0x10
 };
 
@@ -47,8 +47,8 @@ class CacheID {
 public:
     CacheID() {}
     virtual ~CacheID() {}
-    virtual const char *GetCachePath(const char *) = 0;
-    virtual const char *GetCacheSearchPath(const char *) = 0;
+    virtual const char *GetCachePath(const char *strPath) = 0;
+    virtual const char *GetCacheSearchPath(const char *strFilter) = 0;
     virtual unsigned int GetDeviceID() const;
 
     MEM_OVERLOAD(CacheID, 0x2F);
@@ -61,20 +61,34 @@ public:
     virtual const char *GetCacheName() = 0;
     virtual void Poll() = 0;
     virtual bool IsConnectedSync() = 0;
-    virtual bool GetFreeSpaceSync(u64 *) = 0;
-    virtual bool DeleteSync(const char *) = 0;
-    virtual bool
-    GetDirectoryAsync(const char *, std::vector<CacheDirEntry> *, Hmx::Object *) = 0;
-    virtual bool GetFileSizeAsync(const char *, unsigned int *, Hmx::Object *) = 0;
-    virtual bool ReadAsync(const char *, void *, unsigned int, Hmx::Object *) = 0;
-    virtual bool WriteAsync(const char *, void *, unsigned int, Hmx::Object *) = 0;
-    virtual bool DeleteAsync(const char *, Hmx::Object *) = 0;
+    virtual bool GetFreeSpaceSync(u64 *pSize) = 0;
+    virtual bool DeleteSync(const char *filename) = 0;
+    virtual bool GetDirectoryAsync(
+        const char *filter,
+        std::vector<CacheDirEntry> *pDirList,
+        Hmx::Object *pCallbackObj
+    ) = 0;
+    virtual bool GetFileSizeAsync(
+        const char *filename, unsigned int *pSize, Hmx::Object *pCallbackObj
+    ) = 0;
+    virtual bool ReadAsync(
+        const char *filename, void *pData, unsigned int size, Hmx::Object *pCallbackObj
+    ) = 0;
+    virtual bool WriteAsync(
+        const char *filename, void *pData, unsigned int size, Hmx::Object *pCallbackObj
+    ) = 0;
+    virtual bool DeleteAsync(const char *filename, Hmx::Object *pCallbackObj) = 0;
 
     bool IsDone();
     CacheResult GetLastResult();
     MEM_OVERLOAD(Cache, 0x56);
 
 protected:
+    void SetOp(OpType t) { mOpCur = t; }
+    OpType GetOp() { return mOpCur; }
+    void SetLastResult(CacheResult r) { mLastResult = r; }
+
+private:
     OpType mOpCur; // 0x4
     CacheResult mLastResult; // 0x8
 };

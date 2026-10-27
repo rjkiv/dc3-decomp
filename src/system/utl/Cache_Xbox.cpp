@@ -13,6 +13,7 @@
 #include "xdk/xapilibi/errhandlingapi.h"
 #include "xdk/xapilibi/fileapi.h"
 #include "xdk/xapilibi/handleapi.h"
+#include "xdk/xapilibi/winerror.h"
 #include "xdk/xapilibi/xbase.h"
 #include "xdk/xapilibi/xbox.h"
 #include <cstring>
@@ -56,22 +57,22 @@ CacheXbox::CacheXbox(const CacheIDXbox &c)
     : mCacheID(c), mData(0), mSize(0), mCacheDirList(0), mCallbackObj(0) {}
 
 bool CacheXbox::IsConnectedSync() {
-    return XContentGetDeviceState(mCacheID.ContentData()->DeviceID, nullptr)
+    return XContentGetDeviceState(mCacheID.mContentData.DeviceID, nullptr)
         == ERROR_SUCCESS;
 }
 
 bool CacheXbox::GetFileSizeAsync(const char *filename, unsigned int *ui, Hmx::Object *o) {
     if (!IsDone()) {
-        mLastResult = kCache_ErrorBusy;
+        SetLastResult(kCache_ErrorBusy);
         return false;
     } else if (!ui) {
-        mLastResult = kCache_ErrorBadParam;
+        SetLastResult(kCache_ErrorBadParam);
         return false;
     } else {
         mThreadStr = mCacheID.GetCachePath(filename);
         mData = ui;
-        mLastResult = kCache_NoError;
-        mOpCur = kOpFileSize;
+        SetLastResult(kCache_NoError);
+        SetOp(kOpFileSize);
         ThreadCall(this);
         return true;
     }
@@ -79,44 +80,44 @@ bool CacheXbox::GetFileSizeAsync(const char *filename, unsigned int *ui, Hmx::Ob
 
 bool CacheXbox::ReadAsync(const char *cc, void *v, unsigned int ui, Hmx::Object *o) {
     if (!IsDone()) {
-        mLastResult = kCache_ErrorBusy;
+        SetLastResult(kCache_ErrorBusy);
         return false;
     } else if (cc && v && ui != 0) {
         mThreadStr = mCacheID.GetCachePath(cc);
         mData = v;
         mSize = ui;
-        mLastResult = kCache_NoError;
-        mOpCur = kOpRead;
+        SetLastResult(kCache_NoError);
+        SetOp(kOpRead);
         ThreadCall(this);
         return true;
     } else {
-        mLastResult = kCache_ErrorBadParam;
+        SetLastResult(kCache_ErrorBadParam);
         return false;
     }
 }
 
 bool CacheXbox::DeleteAsync(const char *cc, Hmx::Object *o) {
     if (!IsDone()) {
-        mLastResult = kCache_ErrorBusy;
+        SetLastResult(kCache_ErrorBusy);
         return false;
     } else if (!cc) {
-        mLastResult = kCache_ErrorBadParam;
+        SetLastResult(kCache_ErrorBadParam);
         return false;
     } else {
         mThreadStr = mCacheID.GetCachePath(cc);
-        mLastResult = kCache_NoError;
-        mOpCur = kOpDelete;
+        SetLastResult(kCache_NoError);
+        SetOp(kOpDelete);
         ThreadCall(this);
         return true;
     }
 }
 
-bool CacheXbox::GetFreeSpaceSync(u64 *u) {
+bool CacheXbox::GetFreeSpaceSync(u64 *pSize) {
     if (!IsDone()) {
-        mLastResult = kCache_ErrorBusy;
+        SetLastResult(kCache_ErrorBusy);
         return false;
-    } else if (!u) {
-        mLastResult = kCache_ErrorBadParam;
+    } else if (!pSize) {
+        SetLastResult(kCache_ErrorBadParam);
         return false;
     } else {
         ULARGE_INTEGER freeBytes = { 0 };
@@ -127,38 +128,40 @@ bool CacheXbox::GetFreeSpaceSync(u64 *u) {
             DWORD err = GetLastError();
             if (err != ERROR_NOT_READY && err != ERROR_MEDIA_CHANGED
                 && err != ERROR_DEVICE_NOT_CONNECTED && err != ERROR_DEVICE_REMOVED
-                && IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+                && IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
                 MILO_NOTIFY(
                     "CacheXbox::GetFreeSpaceSync(): Unhandled error %u returned from GetDiskFreeSpaceEx().\n",
                     err
                 );
-                mLastResult = kCache_ErrorUnknown;
+                SetLastResult(kCache_ErrorUnknown);
             } else {
-                mLastResult = kCache_ErrorStorageDeviceMissing;
+                SetLastResult(kCache_ErrorStorageDeviceMissing);
             }
             return false;
         } else {
             XDEVICE_DATA deviceData;
             DWORD err =
-                XContentGetDeviceData(mCacheID.ContentData()->DeviceID, &deviceData);
+                XContentGetDeviceData(mCacheID.mContentData.DeviceID, &deviceData);
 
             if (err != ERROR_SUCCESS) {
-                if (err != ERROR_ACCESS_DENIED && err != ERROR_NOT_READY
-                    && err != ERROR_MEDIA_CHANGED && err != ERROR_DEVICE_NOT_CONNECTED
-                    && err != ERROR_DEVICE_REMOVED
-                    && IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+                if (err == ERROR_ACCESS_DENIED || err == ERROR_NOT_READY
+                    || err == ERROR_MEDIA_CHANGED || err == ERROR_DEVICE_NOT_CONNECTED
+                    || err == ERROR_DEVICE_REMOVED) {
+                    SetLastResult(kCache_ErrorStorageDeviceMissing);
+                    return false;
+                }
+                if (IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
                     MILO_NOTIFY(
                         "CacheXbox::GetFreeSpaceSync(): Unhandled error returned from GetDiskFreeSpaceEx().\n"
                     );
-                    mLastResult = kCache_ErrorUnknown;
-                    return false;
+                    SetLastResult(kCache_ErrorUnknown);
                 } else {
-                    mLastResult = kCache_ErrorStorageDeviceMissing;
-                    return false;
+                    SetLastResult(kCache_ErrorStorageDeviceMissing);
                 }
+                return false;
             } else {
-                *u = deviceData.ulDeviceFreeBytes + freeBytes.QuadPart;
-                mLastResult = kCache_NoError;
+                *pSize = deviceData.ulDeviceFreeBytes + freeBytes.QuadPart;
+                SetLastResult(kCache_NoError);
                 return true;
             }
         }
@@ -169,18 +172,18 @@ bool CacheXbox::GetDirectoryAsync(
     const char *filter, std::vector<CacheDirEntry> *pDirList, Hmx::Object *obj
 ) {
     if (!IsDone()) {
-        mLastResult = kCache_ErrorBusy;
+        SetLastResult(kCache_ErrorBusy);
         return false;
     } else if (!pDirList) {
-        mLastResult = kCache_ErrorBadParam;
+        SetLastResult(kCache_ErrorBadParam);
         return false;
     } else {
         MILO_ASSERT(mThreadStr.empty(), 0x108);
         mThreadStr = mCacheID.GetCacheSearchPath(filter);
         MILO_ASSERT(mCacheDirList == NULL, 0x10B);
         mCacheDirList = pDirList;
-        mLastResult = kCache_NoError;
-        mOpCur = kOpDirectory;
+        SetLastResult(kCache_NoError);
+        SetOp(kOpDirectory);
         ThreadCall(this);
         return true;
     }
@@ -188,10 +191,10 @@ bool CacheXbox::GetDirectoryAsync(
 
 bool CacheXbox::DeleteSync(const char *cc) {
     if (!IsDone()) {
-        mLastResult = kCache_ErrorBusy;
+        SetLastResult(kCache_ErrorBusy);
         return false;
     } else if (!cc) {
-        mLastResult = kCache_ErrorBadParam;
+        SetLastResult(kCache_ErrorBadParam);
         return false;
     } else {
         String path = mCacheID.GetCachePath(cc);
@@ -200,21 +203,21 @@ bool CacheXbox::DeleteSync(const char *cc) {
             path.erase(path.find_last_of('\\'));
             res = DeleteParentDirs(path);
         }
-        XContentFlush(mCacheID.Name(), nullptr);
+        XContentFlush(mCacheID.mStrCacheName.c_str(), nullptr);
         if (!res) {
             DWORD err = GetLastError();
-            if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
-                mLastResult = kCache_ErrorStorageDeviceMissing;
+            if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
+                SetLastResult(kCache_ErrorStorageDeviceMissing);
             } else {
                 MILO_NOTIFY(
                     "CacheXbox::DeleteSync() - Unhandled error from DeleteFile(): %d\n",
                     err
                 );
-                mLastResult = kCache_ErrorUnknown;
+                SetLastResult(kCache_ErrorUnknown);
             }
             return false;
         } else {
-            mLastResult = kCache_NoError;
+            SetLastResult(kCache_NoError);
             return true;
         }
     }
@@ -222,7 +225,7 @@ bool CacheXbox::DeleteSync(const char *cc) {
 
 bool CacheXbox::WriteAsync(const char *cc, void *v, unsigned int ui, Hmx::Object *obj) {
     if (!IsDone()) {
-        mLastResult = kCache_ErrorBusy;
+        SetLastResult(kCache_ErrorBusy);
         if (obj) {
             static Message msg("cache_write_result", GetLastResult());
             msg[0] = GetLastResult();
@@ -234,12 +237,12 @@ bool CacheXbox::WriteAsync(const char *cc, void *v, unsigned int ui, Hmx::Object
         mData = v;
         mSize = ui;
         mCallbackObj = obj;
-        mLastResult = kCache_NoError;
-        mOpCur = kOpWrite;
+        SetLastResult(kCache_NoError);
+        SetOp(kOpWrite);
         ThreadCall(this);
         return true;
     } else {
-        mLastResult = kCache_ErrorBadParam;
+        SetLastResult(kCache_ErrorBadParam);
         if (obj) {
             static Message msg("cache_write_result", GetLastResult());
             msg[0] = GetLastResult();
@@ -252,7 +255,7 @@ bool CacheXbox::WriteAsync(const char *cc, void *v, unsigned int ui, Hmx::Object
 
 int CacheXbox::ThreadStart() {
     MILO_ASSERT(!IsDone(), 0x197);
-    switch (mOpCur) {
+    switch (GetOp()) {
     case kOpDirectory:
         return ThreadGetDir(mThreadStr, "");
     case kOpFileSize:
@@ -271,29 +274,29 @@ int CacheXbox::ThreadStart() {
 
 void CacheXbox::ThreadDone(int res) {
     MILO_ASSERT(!IsDone(), 0x1B4);
-    OpType old = mOpCur;
+    OpType old = GetOp();
     switch (old) {
     case kOpDirectory:
-        mLastResult = (CacheResult)res;
+        SetLastResult((CacheResult)res);
         mThreadStr = gNullStr;
         mCacheDirList = nullptr;
         mCallbackObj = nullptr;
         break;
     case kOpFileSize:
-        mLastResult = (CacheResult)res;
+        SetLastResult((CacheResult)res);
         mThreadStr = gNullStr;
         mData = nullptr;
         mCallbackObj = nullptr;
         break;
     case kOpRead:
-        mLastResult = (CacheResult)res;
+        SetLastResult((CacheResult)res);
         mThreadStr = gNullStr;
         mData = nullptr;
         mSize = 0;
         mCallbackObj = nullptr;
         break;
     case kOpWrite:
-        mLastResult = (CacheResult)res;
+        SetLastResult((CacheResult)res);
         mThreadStr = gNullStr;
         mData = nullptr;
         mSize = 0;
@@ -305,7 +308,7 @@ void CacheXbox::ThreadDone(int res) {
         mCallbackObj = nullptr;
         break;
     case kOpDelete:
-        mLastResult = (CacheResult)res;
+        SetLastResult((CacheResult)res);
         mThreadStr = gNullStr;
         mCallbackObj = nullptr;
         break;
@@ -313,14 +316,17 @@ void CacheXbox::ThreadDone(int res) {
         MILO_ASSERT(false, 0x1E3);
         break;
     }
-    mOpCur = kOpNone;
+    SetOp(kOpNone);
 }
 
+// heeeeelp
+// https://decomp.me/scratch/BMxoK
 int CacheXbox::ThreadGetFileSize() {
     HANDLE file = CreateFileA(mThreadStr.c_str(), 0, 1, nullptr, 3, 0x80, nullptr);
+    DWORD err;
     if (file == INVALID_HANDLE_VALUE) {
-        DWORD err = GetLastError();
-        if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+        err = GetLastError();
+        if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
             return kCache_ErrorStorageDeviceMissing;
         } else if (err == ERROR_FILE_NOT_FOUND) {
             return kCache_ErrorCacheNotFound;
@@ -333,20 +339,26 @@ int CacheXbox::ThreadGetFileSize() {
         }
     } else {
         CacheResult ret = kCache_NoError;
-        DWORD fileSize = 0;
-        DWORD res = GetFileSize(file, &fileSize);
-        DWORD err;
-        if (res == -1 && (err = GetLastError(), err != ERROR_SUCCESS)) {
-            MILO_NOTIFY(
-                "CacheXbox::GetFileSizeAsync() - Unhandled error from GetFileSize(): %d\n",
-                err
-            );
-            ret = kCache_ErrorUnknown;
+        DWORD sizeHigh = 0;
+        DWORD res = GetFileSize(file, &sizeHigh);
+        if (res != -1) {
         } else {
-            *(DWORD *)mData = res;
+            err = GetLastError();
+            if (err == ERROR_SUCCESS) {
+            } else {
+                MILO_NOTIFY(
+                    "CacheXbox::GetFileSizeAsync() - Unhandled error from GetFileSize(): %d\n",
+                    err
+                );
+                ret = kCache_ErrorUnknown;
+                goto SKIP_ASSIGNMENT;
+            }
         }
+        *(DWORD *)mData = res;
+
+    SKIP_ASSIGNMENT:
         CloseHandle(file);
-        if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+        if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
             return kCache_ErrorStorageDeviceMissing;
         } else {
             return ret;
@@ -363,7 +375,7 @@ int CacheXbox::ThreadRead() {
         if (err >= ERROR_FILE_NOT_FOUND
             && (err <= ERROR_PATH_NOT_FOUND || err == ERROR_NOT_READY)) {
             return kCache_ErrorStorageDeviceMissing;
-        } else if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+        } else if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
             return kCache_ErrorStorageDeviceMissing;
         } else {
             MILO_NOTIFY(
@@ -377,7 +389,7 @@ int CacheXbox::ThreadRead() {
         CloseHandle(file);
         if (!res) {
             err = GetLastError();
-            if (IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+            if (IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
                 MILO_NOTIFY(
                     "CacheXbox::ReadAsync() - Unhandled error %d from ReadFile()\n", err
                 );
@@ -393,14 +405,20 @@ int CacheXbox::ThreadRead() {
 int CacheXbox::ThreadWrite() {
     mThreadStr.ReplaceAll('/', '\\');
     BOOL b3 = true;
-    unsigned int idx = mThreadStr.find('\\');
-    while ((idx = mThreadStr.find('\\', idx + 1), idx != FixedString::npos)) {
+    // unsigned int idx = mThreadStr.find('\\');
+    for (unsigned int idx = mThreadStr.find('\\', mThreadStr.find('\\') + 1);
+         idx != FixedString::npos;
+         idx = mThreadStr.find('\\', idx)) {
         String subStr = mThreadStr.substr(0, idx);
         if (GetFileAttributesA(subStr.c_str()) == -1) {
             b3 = CreateDirectoryA(subStr.c_str(), nullptr);
             if (!b3) {
                 break;
+            } else {
+                idx++;
             }
+        } else {
+            idx++;
         }
     }
 
@@ -417,7 +435,7 @@ int CacheXbox::ThreadWrite() {
         if (err >= ERROR_FILE_NOT_FOUND
             && (err <= ERROR_PATH_NOT_FOUND || err == ERROR_NOT_READY)) {
             return kCache_ErrorStorageDeviceMissing;
-        } else if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+        } else if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
             return kCache_ErrorStorageDeviceMissing;
         } else {
             MILO_NOTIFY(
@@ -429,13 +447,13 @@ int CacheXbox::ThreadWrite() {
         DWORD bytesWritten = 0;
         if (WriteFile(hFile, mData, mSize, &bytesWritten, nullptr)) {
             CloseHandle(hFile);
-            XContentFlush(mCacheID.Name(), nullptr);
+            XContentFlush(mCacheID.mStrCacheName.c_str(), nullptr);
             return kCache_NoError;
         } else {
             err = GetLastError();
             CloseHandle(hFile);
-            XContentFlush(mCacheID.Name(), nullptr);
-            if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+            XContentFlush(mCacheID.mStrCacheName.c_str(), nullptr);
+            if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
                 return kCache_ErrorStorageDeviceMissing;
             } else {
                 MILO_NOTIFY(
@@ -477,7 +495,7 @@ int CacheXbox::ThreadDelete() {
     }
     if (!delFile) {
         DWORD lastError = GetLastError();
-        if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+        if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
             return 8;
         }
         MILO_NOTIFY(
@@ -517,8 +535,8 @@ int CacheXbox::ThreadGetDir(String str1, String str2) {
                     }
                 } else {
                     entry.mFileSize = findData.nFileSizeLow;
-                    entry.mFullFileName = str2 + findData.cFileName;
-                    entry.mLastWriteTime.FromFileTime(findData.ftLastWriteTime);
+                    entry.mStrRemotePath = str2 + findData.cFileName;
+                    entry.mTimeLastAccess.FromFileTime(findData.ftLastWriteTime);
                     mCacheDirList->push_back(entry);
                 }
             }
@@ -533,7 +551,7 @@ int CacheXbox::ThreadGetDir(String str1, String str2) {
         || err == ERROR_DEVICE_NOT_CONNECTED || err == ERROR_DEVICE_REMOVED) {
         return kCache_ErrorStorageDeviceMissing;
     }
-    if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+    if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
         return kCache_ErrorStorageDeviceMissing;
     }
     return kCache_ErrorUnknown;

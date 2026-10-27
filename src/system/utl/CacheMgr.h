@@ -25,20 +25,37 @@ public:
 
     virtual ~CacheMgr();
     virtual void Poll() = 0;
-    virtual bool SearchAsync(const char *, CacheID **);
+    virtual bool SearchAsync(const char *strCacheName, CacheID **ppCacheID);
+    virtual bool ShowUserSelectUIAsync(
+        LocalUser *pUser,
+        u64 sizeMin,
+        const char *strCacheName,
+        const char *strCacheDescription,
+        CacheID **ppCacheID
+    );
+    virtual bool CreateCacheIDFromDeviceID(
+        unsigned int deviceID,
+        const char *strCacheName,
+        const char *utf8CacheDescription,
+        CacheID **ppCacheID
+    );
+    virtual bool CreateCacheID(
+        const char *strCacheName,
+        const char *strIconFilename,
+        const char *strTitleID,
+        const char *strTitleName,
+        const char *strDataVersion,
+        int minSizeKB,
+        CacheID **ppCacheID
+    );
     virtual bool
-    ShowUserSelectUIAsync(LocalUser *, u64, const char *, const char *, CacheID **);
-    virtual bool
-    CreateCacheIDFromDeviceID(unsigned int, const char *, const char *, CacheID **);
-    virtual bool
-    CreateCacheID(const char *, const char *, const char *, const char *, const char *, int, CacheID **);
-    virtual bool MountAsync(CacheID *, Cache **, Hmx::Object *) = 0;
-    virtual bool UnmountAsync(Cache **, Hmx::Object *) = 0;
-    virtual bool DeleteAsync(CacheID *) = 0;
+    MountAsync(CacheID *pCacheID, Cache **ppCache, Hmx::Object *pCallbackObj) = 0;
+    virtual bool UnmountAsync(Cache **ppCache, Hmx::Object *pCallbackObj) = 0;
+    virtual bool DeleteAsync(CacheID *pCacheID) = 0;
 
-    CacheID *GetCacheID(Symbol);
-    void RemoveCacheID(CacheID *);
-    void AddCacheID(CacheID *, Symbol);
+    CacheID *GetCacheID(Symbol symName);
+    void RemoveCacheID(CacheID *pCacheID);
+    void AddCacheID(CacheID *pCacheID, Symbol symName);
     bool IsDone();
     CacheResult GetLastResult();
 
@@ -53,12 +70,13 @@ protected:
     void SetLastResult(CacheResult);
 
     std::vector<CacheIDStoreEntry> mCacheIDStore; // 0x4
+private:
     OpType mOpCur; // 0x10
     CacheResult mLastResult; // 0x14
 };
 
 void CacheMgrTerminate();
 void CacheMgrInit();
-bool IsDeviceConnected(DWORD);
+bool IsDeviceConnected(DWORD deviceID);
 
 extern CacheMgr *TheCacheMgr;
