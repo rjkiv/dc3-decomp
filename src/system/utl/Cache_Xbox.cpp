@@ -319,9 +319,11 @@ void CacheXbox::ThreadDone(int res) {
     SetOp(kOpNone);
 }
 
+// heeeeelp
+// https://decomp.me/scratch/BMxoK
 int CacheXbox::ThreadGetFileSize() {
-    DWORD err;
     HANDLE file = CreateFileA(mThreadStr.c_str(), 0, 1, nullptr, 3, 0x80, nullptr);
+    DWORD err;
     if (file == INVALID_HANDLE_VALUE) {
         err = GetLastError();
         if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
@@ -339,22 +341,23 @@ int CacheXbox::ThreadGetFileSize() {
         CacheResult ret = kCache_NoError;
         DWORD sizeHigh = 0;
         DWORD res = GetFileSize(file, &sizeHigh);
-        if (res == -1) {
+        if (res != -1) {
+        } else {
             err = GetLastError();
             if (err == ERROR_SUCCESS) {
-                *(DWORD *)mData = res;
             } else {
                 MILO_NOTIFY(
                     "CacheXbox::GetFileSizeAsync() - Unhandled error from GetFileSize(): %d\n",
                     err
                 );
                 ret = kCache_ErrorUnknown;
+                goto SKIP_ASSIGNMENT;
             }
-            CloseHandle(file);
-        } else {
-            *(DWORD *)mData = res;
-            CloseHandle(file);
         }
+        *(DWORD *)mData = res;
+
+    SKIP_ASSIGNMENT:
+        CloseHandle(file);
         if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
             return kCache_ErrorStorageDeviceMissing;
         } else {

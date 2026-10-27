@@ -31,11 +31,11 @@ private:
     void CreateCacheIDForChosenDevice();
     void EndSearch(CacheResult);
 
-    HANDLE mFile; // 0x18
+    HANDLE mEnumHandle; // 0x18
     XOVERLAPPED mOverlapped; // 0x1c
     CacheID **mppCacheID; // 0x38
     Cache **mppCache; // 0x3c
-    Hmx::Object *mCallback; // 0x40
+    Hmx::Object *mCallbackObj; // 0x40
     CacheIDXbox *mCacheIDXbox; // 0x44
     XCONTENT_DATA mContentData; // 0x48
     String mStrCacheName; // 0x17c

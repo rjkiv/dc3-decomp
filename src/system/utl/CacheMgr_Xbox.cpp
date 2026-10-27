@@ -20,7 +20,8 @@ bool IsDeviceConnected(DWORD deviceID) {
 }
 
 CacheMgrXbox::CacheMgrXbox()
-    : mFile(INVALID_HANDLE_VALUE), mppCacheID(nullptr), mppCache(0), mCallback(0) {
+    : mEnumHandle(INVALID_HANDLE_VALUE), mppCacheID(nullptr), mppCache(0),
+      mCallbackObj(0) {
     memset(&mContentData, 0, sizeof(XCONTENT_DATA));
     mContentData.DeviceID = 0;
 }
@@ -64,19 +65,21 @@ bool CacheMgrXbox::SearchAsync(const char *cc, CacheID **ppCacheID) {
             return false;
         } else {
             DWORD bufferSize = 0;
-            DWORD res = XContentCreateEnumerator(0xFE, 0, 1, 0, 1, &bufferSize, &mFile);
+            DWORD res =
+                XContentCreateEnumerator(0xFE, 0, 1, 0, 1, &bufferSize, &mEnumHandle);
             if (res == 0x12) {
-                mFile = INVALID_HANDLE_VALUE;
+                mEnumHandle = INVALID_HANDLE_VALUE;
                 SetLastResult(kCache_ErrorNoStorageDevice);
                 return false;
             } else {
-                if (res == 0 && mFile != INVALID_HANDLE_VALUE) {
+                if (res == 0 && mEnumHandle != INVALID_HANDLE_VALUE) {
                     MILO_ASSERT(bufferSize == sizeof(XCONTENT_DATA), 0x88);
                     memset(&mContentData, 0, sizeof(XCONTENT_DATA));
                     mContentData.DeviceID = 0;
                     memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
-                    DWORD enumRes =
-                        XEnumerate(mFile, &mContentData, 0x134, nullptr, &mOverlapped);
+                    DWORD enumRes = XEnumerate(
+                        mEnumHandle, &mContentData, 0x134, nullptr, &mOverlapped
+                    );
                     if (enumRes != ERROR_IO_PENDING) {
                         MILO_NOTIFY(
                             "CacheMgrXbox::SearchAsync(): Unhandled error %u returned from XEnumerate().\n",
@@ -95,7 +98,7 @@ bool CacheMgrXbox::SearchAsync(const char *cc, CacheID **ppCacheID) {
                         "CacheMgrXbox::SearchAsync(): Unhandled error %u returned from XContentCreateEnumerator().\n",
                         res
                     );
-                    mFile = INVALID_HANDLE_VALUE;
+                    mEnumHandle = INVALID_HANDLE_VALUE;
                     SetLastResult(kCache_ErrorUnknown);
                     return false;
                 }
@@ -122,7 +125,7 @@ bool CacheMgrXbox::ShowUserSelectUIAsync(
         mStrCacheName = cc1;
         mUTF8CacheDescription = cc2;
         if (!mStrCacheName.empty() && !mUTF8CacheDescription.empty()) {
-            DWORD padnum = !user ? 0xFF : user->GetPadNum();
+            DWORD padnum = !user ? XUSER_INDEX_ANY : user->GetPadNum();
             memset(&mContentData, 0, sizeof(XCONTENT_DATA));
             mContentData.DeviceID = 0;
             memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
@@ -230,7 +233,7 @@ bool CacheMgrXbox::MountAsync(CacheID *pCacheIDXbox, Cache **ppCache, Hmx::Objec
             } else {
                 mCacheIDXbox = myCacheXbox;
                 mppCache = ppCache;
-                mCallback = o;
+                mCallbackObj = o;
                 SetLastResult(kCache_NoError);
                 SetOp(kOpMount);
                 return true;
@@ -272,7 +275,7 @@ bool CacheMgrXbox::UnmountAsync(Cache **ppCache, Hmx::Object *o) {
             }
         } else {
             mppCache = ppCache;
-            mCallback = o;
+            mCallbackObj = o;
             SetLastResult(kCache_NoError);
             SetOp(kOpUnmount);
             return true;
@@ -320,8 +323,8 @@ bool CacheMgrXbox::DeleteAsync(CacheID *id) {
 }
 
 void CacheMgrXbox::EndSearch(CacheResult res) {
-    CloseHandle(mFile);
-    mFile = INVALID_HANDLE_VALUE;
+    CloseHandle(mEnumHandle);
+    mEnumHandle = INVALID_HANDLE_VALUE;
     mppCacheID = nullptr;
     mStrCacheName = gNullStr;
     SetLastResult(res);
@@ -409,7 +412,7 @@ void CacheMgrXbox::PollSearch() {
                 mContentData.DeviceID = 0;
                 memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
                 DWORD enumRes =
-                    XEnumerate(mFile, &mContentData, 0x134, nullptr, &mOverlapped);
+                    XEnumerate(mEnumHandle, &mContentData, 0x134, nullptr, &mOverlapped);
                 if (enumRes != ERROR_IO_PENDING) {
                     MILO_NOTIFY(
                         "CacheMgrXbox::PollSearch(): Unhandled error %u returned from XEnumerate().\n",
@@ -473,11 +476,11 @@ void CacheMgrXbox::PollMount() {
     mCacheIDXbox = nullptr;
     mppCache = nullptr;
     SetOp(kOpNone);
-    if (mCallback) {
+    if (mCallbackObj) {
         static Message msg("cache_mgr_mount_result", GetLastResult());
         msg[0] = GetLastResult();
-        mCallback->Handle(msg, true);
-        mCallback = nullptr;
+        mCallbackObj->Handle(msg, true);
+        mCallbackObj = nullptr;
     }
 }
 
@@ -506,11 +509,11 @@ void CacheMgrXbox::PollUnmount() {
         RELEASE(*mppCache);
         mppCache = nullptr;
         SetOp(kOpNone);
-        if (mCallback) {
+        if (mCallbackObj) {
             static Message msg("cache_mgr_unmount_result", GetLastResult());
             msg[0] = GetLastResult();
-            mCallback->Handle(msg, true);
-            mCallback = nullptr;
+            mCallbackObj->Handle(msg, true);
+            mCallbackObj = nullptr;
         }
     }
 }
