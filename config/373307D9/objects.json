@@ -995,7 +995,7 @@
             "system/net/JsonUtils.cpp": "NonMatching",
             "system/net/SessionJobs_Xbox.cpp": "Matching",
             "system/net/WebSvcMgr.cpp": "NonMatching",
-            "system/net/WebSvcMgrCurl.cpp": "NonMatching",
+            "system/net/WebSvcMgrCurl.cpp": "Matching",
             "system/net/WebSvcReq.cpp": "Matching",
             "system/net/XLSPConnection.cpp": "Matching",
             "system/net/json-c/arraylist.c": "Matching",
