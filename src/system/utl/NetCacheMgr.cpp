@@ -212,25 +212,15 @@ NetCacheLoader *NetCacheMgr::AddNetCacheLoader(const char *cc, NetLoaderPos pos)
 
 void NetCacheMgr::SetState(NetCacheMgrState state) {
     if (mState != state) {
-        while (true) {
-            if (mState == kNCMS_Unload) {
-                mHasFailed = false;
-            }
-            if (mState == kNCMS_Nil && state == kNCMS_Unload) {
-                MILO_FAIL(
-                    "NetCacheMgr attempted to move straight from kNCMS_Nil to kNCMS_Unload!\n"
-                );
-            }
-            mState = state;
-            if (state != -1)
-                break;
-            MILO_ASSERT(mNetLoaderRefs.empty(), 0x28B);
-            if (mLoadCount <= 0)
-                return;
-            state = kNCMS_Load;
-            if (mState == 0)
-                return;
+        if (mState == kNCMS_Unload) {
+            mHasFailed = false;
         }
+        if (mState == kNCMS_Nil && state == kNCMS_Unload) {
+            MILO_FAIL(
+                "NetCacheMgr attempted to move straight from kNCMS_Nil to kNCMS_Unload!\n"
+            );
+        }
+        mState = state;
         switch (state) {
         case kNCMS_Load:
             EnterLoadState();
@@ -240,6 +230,12 @@ void NetCacheMgr::SetState(NetCacheMgrState state) {
             break;
         case kNCMS_Unload:
             EnterUnloadState();
+            break;
+        case kNCMS_Nil:
+            MILO_ASSERT(mNetLoaderRefs.empty(), 0x28B);
+            if (mLoadCount > 0) {
+                SetState(kNCMS_Load);
+            }
             break;
         default:
             break;

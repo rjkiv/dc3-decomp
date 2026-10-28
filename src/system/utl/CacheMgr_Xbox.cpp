@@ -12,6 +12,7 @@
 #include "utl/UTF8.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/win_types.h"
+#include "xdk/xapilibi/winerror.h"
 #include "xdk/xapilibi/xbase.h"
 #include "xdk/xapilibi/xbox.h"
 
@@ -390,8 +391,12 @@ void CacheMgrXbox::PollSearch() {
     if (mOverlapped.InternalLow != ERROR_IO_PENDING) {
         DWORD numFound = 0;
         DWORD res = XGetOverlappedResult(&mOverlapped, &numFound, false);
-        if (res != 0 && res != 0x65B) {
-            MILO_FAIL("CacheMgrXbox::PollSearch() encountered unknown error %u.\n", res);
+        if (res != ERROR_SUCCESS) {
+            if (res != ERROR_FUNCTION_FAILED) {
+                MILO_FAIL(
+                    "CacheMgrXbox::PollSearch() encountered unknown error %u.\n", res
+                );
+            }
             EndSearch(kCache_ErrorCacheNotFound);
         } else if (numFound != 0) {
             MILO_ASSERT(numFound == 1, 0x1FB);
@@ -421,6 +426,8 @@ void CacheMgrXbox::PollSearch() {
                     EndSearch(kCache_ErrorUnknown);
                 }
             }
+        } else {
+            EndSearch(kCache_ErrorCacheNotFound);
         }
     }
 }
@@ -429,40 +436,45 @@ void CacheMgrXbox::PollMount() {
     if (mOverlapped.InternalLow != ERROR_IO_PENDING) {
         DWORD err;
         DWORD res = XGetOverlappedResult(&mOverlapped, &err, false);
-        if (res == 0) {
+        if (res == ERROR_SUCCESS) {
             MILO_ASSERT(mppCache != NULL, 0x293);
             MILO_ASSERT(*mppCache == NULL, 0x294);
             MILO_ASSERT(mCacheIDXbox, 0x295);
             CacheXbox *cacheXbox = new CacheXbox(*mCacheIDXbox);
             *mppCache = cacheXbox;
             SetLastResult(kCache_NoError);
-        } else if (res == 0x65B) {
+        } else if (res == ERROR_FUNCTION_FAILED) {
             DWORD extErr = XGetOverlappedExtendedError(&mOverlapped);
-            if (XContentGetDeviceState(mContentData.DeviceID, nullptr)) {
+            DWORD extErrShort = extErr & 0xFFFF;
+            if (XContentGetDeviceState(mCacheIDXbox->mContentData.DeviceID, nullptr)) {
                 MILO_NOTIFY(
                     "CacheMgrXbox::PollMount(): error %u (0x%08X) occurred, but the device is no longer connected, so changing to %u.\n",
+                    extErrShort,
                     extErr,
-                    extErr,
-                    0x48F
+                    ERROR_DEVICE_NOT_CONNECTED
                 );
-                extErr = 0x48F;
+                extErrShort = ERROR_DEVICE_NOT_CONNECTED;
             }
-            if (extErr != 0x15) {
-                if (extErr == 0xB7) {
-                    SetLastResult(kCache_ErrorCorrupt);
-                } else {
-                    if (extErr != 0x456) {
-                        MILO_NOTIFY(
-                            "CacheMgrXbox::PollMount(): Unhandled error %u %u %u returned from XContentCreateEx().\n",
-                            res,
-                            err,
-                            extErr
-                        );
-                        SetLastResult(kCache_ErrorUnknown);
-                    }
-                }
-            } else {
+            switch (extErrShort) {
+            case ERROR_NOT_READY:
+            case ERROR_MEDIA_CHANGED:
+            case ERROR_DEVICE_NOT_CONNECTED:
+            case ERROR_DEVICE_REMOVED:
                 SetLastResult(kCache_ErrorStorageDeviceMissing);
+                break;
+            case ERROR_ALREADY_EXISTS:
+            case ERROR_FILE_CORRUPT:
+                SetLastResult(kCache_ErrorCorrupt);
+                break;
+            default:
+                MILO_NOTIFY(
+                    "CacheMgrXbox::PollMount(): Unhandled error %u %u %u returned from XContentCreateEx().\n",
+                    res,
+                    err,
+                    extErrShort
+                );
+                SetLastResult(kCache_ErrorUnknown);
+                break;
             }
         } else {
             MILO_NOTIFY(
@@ -472,15 +484,15 @@ void CacheMgrXbox::PollMount() {
             );
             SetLastResult(kCache_ErrorUnknown);
         }
-    }
-    mCacheIDXbox = nullptr;
-    mppCache = nullptr;
-    SetOp(kOpNone);
-    if (mCallbackObj) {
-        static Message msg("cache_mgr_mount_result", GetLastResult());
-        msg[0] = GetLastResult();
-        mCallbackObj->Handle(msg, true);
-        mCallbackObj = nullptr;
+        mCacheIDXbox = nullptr;
+        mppCache = nullptr;
+        SetOp(kOpNone);
+        if (mCallbackObj) {
+            static Message msg("cache_mgr_mount_result", GetLastResult());
+            msg[0] = GetLastResult();
+            mCallbackObj->Handle(msg, true);
+            mCallbackObj = nullptr;
+        }
     }
 }
 

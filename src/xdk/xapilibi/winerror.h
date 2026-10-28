@@ -28,6 +28,7 @@
 #define ERROR_FILE_CORRUPT              0x0570
 #define ERROR_DISK_CORRUPT              0x0571
 #define ERROR_DEVICE_REMOVED            0x0651
+#define ERROR_FUNCTION_FAILED           0x065B
 #define ERROR_EMPTY                     0x10D2
 
 #define S_OK                            (long)0
