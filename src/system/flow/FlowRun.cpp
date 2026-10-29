@@ -61,7 +61,7 @@ BEGIN_LOADS(FlowRun)
     } else {
         mTargetDir.LoadFromMainOrDir(bs);
         d >> mTargetName;
-        mTarget.Reset();
+        mTarget = nullptr;
     }
     d >> mStop;
     d >> mImmediateRelease;
@@ -109,7 +109,7 @@ void FlowRun::RequestStopCancel() {
 }
 
 void FlowRun::OnTargetDirChange() {
-    mTargetDir.Reset();
+    mTarget = nullptr;
     mTargetName = "";
 }
 
