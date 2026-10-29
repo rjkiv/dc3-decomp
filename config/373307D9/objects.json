@@ -445,7 +445,7 @@
             "system/meta/StorePurchaser.cpp": "Matching",
             "system/meta/StreamPlayer.cpp": "Matching",
             "system/midi/DataEventList.cpp": "Matching",
-            "system/midi/DisplayEvents.cpp": "NonMatching",
+            "system/midi/DisplayEvents.cpp": "Matching",
             "system/midi/MidiParser.cpp": "Matching",
             "system/midi/MidiParserMgr.cpp": "Matching",
             "system/midi/MidiReader.cpp": "NonMatching",
