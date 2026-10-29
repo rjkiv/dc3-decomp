@@ -782,7 +782,7 @@
             "system/utl/BufStream.cpp": "Matching",
             "system/utl/Cache.cpp": "Matching",
             "system/utl/CacheMgr.cpp": "Matching",
-            "system/utl/CacheMgr_Xbox.cpp": "NonMatching",
+            "system/utl/CacheMgr_Xbox.cpp": "Matching",
             "system/utl/Cache_Xbox.cpp": "Matching",
             "system/utl/Cheats.cpp": "Matching",
             "system/utl/ChunkIDs.cpp": "Matching",

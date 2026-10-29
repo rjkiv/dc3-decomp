@@ -472,33 +472,33 @@ MemHeapStack &ThreadMemStack(bool b1) {
         gThreadIds[0] = GetCurrentThreadId();
         gNumThreads = 1;
     } else {
-        int tID;
+        int cur;
         DWORD curThread = GetCurrentThreadId();
         if (gThreadIds[gCurThread] != curThread) {
-            for (tID = 0; tID < gNumThreads; tID++) {
+            for (cur = 0; cur < gNumThreads; cur++) {
                 DWORD curID = GetCurrentThreadId();
-                if (gThreadIds[tID] == curID)
+                if (gThreadIds[cur] == curID)
                     break;
             }
             if (!b1) {
                 return gNullMemStack;
             }
-            if (tID == gNumThreads) {
-                for (tID = 0; tID < gNumThreads; tID++) {
-                    if (!ValidateThreadId(gThreadIds[tID])) {
-                        MILO_ASSERT(gThreadBuf[tID].mSize == 0, 0x12E);
-                        MILO_ASSERT(gThreadBuf[tID].mTempRefs == 0, 0x12F);
-                        gThreadIds[tID] = GetCurrentThreadId();
+            if (cur == gNumThreads) {
+                for (cur = 0; cur < gNumThreads; cur++) {
+                    if (!ValidateThreadId(gThreadIds[cur])) {
+                        MILO_ASSERT(gThreadBuf[cur].mSize == 0, 0x12E);
+                        MILO_ASSERT(gThreadBuf[cur].mTempRefs == 0, 0x12F);
+                        gThreadIds[cur] = GetCurrentThreadId();
                         break;
                     }
                 }
-                if (tID == gNumThreads) {
+                if (cur == gNumThreads) {
                     MILO_ASSERT(gNumThreads < MAX_BUF_THREADS, 0x138);
-                    gThreadIds[tID] = GetCurrentThreadId();
+                    gThreadIds[cur] = GetCurrentThreadId();
                     gNumThreads++;
                 }
             }
-            gCurThread = tID;
+            gCurThread = cur;
         }
     }
     return gThreadBuf[gCurThread];
@@ -625,8 +625,8 @@ void MemPrintOverview(int i1, char *const c) {
             MakeString(
                 " [%5s] KB free:%7u(%7u) usage:%5i\n",
                 str,
-                status.dwAvailPhys >> 10,
-                sAvailPhys >> 10,
+                status.dwAvailPhys / 1024,
+                sAvailPhys / 1024,
                 PhysicalUsage() / 1024
             )
         );

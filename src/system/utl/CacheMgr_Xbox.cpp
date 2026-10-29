@@ -389,6 +389,7 @@ void CacheMgrXbox::PollDelete() {
 
 void CacheMgrXbox::PollSearch() {
     if (mOverlapped.InternalLow != ERROR_IO_PENDING) {
+        CacheIDXbox *cacheXbox;
         DWORD numFound = 0;
         DWORD res = XGetOverlappedResult(&mOverlapped, &numFound, false);
         if (res != ERROR_SUCCESS) {
@@ -407,7 +408,7 @@ void CacheMgrXbox::PollSearch() {
             if (cmp == 0) {
                 MILO_ASSERT(mppCacheID != NULL, 0x20C);
                 MILO_ASSERT(*mppCacheID == NULL, 0x20D);
-                CacheIDXbox *cacheXbox = new CacheIDXbox();
+                cacheXbox = new CacheIDXbox();
                 *mppCacheID = cacheXbox;
                 memcpy(&cacheXbox->mContentData, &mContentData, sizeof(XCONTENT_DATA));
                 cacheXbox->mStrCacheName = mStrCacheName;
@@ -416,12 +417,12 @@ void CacheMgrXbox::PollSearch() {
                 memset(&mContentData, 0, sizeof(XCONTENT_DATA));
                 mContentData.DeviceID = 0;
                 memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
-                DWORD enumRes =
+                res =
                     XEnumerate(mEnumHandle, &mContentData, 0x134, nullptr, &mOverlapped);
-                if (enumRes != ERROR_IO_PENDING) {
+                if (res != ERROR_IO_PENDING) {
                     MILO_NOTIFY(
                         "CacheMgrXbox::PollSearch(): Unhandled error %u returned from XEnumerate().\n",
-                        enumRes
+                        res
                     );
                     EndSearch(kCache_ErrorUnknown);
                 }
