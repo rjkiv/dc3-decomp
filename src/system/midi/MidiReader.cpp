@@ -13,7 +13,7 @@ MidiChunkID MidiChunkID::kMTrk("MTrk");
 bool MidiReader::sVerify = false;
 
 namespace {
-    int MidiRank(unsigned char status) {
+    inline int MidiRank(unsigned char status) {
         switch (status & 0xF0) {
         case kNoteOff:
             return 1;

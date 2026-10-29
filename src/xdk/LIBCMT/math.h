@@ -67,10 +67,10 @@ int __fpclassifyd(double);
 #define FP_ILOGBNAN
 */
 
-// #define _DECL_MATH(name)                                                                 \
-//     double name(double x);                                                               \
-//     inline float name##f(float x) { return name(x); }                                    \
-//     inline long double name##l(long double x) { return name(x); }
+// #define _DECL_MATH(name) \
+//     double name(double x); \
+//     inline float name##f(float x) { return name(x); } \ inline long double name##l(long
+//     double x) { return name(x); }
 
 #define _DECL_MATH(name)                                                                 \
     double name(double x);                                                               \
@@ -205,9 +205,11 @@ _DECL_MATH2(copysign);
 // without also causing ambiguity between this and double pow(double,double)
 
 // inline float pow(float x, int y) {
-//     unsigned int yIt = y;
-//     if (y < 0) {
-//         yIt = -yIt;
+//     unsigned int yIt;
+//     if (y >= 0) {
+//         yIt = y;
+//     } else {
+//         yIt = -y;
 //     }
 //     float total = 1;
 //     while (true) {
@@ -215,8 +217,9 @@ _DECL_MATH2(copysign);
 //             total *= x;
 //         }
 //         yIt >>= 1;
-//         if (yIt == 0)
+//         if (yIt == 0) {
 //             break;
+//         }
 //         x *= x;
 //     }
 //     if (y < 0) {
