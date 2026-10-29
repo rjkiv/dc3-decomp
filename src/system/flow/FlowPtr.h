@@ -11,18 +11,8 @@ public:
     FlowPtrBase(Symbol name, FlowNode *node)
         : mSymbol(name), mOwner(node), mParamIdx(-3) {}
 
+    bool Empty();
     int GetInitialState(Hmx::Object *);
-
-    FlowPtrBase &operator=(const FlowPtrBase &other) {
-        mSymbol = other.mSymbol;
-        mParamIdx = other.mParamIdx;
-        return *this;
-    }
-
-    void Reset() {
-        mSymbol = 0;
-        mParamIdx = GetInitialState(nullptr);
-    }
 
     Symbol mSymbol; // 0x0
     FlowNode *mOwner; // 0x4
@@ -46,33 +36,23 @@ public:
     FlowPtr(Hmx::Object *owner, T *ptr = nullptr)
         : FlowPtrBase(ptr ? ptr->Name() : 0, dynamic_cast<FlowNode *>(owner)),
           mObject(owner, ptr) {}
-    ~FlowPtr() {}
+
+    // void operator=(Symbol);
 
     // see: merged_82401EF0
-    void operator=(T *obj) {
-        int state = GetInitialState(obj);
-        mSymbol = !obj ? 0 : obj->Name();
-        mObject = obj;
-        mParamIdx = state;
-    }
+    void operator=(T *obj) { Set(obj, obj ? obj->Name() : 0, GetInitialState(obj)); }
 
-    FlowPtr &operator=(const FlowPtr &ptr) {
+    void operator=(const FlowPtr &ptr) {
         auto state = ptr.mParamIdx;
         auto objname = ptr.mSymbol;
         mObject = ptr.mObject.Ptr();
         mSymbol = objname;
         mParamIdx = state;
-        return *this;
-    }
-
-    void Reset() {
-        mObject = nullptr;
-        FlowPtrBase::Reset();
     }
 
     operator T *() { return Get(); }
 
-    T *Ptr() const { return mObject; }
+    T *Ptr() { return mObject; }
 
     T *operator->() {
         T *o = Get();
@@ -98,6 +78,12 @@ public:
     ObjPtr<T> mObject; // 0xc
 
 private:
+    void Set(T *obj, Symbol sym, int idx) {
+        mObject = obj;
+        mSymbol = sym;
+        mParamIdx = idx;
+    }
+
     T *Get() {
         if (mParamIdx >= -1 && RefreshParamObject()) {
             mObject = dynamic_cast<T *>(GetObject());
