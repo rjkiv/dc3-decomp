@@ -167,7 +167,7 @@ void DataEventList::InsertEvent(float start, float end, const DataNode &node, in
             MILO_ASSERT(mCompType == kDataSymbol || mCompType == kDataInt, 0x43);
         } else if (node.Type() != mCompType) {
             String str;
-            node.Print(str, false, 0);
+            str << node;
             MILO_NOTIFY(
                 "Trying to add event %s but mCompType is %s, ignoring",
                 str,

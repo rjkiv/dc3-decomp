@@ -33,7 +33,7 @@ void SongDB::ParseEvents(DataEventList *list) {
             if (mSongDurationMs != 0.0f) {
                 MILO_FAIL("Duplicate end text event");
             }
-            mSongDurationMs = BeatToMs(event.Start());
+            mSongDurationMs = BeatToMs(event.start);
             return;
         }
     }

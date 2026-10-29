@@ -31,9 +31,6 @@ public:
         SetMsg(e.mMsg);
         return *this;
     }
-    float Start() const { return start; }
-    float End() const { return end; }
-    Symbol Type(int i) const { return mMsg->Sym(i); }
 
     float start; // 0x0
     float end; // 0x4

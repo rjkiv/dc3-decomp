@@ -131,8 +131,9 @@ float HamMaster::SongDurationMs() {
         static Symbol end("end");
         for (int i = 0; i < events->Size(); i++) {
             const DataEvent &ev = events->Event(i);
-            if (ev.Type(1) == end) {
-                float tick = mSongData->GetBeatMap()->BeatToTick(ev.Start());
+            Symbol type = ev.Msg()->Sym(1);
+            if (type == end) {
+                float tick = mSongData->GetBeatMap()->BeatToTick(ev.start);
                 return mSongData->GetTempoMap()->TickToTime(tick);
             }
         }
@@ -198,8 +199,9 @@ float HamMaster::EventBeat(Symbol s) {
         DataEventList *events = mMidiParserMgr->GetEventsList();
         for (int i = 0; i < events->Size(); i++) {
             const DataEvent &ev = events->Event(i);
-            if (ev.Type(1) == s) {
-                return ev.Start();
+            Symbol type = ev.Msg()->Sym(1);
+            if (type == s) {
+                return ev.start;
             }
         }
     }
