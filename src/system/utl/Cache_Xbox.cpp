@@ -319,8 +319,6 @@ void CacheXbox::ThreadDone(int res) {
     SetOp(kOpNone);
 }
 
-// heeeeelp
-// https://decomp.me/scratch/BMxoK
 int CacheXbox::ThreadGetFileSize() {
     HANDLE file = CreateFileA(mThreadStr.c_str(), 0, 1, nullptr, 3, 0x80, nullptr);
     DWORD err;
@@ -338,25 +336,27 @@ int CacheXbox::ThreadGetFileSize() {
             return kCache_ErrorUnknown;
         }
     } else {
-        CacheResult ret = kCache_NoError;
+        CacheResult ret;
         DWORD sizeHigh = 0;
         DWORD res = GetFileSize(file, &sizeHigh);
-        if (res != -1) {
-        } else {
-            err = GetLastError();
-            if (err == ERROR_SUCCESS) {
+        do {
+            if (res != -1) {
             } else {
-                MILO_NOTIFY(
-                    "CacheXbox::GetFileSizeAsync() - Unhandled error from GetFileSize(): %d\n",
-                    err
-                );
-                ret = kCache_ErrorUnknown;
-                goto SKIP_ASSIGNMENT;
+                err = GetLastError();
+                if (err == ERROR_SUCCESS) {
+                } else {
+                    MILO_NOTIFY(
+                        "CacheXbox::GetFileSizeAsync() - Unhandled error from GetFileSize(): %d\n",
+                        err
+                    );
+                    ret = kCache_ErrorUnknown;
+                    break;
+                }
             }
-        }
-        *(DWORD *)mData = res;
+            *(DWORD *)mData = res;
+            ret = kCache_NoError;
+        } while (false);
 
-    SKIP_ASSIGNMENT:
         CloseHandle(file);
         if (!IsDeviceConnected(mCacheID.mContentData.DeviceID)) {
             return kCache_ErrorStorageDeviceMissing;
@@ -414,15 +414,14 @@ int CacheXbox::ThreadWrite() {
             b3 = CreateDirectoryA(subStr.c_str(), nullptr);
             if (!b3) {
                 break;
-            } else {
-                idx++;
             }
-        } else {
-            idx++;
         }
+
+        idx++;
     }
 
     DWORD err;
+    DWORD bytesWritten;
     HANDLE hFile = INVALID_HANDLE_VALUE;
 
     if (b3) {
@@ -444,7 +443,7 @@ int CacheXbox::ThreadWrite() {
             return kCache_ErrorUnknown;
         }
     } else {
-        DWORD bytesWritten = 0;
+        bytesWritten = 0;
         if (WriteFile(hFile, mData, mSize, &bytesWritten, nullptr)) {
             CloseHandle(hFile);
             XContentFlush(mCacheID.mStrCacheName.c_str(), nullptr);

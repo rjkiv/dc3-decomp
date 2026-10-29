@@ -155,6 +155,8 @@ uint FIRFilter::evaluateFilterMono(
     return end;
 }
 
+float pow(float,int);
+
 // Set filter coeffiecients and length.
 //
 // Throws an exception if filter length isn't divisible by 8
@@ -170,7 +172,7 @@ void FIRFilter::setCoefficients(
     MILO_ASSERT(length == newLength,0xb6);
 
     resultDivFactor = uResultDivFactor;
-    resultDivider = (SAMPLETYPE)::pow(2.0, (int)resultDivFactor);
+    resultDivider = (SAMPLETYPE)::pow(2.0f, (int)resultDivFactor);
 
     delete[] filterCoeffs;
     filterCoeffs = new SAMPLETYPE[length];
