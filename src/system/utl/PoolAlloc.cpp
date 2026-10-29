@@ -10,9 +10,8 @@
 
 static int gHunkSize = 0xC800;
 static int gSmallHunkSize = 0xC800;
-
 static int gTotalChunksSize = 0;
-static bool gPoolAllocInitted = 0;
+static bool gPoolAllocInitted = false;
 ChunkAllocator *gChunkAlloc = nullptr;
 
 void PoolAllocInit(DataArray *a) {
@@ -79,8 +78,9 @@ void FixedSizeAlloc::Free(void *v) {
 int *FixedSizeAlloc::RawAlloc(int size) {
     static int *gPoolEnd = nullptr;
     static int *gPoolStart = nullptr;
+    int size4 = size >> 2;
     gTotalChunksSize += size;
-    if (gPoolStart + (size >> 2) > gPoolEnd) {
+    if (gPoolStart + size4 > gPoolEnd) {
         if (MemNumHeaps() > 0) {
             if (gHunkSize == gSmallHunkSize) {
                 printf("PoolAlloc warning: allocating small pool chunk\n");
@@ -96,7 +96,7 @@ int *FixedSizeAlloc::RawAlloc(int size) {
         gPoolStart += 0x10;
     }
     int *ret = gPoolStart;
-    gPoolStart += (size >> 2);
+    gPoolStart += size4;
     return ret;
 }
 
@@ -108,8 +108,10 @@ void FixedSizeAlloc::Refill() {
 
     int *it = mFreeList;
     int *itEnd = mFreeList + (allocSize - mAllocSizeWords);
-    for (; it < itEnd; it += mAllocSizeWords) {
-        *it += mAllocSizeWords;
+    while (it < itEnd) {
+        int *next = it + mAllocSizeWords;
+        *it = (int)next;
+        it = next;
     }
     *it = 0;
 }
@@ -166,11 +168,11 @@ void ChunkAllocator::Print(TextStream &ts) {
 #pragma region ReclaimableAlloc
 
 ReclaimableAlloc::ReclaimableAlloc(int x, const char *name)
-    : FixedSizeAlloc(((x + 15) >> 2) & ~3, 0x2800 / x), mName(name) {}
+    : FixedSizeAlloc(((x + 15) >> 2) & ~3, 0x2800 / x), mType(name) {}
 
 int *ReclaimableAlloc::RawAlloc(int num) {
-    void *alloced = MemAlloc(num, __FILE__, 0x196, mName);
-    mChunks.push_back(alloced);
+    void *alloced = MemAlloc(num, __FILE__, 0x196, mType);
+    mRawMems.push_back(alloced);
     return (int *)alloced;
 }
 
@@ -188,10 +190,10 @@ void ReclaimableAlloc::CustFree(void *mem) {
 
 void ReclaimableAlloc::DeallocAll() {
     MILO_ASSERT(mNumAllocs == 0, 0x19D);
-    FOREACH (it, mChunks) {
+    FOREACH (it, mRawMems) {
         MemFree(*it);
     }
-    mChunks.clear();
+    mRawMems.clear();
     mNumChunks = 0;
     mFreeList = nullptr;
 }

@@ -827,7 +827,7 @@
             "system/utl/OSCMessenger.cpp": "Matching",
             "system/utl/Option.cpp": "Matching",
             "system/utl/Pool.cpp": "Matching",
-            "system/utl/PoolAlloc.cpp": "NonMatching",
+            "system/utl/PoolAlloc.cpp": "Matching",
             "system/utl/Profiler.cpp": "Matching",
             "system/utl/Song.cpp": "Matching",
             "system/utl/SongInfoAudioType.cpp": "Matching",

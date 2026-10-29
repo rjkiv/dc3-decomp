@@ -58,8 +58,9 @@ protected:
 
     void DeallocAll();
 
-    const char *mName; // 0x1c
-    std::vector<void *> mChunks; // 0x20
+private:
+    const char *mType; // 0x1c
+    std::vector<void *> mRawMems; // 0x20
 };
 
 void PoolAllocInit(class DataArray *cfg);
@@ -68,10 +69,10 @@ void PoolFree(int, void *mem, const char *file, int line, const char *name);
 void PoolReport(TextStream &);
 
 #define POOL_OVERLOAD(class_name, line_num)                                              \
-    static void *operator new(size_t s) {                                          \
+    static void *operator new(size_t s) {                                                \
         return PoolAlloc(s, s, __FILE__, line_num, #class_name);                         \
     }                                                                                    \
-    static void *operator new(size_t s, void *place) { return place; }             \
+    static void *operator new(size_t s, void *place) { return place; }                   \
     static void operator delete(void *v) {                                               \
         PoolFree(sizeof(class_name), v, __FILE__, line_num, #class_name);                \
     }
