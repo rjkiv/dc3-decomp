@@ -129,9 +129,9 @@ bool FlowPickOne::Activate() {
 
 void FlowPickOne::OnChoiceTypeChanged() {
     if (mChoiceType != kChoiceUseIndex) {
-        FOREACH (it, mDrivenPropEntries) {
+        FOREACH (it, mDrivenProperties) {
             if (it->mDrivenProperty.Array()->Sym(0) == "index") {
-                mDrivenPropEntries.erase(it);
+                mDrivenProperties.erase(it);
                 return;
             }
         }

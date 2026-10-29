@@ -40,7 +40,7 @@ bool Flow::sReflectingProperty;
 void fakepushbackflowlmao(std::vector<Hmx::Object *> objs) { objs.push_back(nullptr); }
 
 void ScanForOutPorts(ObjPtrVec<FlowOutPort> &ports, FlowNode *node, Flow *flow) {
-    FOREACH (it, node->ChildNodes()) {
+    FOREACH (it, node->GetChildNodes()) {
         FlowOutPort *curPort = dynamic_cast<FlowOutPort *>((FlowNode *)*it);
         if (curPort) {
             if (curPort->GetOwnerFlow() == flow) {
@@ -478,9 +478,9 @@ void Flow::Deactivate(bool b1) { FlowQueueable::Deactivate(b1); }
 void Flow::Enter() {
     if (NoProxyFile() && mStartMode != kStartNone) {
         if (mStartMode == kStartOnEnter) {
-            Execute(FlowNode::kQueue);
+            Execute(FlowNode::kStarting);
         } else {
-            TheFlowMgr->QueueCommand(this, FlowNode::kQueue);
+            TheFlowMgr->QueueCommand(this, FlowNode::kStarting);
         }
     }
 }

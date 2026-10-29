@@ -10,18 +10,30 @@ class FlowLabel;
 /** "A flow node" */
 class FlowNode : public virtual Hmx::Object {
 public:
+    enum BreakOnFunction {
+        kBreakNone = 0x0000,
+        kBreakActivate = 0x0001,
+        kBreakDeactivate = 0x0002,
+        kBreakRequestStop = 0x0003,
+        kBreakRequestStopCancel = 0x0004,
+        kBreakChildFinished = 0x0005,
+        kBreakReactivate = 0x0006,
+        kBreakExecute = 0x0007,
+        kBreakAll = 0x0008,
+    };
+    enum ChildType {
+        kNoChildren = 0x0000,
+        kFlowNode = 0x0001,
+        kFlowSwitchCase = 0x0002,
+        kFlowValueCase = 0x0003,
+        kFlowLabelCase = 0x0004,
+    };
     enum QueueState {
-        /** "If we're activated, ignore the activation" */
-        kIgnore = 0,
-        /** "New activations go in the queue and are executed when this one finishes" */
-        kQueue = 1,
-        /** "New activations go into a one deep queue and are executed when this one
-         * finishes" */
-        kQueueOne = 2,
-        /** "Forcably stop what we're doing and restart" */
-        kImmediate = 3,
-        /** "Ask our children to stop, then run again when they finish" */
-        kWhenAble = 4
+        kRequestStop = 0x0000,
+        kStarting = 0x0001,
+        kAfter = 0x0002,
+        kQueueIgnore = 0x0003,
+        kPolling = 0x0004,
     };
     enum StopMode {
         /** "Stop immediately." */
@@ -35,15 +47,6 @@ public:
         /** "When asked to stop, release but leave the sound playing." */
         kReleaseAndContinue = 4
     };
-    enum OperatorType {
-        kEqual = 0,
-        kNotEqual = 1,
-        kGreaterThan = 2,
-        kGreaterThanOrEqual = 3,
-        kLessThan = 4,
-        kLessThanOrEqual = 5,
-        kTransition = 6
-    };
     // Hmx::Object
     virtual ~FlowNode();
     OBJ_CLASSNAME(FlowNode)
@@ -55,36 +58,35 @@ public:
     virtual void Load(BinStream &);
     virtual const char *FindPathName();
     // FlowNode
-    virtual void SetParent(FlowNode *, bool);
+    virtual void SetParent(FlowNode *node, bool b);
     virtual FlowNode *GetParent() { return mFlowParent; }
     virtual bool Activate();
-    virtual void Deactivate(bool);
-    virtual void ChildFinished(FlowNode *);
+    virtual void Deactivate(bool isDeleting);
+    virtual void ChildFinished(FlowNode *node);
     virtual void RequestStop();
     virtual void RequestStopCancel();
-    virtual void Execute(QueueState) {}
+    virtual void Execute(QueueState state) {}
     virtual bool IsRunning() { return !mRunningNodes.empty(); }
     virtual Flow *GetOwnerFlow();
     virtual void MiloPreRun();
-    virtual void MoveIntoDir(ObjectDir *, ObjectDir *);
+    virtual void MoveIntoDir(ObjectDir *d, ObjectDir *src);
     virtual void UpdateIntensity();
 
     OBJ_MEM_OVERLOAD(0x9F)
     NEW_OBJ(FlowNode)
     REGISTER_OBJ(FlowNode)
 
-    static FlowNode *DuplicateChild(FlowNode *);
-    static Hmx::Object *LoadObjectFromMainOrDir(BinStream &, ObjectDir *);
+    static FlowNode *DuplicateChild(FlowNode *node);
+    static Hmx::Object *LoadObjectFromMainOrDir(BinStream &d, ObjectDir *dir);
 
-    bool HasRunningNode(FlowNode *);
+    bool HasRunningNode(FlowNode *node);
     DrivenPropertyEntry *GetDrivenEntry(Symbol);
     DrivenPropertyEntry *GetDrivenEntry(DataArray *);
     Flow *GetTopFlow();
-    const ObjVector<DrivenPropertyEntry> &DrivenPropEntries() const {
-        return mDrivenPropEntries;
-    }
-    bool HasChildNodes() const { return !mChildNodes.empty(); }
-    const ObjPtrVec<FlowNode> &ChildNodes() const { return mChildNodes; }
+    ObjVector<DrivenPropertyEntry> &GetDrivenProperties() { return mDrivenProperties; }
+    const ObjPtrVec<FlowNode> &GetChildNodes() const { return mChildNodes; }
+    void AddChild(FlowNode *n) { mChildNodes.push_back(n); }
+    void RemoveChild(FlowNode *n) { mChildNodes.remove(n); }
 
 protected:
     FlowNode();
@@ -92,16 +94,16 @@ protected:
     static bool sPushDrivenProperties;
     static float sIntensity;
 
-    void ActivateChild(FlowNode *);
-    void PushDrivenProperties(void);
-    void ActivateLabel(FlowLabel *);
+    void ActivateChild(FlowNode *node);
+    void PushDrivenProperties();
+    void ActivateLabel(FlowLabel *node);
 
     bool mDebugOutput; // 0x8
     String mDebugComment; // 0xc
     ObjPtrVec<FlowNode> mChildNodes; // 0x14
     ObjPtrList<FlowNode> mRunningNodes; // 0x30
     FlowNode *mFlowParent; // 0x44
-    ObjVector<DrivenPropertyEntry> mDrivenPropEntries; // 0x48
+    ObjVector<DrivenPropertyEntry> mDrivenProperties; // 0x48
     bool mRequestingStop; // 0x58
 };
 

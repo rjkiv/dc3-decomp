@@ -99,7 +99,7 @@ bool FlowSound::Activate() {
             mSound->Stop(nullptr, false);
             return false;
         } else {
-            TheFlowMgr->QueueCommand(this, kQueue);
+            TheFlowMgr->QueueCommand(this, kStarting);
             return true;
         }
     }
@@ -128,14 +128,14 @@ void FlowSound::RequestStop() {
     case FlowNode::kStopImmediate:
     case FlowNode::kReleaseAndContinue:
         mStopOnLoop = true;
-        TheFlowMgr->QueueCommand(this, kIgnore);
+        TheFlowMgr->QueueCommand(this, kRequestStop);
         break;
     case FlowNode::kStopLastFrame:
         mStopOnLoop = true;
         break;
     case FlowNode::kStopBetweenMarkers:
         if (mPassedStopMarker) {
-            TheFlowMgr->QueueCommand(this, kIgnore);
+            TheFlowMgr->QueueCommand(this, kRequestStop);
         } else {
             mQueuedStop = kStopBetweenMarkers;
             mStopOnLoop = true;
@@ -156,14 +156,14 @@ void FlowSound::RequestStopCancel() {
     FlowNode::RequestStopCancel();
     if (mStopOnLoop) {
         mStopOnLoop = false;
-        TheFlowMgr->QueueCommand(this, kQueue);
+        TheFlowMgr->QueueCommand(this, kStarting);
     }
 }
 
 void FlowSound::Execute(QueueState qs) {
     FLOW_LOG("Execute: state = %i\n", (int)qs);
     if (IsRunning()) {
-        if (qs == kIgnore) {
+        if (qs == kRequestStop) {
             mPlaying = false;
             if (mStopMode == kReleaseAndContinue) {
                 mSound->EndLoop(this);
@@ -176,7 +176,7 @@ void FlowSound::Execute(QueueState qs) {
             FlowNode::Deactivate(false);
         }
     } else {
-        if (qs == kQueue) {
+        if (qs == kStarting) {
             mStopOnLoop = false;
             mQueuedStop = kStopImmediate;
             if (!mPlaying) {
@@ -184,7 +184,7 @@ void FlowSound::Execute(QueueState qs) {
                 float db = RatioToDb(mIntensity) + mVolume;
                 mSound->Play(db, mPan, mTranspose, this, 0);
             }
-        } else if (qs == kIgnore) {
+        } else if (qs == kRequestStop) {
             mFlowParent->ChildFinished(this);
         }
     }
@@ -244,7 +244,7 @@ void FlowSound::OnMarkerEvent(Symbol event) {
         }
     } else if (event == stop) {
         if (mQueuedStop == kStopOnMarker || mQueuedStop == kStopBetweenMarkers) {
-            TheFlowMgr->QueueCommand(this, kIgnore);
+            TheFlowMgr->QueueCommand(this, kRequestStop);
         }
         mQueuedStop = kStopImmediate;
         mPassedStopMarker = true;

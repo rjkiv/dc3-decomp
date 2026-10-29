@@ -75,7 +75,7 @@ void FlowOnStop::RequestStop() {
     if (mRunningNodes.empty()) {
         if (mMode != kDeactivateOnly) {
             mRequestingStop = true;
-            TheFlowMgr->QueueCommand(this, kQueue);
+            TheFlowMgr->QueueCommand(this, kStarting);
         } else {
             mIsRunning = false;
             mFlowParent->ChildFinished(this);
@@ -91,7 +91,7 @@ void FlowOnStop::RequestStopCancel() {
 }
 
 void FlowOnStop::Execute(QueueState qs) {
-    if (qs == kQueue && mRequestingStop) {
+    if (qs == kStarting && mRequestingStop) {
         mRequestingStop = false;
         mIsRunning = false;
         FlowNode::Activate();

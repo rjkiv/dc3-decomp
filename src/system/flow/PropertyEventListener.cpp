@@ -37,7 +37,7 @@ void PropertyEventListener::GenerateAutoNames(FlowNode *node, bool clear) {
     if (clear) {
         mAutoPropEntries.clear();
     }
-    FOREACH (it, node->DrivenPropEntries()) {
+    FOREACH (it, node->GetDrivenProperties()) {
         FOREACH (op, it->mMathOps) {
             AutoPropEntry entry(node);
             mAutoPropEntries.push_back(entry);

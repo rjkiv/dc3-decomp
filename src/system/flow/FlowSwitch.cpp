@@ -81,7 +81,7 @@ void FlowSwitch::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
     PushDrivenProperties();
     FlowSwitchCase *switchCase = static_cast<FlowSwitchCase *>(n);
-    if (switchCase && switchCase->GetOperator() == kTransition) {
+    if (switchCase && switchCase->GetOperator() == FlowSwitchCase::kTransition) {
         mRunningNodes.remove(n);
         if (mCurrentValue != mLastValue) {
             DataNode dupe(mLastValue);
@@ -126,7 +126,8 @@ void FlowSwitch::VerifyTypes() {
 bool FlowSwitch::ActivateTransitionCases(DataNode &n1, DataNode &n2) {
     FOREACH (it, mChildNodes) {
         FlowSwitchCase *cur = static_cast<FlowSwitchCase *>((FlowNode *)*it);
-        if (cur->GetOperator() == kTransition && cur->IsValidCase(this, &n1, &n2, true)) {
+        if (cur->GetOperator() == FlowSwitchCase::kTransition
+            && cur->IsValidCase(this, &n1, &n2, true)) {
             ActivateChild(cur);
             if (mRequestingStop) {
                 return mRunningNodes.empty();
@@ -145,16 +146,16 @@ void FlowSwitch::ActivateValueCases(DataNode &n1, DataNode &n2) {
     bool b2 = false;
     FOREACH (it, mChildNodes) {
         FlowSwitchCase *cur = static_cast<FlowSwitchCase *>((FlowNode *)*it);
-        if (!cur->IsRunning() && cur->GetOperator() != kTransition) {
+        if (!cur->IsRunning() && cur->GetOperator() != FlowSwitchCase::kTransition) {
             bool valid = cur->IsValidCase(this, &n1, &n2, false);
             if (valid) {
                 i9++;
-                if (!cur->HasChildNodes()) {
+                if (cur->GetChildNodes().empty()) {
                     b2 = true;
                 } else {
                     ActivateChild(cur);
                 }
-            } else if (b2 && cur->HasChildNodes()) {
+            } else if (b2 && !cur->GetChildNodes().empty()) {
                 i9++;
                 ActivateChild(cur);
                 b2 = false;

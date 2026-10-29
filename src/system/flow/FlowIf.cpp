@@ -109,13 +109,13 @@ bool FlowIf::Activate() {
     PushDrivenProperties();
     bool activate = false;
     switch (mOperator) {
-    case kEqual:
+    case FlowSwitchCase::kEquals:
         activate = mFirstValue.Node().Equal(mSecondValue.Node(), nullptr, true);
         break;
-    case kNotEqual:
+    case FlowSwitchCase::kNotEquals:
         activate = mFirstValue.Node() != mSecondValue.Node();
         break;
-    case kGreaterThan: {
+    case FlowSwitchCase::kGreaterThan: {
         DataNode n1 = mFirstValue.Node();
         DataNode n2 = mSecondValue.Node();
         if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {
@@ -127,7 +127,7 @@ bool FlowIf::Activate() {
         }
         break;
     }
-    case kGreaterThanOrEqual: {
+    case FlowSwitchCase::kGreaterThanOrEquals: {
         DataNode n1 = mFirstValue.Node();
         DataNode n2 = mSecondValue.Node();
         if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {
@@ -139,7 +139,7 @@ bool FlowIf::Activate() {
         }
         break;
     }
-    case kLessThan: {
+    case FlowSwitchCase::kLessThan: {
         DataNode n1 = mFirstValue.Node();
         DataNode n2 = mSecondValue.Node();
         if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {
@@ -151,7 +151,7 @@ bool FlowIf::Activate() {
         }
         break;
     }
-    case kLessThanOrEqual: {
+    case FlowSwitchCase::kLessThanOrEquals: {
         DataNode n1 = mFirstValue.Node();
         DataNode n2 = mSecondValue.Node();
         if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {

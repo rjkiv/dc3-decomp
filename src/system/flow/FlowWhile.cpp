@@ -56,7 +56,7 @@ bool FlowWhile::Activate() {
         );
         Deactivate(false);
         return false;
-    } else if (mDrivenPropEntries.empty())
+    } else if (mDrivenProperties.empty())
         return false;
     else {
         if (!mRegistered) {
@@ -98,7 +98,7 @@ void FlowWhile::ChildFinished(FlowNode *n) {
         PushDrivenProperties();
         mRunningNodes.remove(n);
         FlowSwitchCase *fsc = static_cast<FlowSwitchCase *>(n);
-        if (fsc && fsc->GetOperator() == kTransition) {
+        if (fsc && fsc->GetOperator() == FlowSwitchCase::kTransition) {
             if (mCurrentValue != mLastValue) {
                 DataNode dupe(mLastValue);
                 mLastValue = mCurrentValue;
@@ -182,7 +182,7 @@ void FlowWhile::ReActivate() {
         mLastValue = mCurrentValue;
     } else if (mFirstValidCaseOnly) {
         FlowSwitchCase *first = static_cast<FlowSwitchCase *>(mRunningNodes.front());
-        if (first->GetOperator() != kTransition) {
+        if (first->GetOperator() != FlowSwitchCase::kTransition) {
             FlowSwitchCase *cur = nullptr;
             FOREACH (it, mChildNodes) {
                 FlowSwitchCase *switchCase =

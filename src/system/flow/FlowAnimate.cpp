@@ -160,7 +160,7 @@ bool FlowAnimate::Activate() {
                 mAnim->Animate(mBlend, mWait, mDelay, this);
             }
         } else if (!FlowNode::IsRunning()) {
-            TheFlowMgr->QueueCommand(this, kQueue);
+            TheFlowMgr->QueueCommand(this, kStarting);
             return true;
         }
     }
@@ -191,14 +191,14 @@ void FlowAnimate::RequestStop() {
     if (mSpawnedTask) {
         switch (mStopMode) {
         case kStopImmediate:
-            TheFlowMgr->QueueCommand(this, kIgnore);
+            TheFlowMgr->QueueCommand(this, kRequestStop);
             break;
         case kStopLastFrame:
             mStopOnLoop = true;
             break;
         case kStopBetweenMarkers:
             if (mPassedStopMarker) {
-                TheFlowMgr->QueueCommand(this, kIgnore);
+                TheFlowMgr->QueueCommand(this, kRequestStop);
             } else {
                 mQueuedStop = kStopBetweenMarkers;
                 mStopOnLoop = true;
@@ -209,7 +209,7 @@ void FlowAnimate::RequestStop() {
             mStopOnLoop = true;
             break;
         case kReleaseAndContinue:
-            TheFlowMgr->QueueCommand(this, kIgnore);
+            TheFlowMgr->QueueCommand(this, kRequestStop);
             break;
         default:
             MILO_NOTIFY_ONCE("Bad Stop Mode value in animate case!");
@@ -221,7 +221,7 @@ void FlowAnimate::RequestStop() {
 
 void FlowAnimate::RequestStopCancel() {
     FLOW_LOG("RequestStopCancel\n");
-    TheFlowMgr->QueueCommand(this, kQueue);
+    TheFlowMgr->QueueCommand(this, kStarting);
     if (mStopOnLoop) {
         mStopOnLoop = false;
     }
@@ -231,7 +231,7 @@ void FlowAnimate::RequestStopCancel() {
 void FlowAnimate::Execute(QueueState state) {
     FLOW_LOG("Execute: state = %i\n", (int)state);
     if (IsRunning()) {
-        if (mSpawnedTask && state == kIgnore) {
+        if (mSpawnedTask && state == kRequestStop) {
             mSpawnedTask->SetEventReciever(nullptr);
             if (mStopMode != 4) {
                 delete mSpawnedTask;
@@ -240,7 +240,7 @@ void FlowAnimate::Execute(QueueState state) {
             FLOW_TIMED_RELEASE_FROM_PARENT;
         }
     } else {
-        if (state == kQueue) {
+        if (state == kStarting) {
             mStopOnLoop = false;
             mQueuedStop = kStopImmediate;
             Task *task;
@@ -282,7 +282,7 @@ void FlowAnimate::Execute(QueueState state) {
                 task = mAnim->Animate(mBlend, mWait, mDelay, this);
             }
             mSpawnedTask = static_cast<AnimTask *>(task);
-        } else if (state == kIgnore) {
+        } else if (state == kRequestStop) {
             mFlowParent->ChildFinished(this);
         }
     }
@@ -345,7 +345,7 @@ void FlowAnimate::OnAnimEvent(Symbol s) {
         }
     } else if (s == stop) {
         if (mQueuedStop == kStopOnMarker || mQueuedStop == kStopBetweenMarkers) {
-            TheFlowMgr->QueueCommand(this, kIgnore);
+            TheFlowMgr->QueueCommand(this, kRequestStop);
         }
         mQueuedStop = kStopImmediate;
         mPassedStopMarker = true;

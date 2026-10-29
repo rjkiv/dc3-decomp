@@ -261,7 +261,7 @@
             "system/flow/FlowLabel.cpp": "Matching",
             "system/flow/FlowManager.cpp": "NonMatching",
             "system/flow/FlowMultiSetProperty.cpp": "NonMatching",
-            "system/flow/FlowNode.cpp": "NonMatching",
+            "system/flow/FlowNode.cpp": "Matching",
             "system/flow/FlowOnStop.cpp": "Matching",
             "system/flow/FlowOutPort.cpp": "Matching",
             "system/flow/FlowPickOne.cpp": "NonMatching",

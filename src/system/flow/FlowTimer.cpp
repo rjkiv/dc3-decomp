@@ -86,7 +86,7 @@ bool FlowTimer::Activate() {
     if (mTotalTime <= 0) {
         return false;
     } else {
-        TheFlowMgr->QueueCommand(this, kQueue);
+        TheFlowMgr->QueueCommand(this, kStarting);
         return true;
     }
 }
@@ -118,7 +118,7 @@ void FlowTimer::RequestStop() {
     FLOW_LOG("RequestStop\n");
     if (mStopMode == 0) {
         mRequestingStop = true;
-        TheFlowMgr->QueueCommand(this, kIgnore);
+        TheFlowMgr->QueueCommand(this, kRequestStop);
         FlowNode::RequestStop();
     }
 }
@@ -126,25 +126,25 @@ void FlowTimer::RequestStop() {
 void FlowTimer::RequestStopCancel() {
     FLOW_LOG("RequestStopC\n");
     mRequestingStop = false;
-    TheFlowMgr->QueueCommand(this, kQueue);
+    TheFlowMgr->QueueCommand(this, kStarting);
     FlowNode::RequestStopCancel();
 }
 
 void FlowTimer::Execute(FlowNode::QueueState state) {
     FLOW_LOG("Execute: state = %i\n", (int)state);
     if (IsRunning()) {
-        if (state == kIgnore) {
+        if (state == kRequestStop) {
             if (mTask) {
                 delete mTask;
             }
             FLOW_TIMED_RELEASE_FROM_PARENT;
         }
     } else {
-        if (state == kQueue) {
+        if (state == kStarting) {
             mTask = new EventTask(
                 this, &mChildNodes, RndAnimatable::RateToTaskUnits(mRate), mTotalTime
             );
-        } else if (state == kIgnore) {
+        } else if (state == kRequestStop) {
             mFlowParent->ChildFinished(this);
         }
     }

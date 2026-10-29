@@ -4,12 +4,18 @@
 class FlowQueueable : public FlowNode {
 public:
     enum FlowInterruptType {
-        kIgnore = 0x0000,
-        kQueue = 0x0001,
-        kQueueOne = 0x0002,
-        kImmediate = 0x0003,
-        kWhenAble = 0x0004,
-        kNotQueueable = 0x0005
+        /** "If we're activated, ignore the activation" */
+        kIgnore = 0,
+        /** "New activations go in the queue and are executed when this one finishes" */
+        kQueue = 1,
+        /** "New activations go into a one deep queue and are executed when this one
+         * finishes" */
+        kQueueOne = 2,
+        /** "Forcably stop what we're doing and restart" */
+        kImmediate = 3,
+        /** "Ask our children to stop, then run again when they finish" */
+        kWhenAble = 4,
+        kNotQueueable = 5
     };
 
     // Hmx::Object

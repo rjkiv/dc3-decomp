@@ -29,13 +29,13 @@ void FlowManager::AddPollable(FlowNode *n) { mPollList.push_back(n); }
 void FlowManager::RemovePollable(FlowNode *n) { mPollList.remove(n); }
 
 void FlowManager::QueueCommand(FlowNode *n, FlowNode::QueueState q) {
-    if (mInPoll && q != FlowNode::kQueueOne) {
+    if (mInPoll && q != FlowNode::kAfter) {
         n->Execute(q);
     } else
         mNodeList[n] = q;
 }
 
-void FlowManager::CancelCommand(FlowNode *n) { mNodeList[n] = FlowNode::kImmediate; }
+void FlowManager::CancelCommand(FlowNode *n) { mNodeList[n] = FlowNode::kQueueIgnore; }
 
 void FlowManager::AddEventTime(Symbol s, float f1) {
     float fsub = f1 - mCurTaskTime;
@@ -63,14 +63,14 @@ void FlowManager::Poll() {
     timer.Start();
     mInPoll = true;
     FOREACH (it, mNodeList) {
-        if (it->second != FlowNode::kImmediate) {
+        if (it->second != FlowNode::kQueueIgnore) {
             it->first->Execute(it->second);
         }
     }
     mNodeList.clear();
     ObjPtrVec<FlowNode> polls(mPollList);
     FOREACH (it, polls) {
-        (*it)->Execute(FlowNode::kWhenAble);
+        (*it)->Execute(FlowNode::kPolling);
     }
     mInPoll = false;
     timer.Stop();

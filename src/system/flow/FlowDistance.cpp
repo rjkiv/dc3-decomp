@@ -81,7 +81,7 @@ bool FlowDistance::Activate() {
         harness_reduction_vector.y = diff.z;
         harness_reduction_vector.z = diff.x;
         mInRange = Length(harness_reduction_vector) > mDistance;
-        Execute(kWhenAble);
+        Execute(kPolling);
         if (mPersistent) {
             return true;
         } else

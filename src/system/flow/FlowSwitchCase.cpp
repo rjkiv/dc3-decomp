@@ -121,7 +121,7 @@ bool FlowSwitchCase::Activate() {
         mIsRunning = true;
         FlowNode::Activate();
         if (mUnregisterParent) {
-            TheFlowMgr->QueueCommand(this, kQueue);
+            TheFlowMgr->QueueCommand(this, kStarting);
         }
         return true;
     } else {
@@ -148,7 +148,7 @@ void FlowSwitchCase::RequestStop() {
     FLOW_LOG("RequestStop\n");
     FlowNode::RequestStop();
     if (mIsRunning) {
-        TheFlowMgr->QueueCommand(this, kIgnore);
+        TheFlowMgr->QueueCommand(this, kRequestStop);
     }
 }
 
@@ -160,12 +160,12 @@ void FlowSwitchCase::RequestStopCancel() {
 
 void FlowSwitchCase::Execute(QueueState qs) {
     FLOW_LOG("Execute: state = %i\n", (int)qs);
-    if (qs == kQueue) {
+    if (qs == kStarting) {
         FlowWhile *propEventListener = static_cast<FlowWhile *>(mFlowParent);
         propEventListener->UnregisterSelf();
         if (!mIsRunning)
             return;
-    } else if (qs != kIgnore) {
+    } else if (qs != kRequestStop) {
         return;
     }
     mIsRunning = false;
@@ -185,11 +185,11 @@ void FlowSwitchCase::UseLastValueChanged() {
     if (mUseLastValue) {
         DrivenPropertyEntry *entry = GetDrivenEntry("to_value");
         if (entry) {
-            auto it = mDrivenPropEntries.begin();
-            for (; it != mDrivenPropEntries.end() && entry != it; ++it)
+            auto it = mDrivenProperties.begin();
+            for (; it != mDrivenProperties.end() && entry != it; ++it)
                 ;
-            if (it != mDrivenPropEntries.end()) {
-                mDrivenPropEntries.erase(it);
+            if (it != mDrivenProperties.end()) {
+                mDrivenProperties.erase(it);
             }
         }
     }
@@ -206,8 +206,10 @@ bool FlowSwitchCase::IsValidCase(
         if (n1->Type() != mFromValue.Node().Type()
             || n2->Type() != mToValue.Node().Type()) {
             return false;
-        } else if (n1->Equal(mFromValue.Node(), nullptr, true)
-                   && n2->Equal(mToValue.Node(), nullptr, true)) {
+        } else if (
+            n1->Equal(mFromValue.Node(), nullptr, true)
+            && n2->Equal(mToValue.Node(), nullptr, true)
+        ) {
             return true;
         } else {
             return false;
@@ -217,10 +219,10 @@ bool FlowSwitchCase::IsValidCase(
             mToValue = *n2;
         }
         switch (mOperator) {
-        case kEqual: {
+        case kEquals: {
             return n1->Equal(mToValue.Node(), nullptr, true);
         }
-        case kNotEqual: {
+        case kNotEquals: {
             return *n1 != mToValue.Node();
         }
         case kGreaterThan: {
@@ -232,7 +234,7 @@ bool FlowSwitchCase::IsValidCase(
                 return false;
             }
         }
-        case kGreaterThanOrEqual: {
+        case kGreaterThanOrEquals: {
             DataNode to = mToValue.Node();
             if ((n1->Type() == kDataInt || n1->Type() == kDataFloat)
                 && (to.Type() == kDataInt || to.Type() == kDataFloat)) {
@@ -250,7 +252,7 @@ bool FlowSwitchCase::IsValidCase(
                 return false;
             }
         }
-        case kLessThanOrEqual: {
+        case kLessThanOrEquals: {
             DataNode to = mToValue.Node();
             if ((n1->Type() == kDataInt || n1->Type() == kDataFloat)
                 && (to.Type() == kDataInt || to.Type() == kDataFloat)) {

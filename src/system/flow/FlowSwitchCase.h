@@ -6,13 +6,13 @@ class FlowSwitchCase : public FlowNode {
 public:
     enum FlowSwitchCaseComparison {
         kEquals = 0,
-        kNotEquals,
-        kGreaterThan,
-        kGreaterThanOrEquals,
-        kLessThan,
-        kLessThanOrEquals,
-        kTransition,
-        kDefault
+        kNotEquals = 1,
+        kGreaterThan = 2,
+        kGreaterThanOrEquals = 3,
+        kLessThan = 4,
+        kLessThanOrEquals = 5,
+        kTransition = 6,
+        kDefault = 7
     };
 
     // Hmx::Object

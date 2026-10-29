@@ -17,8 +17,8 @@ bool FlowNode::sPushDrivenProperties = false;
 #pragma region Hmx::Object
 
 FlowNode::FlowNode()
-    : mChildNodes(this, (EraseMode)0, kObjListNoNull), mRunningNodes(this),
-      mFlowParent(nullptr), mDrivenPropEntries(this), mRequestingStop(0) {
+    : mChildNodes(this), mRunningNodes(this), mFlowParent(nullptr),
+      mDrivenProperties(this), mRequestingStop(0) {
     mDebugOutput = false;
 }
 
@@ -57,8 +57,8 @@ BEGIN_SAVES(FlowNode)
         }
     }
     bs << flowNodes;
-    bs << (int)mDrivenPropEntries.size();
-    FOREACH (it, mDrivenPropEntries) {
+    bs << (int)mDrivenProperties.size();
+    FOREACH (it, mDrivenProperties) {
         it->Save(bs);
     }
     bs << mDebugOutput;
@@ -77,7 +77,7 @@ BEGIN_COPYS(FlowNode)
                 }
             }
         }
-        COPY_MEMBER(mDrivenPropEntries)
+        COPY_MEMBER(mDrivenProperties)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -95,13 +95,13 @@ BEGIN_LOADS(FlowNode)
     }
     int numEntries;
     d >> numEntries;
-    mDrivenPropEntries.clear();
-    auto &entries = mDrivenPropEntries; // :)
+    mDrivenProperties.clear();
+    auto &entries = mDrivenProperties; // :)
     entries.reserve(numEntries);
     for (int i = 0; i < numEntries; i++) {
         DrivenPropertyEntry entry(this);
         entry.Load(d, this);
-        mDrivenPropEntries.push_back(entry);
+        mDrivenProperties.push_back(entry);
     }
     if (d.rev > 0) {
         bool output;
@@ -131,11 +131,11 @@ const char *FlowNode::FindPathName() {
 void FlowNode::SetParent(class FlowNode *new_parent, bool b) {
     if (mFlowParent != new_parent) {
         if (mFlowParent != nullptr) {
-            mFlowParent->mChildNodes.remove(this);
+            mFlowParent->RemoveChild(this);
         }
         mFlowParent = new_parent;
         if (new_parent != nullptr && b) {
-            new_parent->mChildNodes.push_back(this);
+            new_parent->AddChild(this);
         }
     }
 }
@@ -215,7 +215,7 @@ void FlowNode::MoveIntoDir(ObjectDir *o1, ObjectDir *o2) {
         FOREACH (it, mChildNodes) {
             (*it)->MoveIntoDir(o1, o2);
         }
-        FOREACH (it, mDrivenPropEntries) {
+        FOREACH (it, mDrivenProperties) {
             FOREACH (op, it->mMathOps) {
                 FlowPtr<Hmx::Object> &ptr = op->mPropertyProvider;
                 if (ptr == o2) {
@@ -236,7 +236,7 @@ void FlowNode::UpdateIntensity() {
 
 void FlowNode::PushDrivenProperties() {
     sPushDrivenProperties = true;
-    FOREACH (it, mDrivenPropEntries) {
+    FOREACH (it, mDrivenProperties) {
         DataNode n;
         auto op = it->mMathOps.begin();
         Hmx::Object *obj = op->mPropertyProvider;
@@ -250,11 +250,14 @@ void FlowNode::PushDrivenProperties() {
         } else {
             n = op->mValue;
         }
-        if (op != it->mMathOps.end()) {
+
+        if (++op == it->mMathOps.end()) {
+            SetProperty(it->mDrivenProperty.Array(), n);
+        } else {
             if (n.CompatibleType(kDataFloat)) {
                 float sum = n.LiteralFloat();
-                while (op != it->mMathOps.end()) {
-                    sum += op->Apply(sum);
+                for (; op != it->mMathOps.end(); ++op) {
+                    sum = op->Apply(sum);
                 }
                 n = sum;
             }
@@ -268,8 +271,6 @@ void FlowNode::PushDrivenProperties() {
                     SetProperty(it->mDrivenProperty.Array(), Round(n.LiteralFloat()));
                 }
             }
-        } else {
-            SetProperty(it->mDrivenProperty.Array(), n);
         }
     }
     sPushDrivenProperties = false;
@@ -296,7 +297,7 @@ DrivenPropertyEntry *FlowNode::GetDrivenEntry(Symbol s) {
 }
 
 DrivenPropertyEntry *FlowNode::GetDrivenEntry(DataArray *a) {
-    FOREACH (it, mDrivenPropEntries) {
+    FOREACH (it, mDrivenProperties) {
         if (it->mDrivenProperty.Type() == kDataArray) {
             DataArray *curArr = it->mDrivenProperty.Array();
             if (curArr->Size() == a->Size()) {
@@ -351,7 +352,7 @@ FlowNode *FlowNode::DuplicateChild(FlowNode *n) {
                 newFlow->SetProperty(ptr, *prop);
             }
         }
-        FOREACH (it, flow->ChildNodes()) {
+        FOREACH (it, flow->GetChildNodes()) {
             if ((*it)->ClassName() == FlowLabel::StaticClassName()
                 && (*it)->Dir() != flow) {
                 Hmx::Object *obj = Hmx::Object::NewObject(FlowLabel::StaticClassName());
