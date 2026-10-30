@@ -265,7 +265,7 @@
             "system/flow/FlowOnStop.cpp": "Matching",
             "system/flow/FlowOutPort.cpp": "Matching",
             "system/flow/FlowPickOne.cpp": "NonMatching",
-            "system/flow/FlowPtr.cpp": "NonMatching",
+            "system/flow/FlowPtr.cpp": "Matching",
             "system/flow/FlowQueueable.cpp": "NonMatching",
             "system/flow/FlowRun.cpp": "Matching",
             "system/flow/FlowSequence.cpp": "Matching",

@@ -69,18 +69,13 @@ Hmx::Object *FlowPtrBase::LoadObject(BinStream &bs) {
                 loadingDir = FlowPtrGetLoadingDir(loadingDir);
                 if (loadingDir) {
                     obj = loadingDir->FindObject(mSymbol.Str(), false, true);
-                    if (!obj) {
-                        obj = ObjectDir::Main()->FindObject(mSymbol.Str(), false, true);
-                    }
-                } else {
-                    obj = ObjectDir::Main()->FindObject(mSymbol.Str(), false, true);
                 }
             }
-        } else {
+        }
+        if (!obj) {
             obj = ObjectDir::Main()->FindObject(mSymbol.Str(), false, true);
         }
     }
-
     if (obj) {
         mParamIdx = -2;
     } else if (!mSymbol.Null()) {

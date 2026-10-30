@@ -1,4 +1,5 @@
 #pragma once
+#include "flow/FlowLabelProvider.h"
 #include "flow/FlowNode.h"
 #include "flow/FlowPtr.h"
 #include "flow/PropertyEventListener.h"
@@ -44,7 +45,9 @@ protected:
     EaseFunc *pt2EaseFuncion; // 0x7c
 };
 
-class FlowSetProperty : public FlowNode, public PropertyEventListener {
+class FlowSetProperty : public FlowNode,
+                        public FlowLabelProvider,
+                        public PropertyEventListener {
 public:
     virtual ~FlowSetProperty();
     virtual bool Replace(ObjRef *from, Hmx::Object *to);
@@ -76,7 +79,6 @@ public:
 protected:
     FlowSetProperty();
 
-    u32 unk_0x74; // might be fake.
     FlowPtr<Hmx::Object> mTargetObject; // 0x78
     DataNode mProperty; // 0x98
     DataNodeObjTrack mValue; // 0xA0

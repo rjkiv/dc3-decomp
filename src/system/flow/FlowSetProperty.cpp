@@ -73,7 +73,7 @@ PropertyTask::~PropertyTask() {}
 
 bool PropertyTask::Replace(ObjRef *from, Hmx::Object *to) {
     auto &ref = mTarget;
-    if (from == static_cast<ObjRef *>(&ref)) {
+    if (from == &ref) {
         ref = to;
         if (!ref) {
             delete this;
