@@ -3,7 +3,10 @@
 #include "synth360/Mic.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/XMIC.h"
+#include "xdk/win_types.h"
+#include "xdk/xapilibi/xbase.h"
 #include "xdk/xmic/xmic.h"
+#include <cstring>
 
 namespace {
     DWORD ExternalMicThreadEntry(void *v) {
@@ -24,7 +27,7 @@ std::vector<MicXbox *> ExternalMicClientMgr::mAssocMicXbox;
 #pragma region ExternalMic
 
 ExternalMic::ExternalMic(DWORD micId)
-    : mMicIndex(micId), mShutdown(false), mIsActive(false), mGain(-1) {
+    : mIndex(micId), mShutdown(false), mIsActive(false), mGain(-1) {
     mThread = CreateThread(0, 0, ExternalMicThreadEntry, this, 4, 0);
     MILO_ASSERT(mThread, 0x6a);
     SetThreadPriority(mThread, 15);
@@ -49,7 +52,7 @@ HRESULT ExternalMic::gatherGainAttribs(DWORD dw) {
 }
 
 HRESULT ExternalMic::processGain(DWORD dw) {
-    float gainReq = ExternalMicClientMgr::GetRequiredGain(mMicIndex);
+    float gainReq = ExternalMicClientMgr::GetRequiredGain(mIndex);
     if (gainReq != mGain) {
         MILO_ASSERT((0.0f <= gainReq) && (gainReq <= 1.0f), 0x26F);
         DWORD hr = XMicSetGain(dw, (mMaxGain - mMinGain) * gainReq + mMinGain, nullptr);
@@ -85,6 +88,12 @@ void ExternalMic::Terminate() {
     }
     gMics.clear();
     ExternalMicClientMgr::Terminate();
+}
+
+DWORD ExternalMic::sampleProcessThread() {
+    DWORD dwTransferLength = 0;
+    DWORD dwMicrophoneIndex = 0;
+    return 0;
 }
 
 #pragma endregion

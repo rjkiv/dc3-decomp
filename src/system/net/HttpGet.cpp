@@ -1,7 +1,9 @@
 #include "net/HttpGet.h"
+#include "HttpGet.h"
 #include "macros.h"
 #include "os/Debug.h"
 #include "os/NetworkSocket.h"
+#include "stl/_vector.h"
 #include "utl/MakeString.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
@@ -99,29 +101,35 @@ namespace {
     }
 };
 
-HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const char *c2)
-    : mSocket(0), mStrRemoteFile(c1), mPort(port), mState(kS_Nil), mIgnoreResponse(0),
-      mTimeoutMs(kDefaultTimeoutMs), mIP(ip), mOptionalHeader(c2), mRecvBuf(0),
-      mRecvBufPos(0), mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0),
-      mFailType(), mFailState(kS_Nil) {
-    SetState((State)0);
+HttpGet::HttpGet(
+    unsigned int ip, unsigned short port, const char *strRemoteFile, const char *strHeader
+)
+    : mSocket(0), mStrRemoteFile(strRemoteFile), mPort(port), mState(kS_Nil),
+      mIgnoreResponse(0), mTimeoutMs(kDefaultTimeoutMs), mIP(ip),
+      mOptionalHeader(strHeader), mRecvBuf(0), mRecvBufPos(0), mFileBuf(0),
+      mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0), mFailType(),
+      mFailState(kS_Nil) {
+    SetState(kS_Connecting);
     AddRequiredHeaders();
 }
 
 HttpGet::HttpGet(
-    unsigned int ip, unsigned short port, const char *c1, unsigned char uc, const char *c2
+    unsigned int ip,
+    unsigned short port,
+    const char *strRemoteFile,
+    unsigned char flags,
+    const char *strHeader
 )
-    : mSocket(0), mStrRemoteFile(c1), mPort(port), mState(kS_Nil),
-      mIgnoreResponse(uc & 3), mTimeoutMs(kDefaultTimeoutMs), mIP(ip),
-      mOptionalHeader(c2), mRecvBuf(0), mRecvBufPos(0), mFileBuf(0), mFileBufSize(0),
-      mFileBufRecvPos(0), mRetryCount(0), mFailType() {
-    State s;
-    if ((uc & 4) == 0) {
-        s = (State)8;
+    : mSocket(0), mIP(ip), mPort(port), mStrRemoteFile(strRemoteFile),
+      mIgnoreResponse(flags & 3), mOptionalHeader(strHeader), mState(kS_Nil),
+      mTimeoutMs(kDefaultTimeoutMs), mRecvBuf(0), mRecvBufPos(0), mFileBuf(0),
+      mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0),
+      mFailType(kHttpGetFail_Unknown) {
+    if (flags & 4) {
+        SetState(kS_Connecting);
     } else {
-        s = (State)0;
+        SetState(kS_WaitToSend);
     }
-    SetState(s);
     AddRequiredHeaders();
 }
 
@@ -130,8 +138,8 @@ HttpGet::~HttpGet() { SafeShutdown(); }
 void HttpGet::StartSending() {
     MILO_ASSERT(mSocket, 0x311);
     if (!mSocket->CanSend()) {
-        mFailType = (HttpGetFailType)1;
-        SetState((State)7);
+        mFailType = kHttpGetFail_SocketError;
+        SetState(kS_FailureRetry);
         return;
     }
     String str("GET ");
@@ -145,11 +153,11 @@ void HttpGet::StartSending() {
     str += "\r\n\r\n";
     int len = str.length();
     if (mSocket->Send(str.c_str(), len) != len) {
-        mFailType = (HttpGetFailType)1;
-        SetState((State)7);
+        mFailType = kHttpGetFail_SocketError;
+        SetState(kS_FailureRetry);
         return;
     }
-    SetState((State)3);
+    SetState(kS_WaitToReceive);
 }
 
 void HttpGet::SafeShutdown() {
@@ -163,16 +171,16 @@ void HttpGet::SafeShutdown() {
 }
 
 void HttpGet::Send() {
-    if (mState == 8) {
-        SetState((State)0);
+    if (mState == kS_WaitToSend) {
+        SetState(kS_Connecting);
     }
 }
 
-bool HttpGet::IsDownloaded() { return mState == 5; }
-bool HttpGet::HasFailed() { return mState == 6; }
+bool HttpGet::IsDownloaded() { return mState == kS_Done; }
+bool HttpGet::HasFailed() { return mState == kS_Failure; }
 
 char *HttpGet::DetachBuffer() {
-    if (mState != 5) {
+    if (mState != kS_Done) {
         return nullptr;
     } else {
         char *buffer = mFileBuf;
@@ -205,8 +213,8 @@ void HttpGet::StartConnection() {
     MILO_ASSERT(mSocket == NULL, 0x2FF);
     mSocket = NetworkSocket::Create(true);
     if (mSocket->Fail()) {
-        mFailType = (HttpGetFailType)1;
-        SetState((State)6);
+        mFailType = kHttpGetFail_SocketError;
+        SetState(kS_Failure);
     } else {
         mSocket->Connect(mIP, mPort);
     }
@@ -264,14 +272,14 @@ void HttpPost::StartSending() {
     MILO_ASSERT(mSocket, 0x3CD);
     if (!mSocket->CanSend()) {
         SetFailType(kHttpGetFail_SocketError);
-        SetState((State)7);
+        SetState(kS_FailureRetry);
     } else {
         mHeaderLength = mHeader.length();
         if (mSocket->Send(mHeader.c_str(), mHeaderLength) != mHeaderLength) {
             SetFailType(kHttpGetFail_SocketError);
-            SetState((State)7);
+            SetState(kS_FailureRetry);
         } else {
-            SetState((State)2);
+            SetState(kS_Sending);
         }
     }
 }
@@ -289,13 +297,13 @@ void HttpPost::Sending() {
     );
     State s;
     if (socketSend == -1) {
-        s = (State)7;
+        s = kS_FailureRetry;
         SetFailType(kHttpGetFail_SocketError);
     } else if (socketSend != mContentBytesLeftToSend) {
         mContentBytesLeftToSend -= socketSend;
         return;
     } else {
-        s = (State)3;
+        s = kS_WaitToReceive;
         mContentBytesLeftToSend = 0;
     }
     SetState(s);
@@ -324,30 +332,30 @@ void HttpGet::SetState(State s) {
     if (mState == s)
         return;
     switch (mState) {
-    case 0:
-        if (s != (State)1)
+    case kS_Connecting:
+        if (s != kS_StartSending)
             SafeShutdown();
         break;
-    case 1:
-        if (s == (State)2)
+    case kS_StartSending:
+        if (s == kS_Sending)
             break;
-    case 2:
-        if (s != (State)3)
+    case kS_Sending:
+        if (s != kS_WaitToReceive)
             SafeShutdown();
         break;
-    case 3:
-        if (s != (State)4)
+    case kS_WaitToReceive:
+        if (s != kS_Receiving)
             SafeShutdown();
         break;
-    case 4:
-        if (s != (State)5)
+    case kS_Receiving:
+        if (s != kS_Done)
             SafeShutdown();
         else
             SafeDisconnect();
         break;
     }
-    if ((s == (State)6 || s == (State)7) && (mState != (State)6)
-        && (mState != (State)7)) {
+    if ((s == kS_Failure || s == kS_FailureRetry) && (mState != kS_Failure)
+        && (mState != kS_FailureRetry)) {
         mFailState = mState;
     }
 
@@ -358,23 +366,23 @@ void HttpGet::SetState(State s) {
     case kS_Nil:
         SafeShutdown();
         break;
-    case 0:
+    case kS_Connecting:
         StartConnection();
         break;
-    case 1:
+    case kS_StartSending:
         StartSending();
         break;
-    case 4:
+    case kS_Receiving:
         StartReceiving();
         break;
-    case 6:
+    case kS_Failure:
         return;
-    case 7:
+    case kS_FailureRetry:
         if (CanRetry()) {
             mRetryCount++;
-            SetState((State)0);
+            SetState(kS_Connecting);
         } else {
-            SetState((State)6);
+            SetState(kS_Failure);
         }
         break;
     }

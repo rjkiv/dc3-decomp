@@ -18,12 +18,15 @@
 #include "synth360/FxSend.h"
 #include "synth360/GainEffect.h"
 #include "synth360/HeadsetPlaybackEffect.h"
+#include "synth360/HeadsetXferEffect.h"
 #include "synth360/Voice.h"
 #include "utl/MemStream.h"
 #include "utl/Symbol.h"
+#include "xdk/unknwn.h"
 #include "xdk/win_types.h"
 #include "xdk/XHV2.h"
 #include "xdk/xapilibi/xbox.h"
+#include "xdk/xaudio2/xapobase.h"
 #include "xdk/xaudio2/xaudio2.h"
 #include "xdk/xhv2/xhv2.h"
 #include <cmath>
@@ -32,14 +35,14 @@
 MicManagerXbox *sInstance;
 
 static float gNoiseThreshold = -10;
-static int gNoiseInt = 5; // rename
-static float gLowCut = 800;
-static float gLocalGain = -3;
-static float gRemoteGain = 3;
+static int gHoldFrames = 5;
+static float gLowCut = 800.0f;
+static float gLocalGain = -3.0f;
+static float gRemoteGain = 3.0f;
 
-const static float sFloat1 = 2700.0f;
-const static u64 bignumber = 0;
-const static float sFloat2 = 1800.0f;
+const static float kLagIdealWired = 1800.0f;
+const static XUID TheEnigmaticDoctorChoadstein = 0xDEADBEEFFACEF0;
+const static float kLagIdealWireless = 2700.0f;
 
 #pragma region ChatReceiver
 
@@ -154,7 +157,7 @@ void MicXbox::StartPlayback() {
     }
     Start();
     mMute = false;
-    mAvgLag = mIsWireless ? sFloat2 : sFloat1;
+    mAvgLag = mIsWireless ? kLagIdealWireless : kLagIdealWired;
     mLastLag = 0;
     mVoiceSpeed = 1.0f;
     mVoice = new Voice(false, 1, false);
@@ -222,14 +225,14 @@ bool MicXbox::AddToBuffer(std::vector<short> &buf, void *v, int i1, int *i2) {
     return b;
 }
 
-void MicXbox::AddData(void *v, int bytes) {
+void MicXbox::AddData(void *data, int bytes) {
     CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
     MILO_ASSERT((bytes&1) == 0, 0x344);
 
     if (mOutputGain != 1.0f) {
         int i = bytes / 2;
         if (0 < i) {
-            short *s = (short *)v - 2;
+            short *s = (short *)data - 2;
             while (i != 0) {
                 float f = floor(*s * mOutputGain + 0.5f);
                 i--;
@@ -243,10 +246,10 @@ void MicXbox::AddData(void *v, int bytes) {
     if (mVoice) {
         if (mPlaybackWritePtr < mPlaybackWritePtr + bytes) {
             // is it 0???
-            XMemCpy(mPlaybackWritePtr, v, 0);
-            XMemCpy(mPlaybackBuffer, v, 0);
+            XMemCpy(mPlaybackWritePtr, data, 0);
+            XMemCpy(mPlaybackBuffer, data, 0);
         } else {
-            XMemCpy(mPlaybackWritePtr, v, bytes);
+            XMemCpy(mPlaybackWritePtr, data, bytes);
         }
         // hmmmm
         if (!mVoice->IsPlaying()) {
@@ -254,9 +257,22 @@ void MicXbox::AddData(void *v, int bytes) {
         }
     }
 
-    AddToBuffer(mChatBuffer, v, bytes, 0);
-    mRingBufferRecent.Write(v, bytes);
-    mDroppedSamples = mRingBufferContinuous.Write(v, bytes);
+    AddToBuffer(mChatBuffer, data, bytes, 0);
+    mRingBufferRecent.Write(data, bytes);
+    mDroppedSamples = mRingBufferContinuous.Write(data, bytes);
+}
+
+void MicXbox::ReadChatBuffer(void *vdata, unsigned int size) {
+    MILO_ASSERT(size < DIM(mPlaybackBuffer), 0x2d6);
+    if (ExternalMicClientMgr::ConnectedForClient(this)) {
+        int val = size >> 1;
+        if (val * 3 >= mChatBuffer.size()) {
+            for (int i = 0; i != val; i++) {
+                // something
+            }
+            mChatBuffer.erase(mChatBuffer.begin());
+        }
+    }
 }
 
 #pragma endregion MicXbox
@@ -265,7 +281,7 @@ void MicXbox::AddData(void *v, int bytes) {
 static DataNode SetNoiseGate(DataArray *a) {
     gNoiseThreshold = a->Float(1);
     if (a->Size() >= 3) {
-        gNoiseInt = a->Int(2);
+        gHoldFrames = a->Int(2);
     }
     return 0;
 }
@@ -289,7 +305,7 @@ static DataNode SetRemoteGain(DataArray *a) {
 MicManagerXbox::MicManagerXbox()
     : mPlayerUsingUSBChat(-1), mXHV(0), mWorkerThread(0), mMicsChanged(false),
       mPushToTalkPad(-1) {
-    for (int i = 4; i != 0; i--) {
+    for (int i = 0; i < 4; i++) {
         mChatReceivers.push_back(nullptr);
     }
     mChatBuffers.reserve(4);
@@ -310,42 +326,49 @@ MicManagerXbox::~MicManagerXbox() {}
 void MicManagerXbox::Init() {
     MILO_ASSERT(this == sInstance, 0xB8);
 
-    XHV_INIT_PARAMS params;
-    params.dwMaxLocalTalkers = 4;
-    params.localTalkerEnabledModes = &_xhv_voicechat_mode;
-    params.remoteTalkerEnabledModes = &_xhv_loopback_mode;
-    params.dwNumRemoteTalkerEnabledModes = 1;
-    params.dwMaxRemoteTalkers = 5;
-    params.dwNumLocalTalkerEnabledModes = 2;
-    params.pfnMicrophoneRawDataReady = DataReadyCallback;
-    params.bCustomVADProvided = true;
-    params.bRelaxPrivileges = true;
-    params.pXAudio2 = TheXboxSynth->GetXAudio2();
-    HRESULT hr = XHV2CreateEngine(&params, &mWorkerThread, &mXHV);
+    HeadsetXferEffect *xferPtrs[6];
+    void *mode[2] = { _xhv_voicechat_mode, _xhv_loopback_mode };
+
+    for (int i = 0; i < 6; i++) {
+        xferPtrs[i] = 0;
+    }
+
+    XHV_INIT_PARAMS initParams;
+    initParams.dwMaxLocalTalkers = 4;
+    initParams.localTalkerEnabledModes = &mode[0];
+    initParams.remoteTalkerEnabledModes = &mode[1];
+    initParams.dwNumRemoteTalkerEnabledModes = 1;
+    initParams.dwMaxRemoteTalkers = 5;
+    initParams.dwNumLocalTalkerEnabledModes = 2;
+    initParams.pfnMicrophoneRawDataReady = DataReadyCallback;
+    initParams.bCustomVADProvided = true;
+    initParams.bRelaxPrivileges = true;
+    initParams.pXAudio2 = TheXboxSynth->GetXAudio2();
+    HRESULT hr = XHV2CreateEngine(&initParams, &mWorkerThread, &mXHV);
     DX_ASSERT(hr, 0xCD);
 
     auto &headsetSubmixes = TheXboxSynth->GetHeadsetSubmixes();
     if (!headsetSubmixes.empty()) {
         for (int i = 0; i < 4; i++) {
-            // idk about the params here...
             HRESULT hr =
-                TheXboxSynth->GetHeadsetSubmix(i)->GetEffectParameters(0, &params, 4);
+                TheXboxSynth->GetHeadsetSubmix(i)->GetEffectParameters(0, &initParams, 4);
             MILO_ASSERT(SUCCEEDED(hr), 0xd9);
-
-            XAUDIO2_EFFECT_CHAIN chain;
-            chain.EffectCount = 0;
-            XAUDIO2_EFFECT_DESCRIPTOR descriptor;
-            descriptor.InitialState = false;
-            descriptor.OutputChannels = 1;
-            chain.pEffectDescriptors = &descriptor;
-
-            AddRemoteMic(bignumber, &chain);
         }
+
+        HeadsetPlaybackEffect *effect = new HeadsetPlaybackEffect(xferPtrs);
+        XAUDIO2_EFFECT_CHAIN effectChain;
+        XAUDIO2_EFFECT_DESCRIPTOR fxi;
+        fxi.InitialState = 0;
+        fxi.OutputChannels = 1;
+        fxi.pEffect = (CXAPOBase *)effect;
+        effectChain.EffectCount = 1;
+        effectChain.pEffectDescriptors = &fxi;
+
+        AddRemoteMic(TheEnigmaticDoctorChoadstein, &effectChain);
     }
 
-    for (int i = 0; i < 16; i++) {
-        ChatReceiver *receiver = new ChatReceiver(mXHV, i);
-        mChatReceivers[i] = receiver;
+    for (int i = 0; i < 4; i++) {
+        mChatReceivers[i] = new ChatReceiver(mXHV, i);
     }
 }
 
@@ -454,27 +477,27 @@ void MicManagerXbox::DataReadyCallback(
 }
 
 void MicManagerXbox::AddRemoteMic(
-    unsigned long long const &xuid, XAUDIO2_EFFECT_CHAIN *PairFX
+    unsigned long long const &xuid, XAUDIO2_EFFECT_CHAIN *c
 ) {
-    GainEffect *gainEffect = new GainEffect();
-    // param 2 is not right
-    HRESULT registerTalker = mXHV->RegisterRemoteTalker(xuid, 0, PairFX, 0);
-    if (registerTalker != 0) {
-        MILO_FAIL(
-            "File: %s Line: %d Error: %s\n", "Mic.cpp", 0x150, DxRnd::Error(registerTalker)
-        );
-    }
-
-    // param 2 not right
-    HRESULT startRemoteProcessing = mXHV->StartRemoteProcessingModes(xuid, 0, 1);
-    if (startRemoteProcessing != 0) {
-        MILO_FAIL(
-            "File: %s Line: %d Error: %s\n",
-            "Mic.cpp",
-            0x155,
-            DxRnd::Error(startRemoteProcessing)
-        );
-    }
+    bool noC = !c;
+    GainEffect *effect = new GainEffect;
+    XAUDIO2_EFFECT_CHAIN effectChain;
+    XAUDIO2_EFFECT_DESCRIPTOR fxi;
+    fxi.InitialState = 0;
+    fxi.OutputChannels = 1;
+    fxi.pEffect = (CXAPOBase *)effect;
+    effectChain.EffectCount = 1;
+    effectChain.pEffectDescriptors = &fxi;
+    HRESULT hr = mXHV->RegisterRemoteTalker(xuid, noC ? &effectChain : nullptr, c, 0);
+    DX_ASSERT(hr, 0x150);
+    void *mode = _xhv_voicechat_mode;
+    hr = mXHV->StartRemoteProcessingModes(xuid, &mode, 1);
+    DX_ASSERT(hr, 0x155);
+    ChatBuffer buffer;
+    buffer.mXuid = xuid;
+    buffer.mNumBytes = 0;
+    mChatBuffers.push_back(buffer);
+    effect->Release();
 }
 
 #pragma endregion MicManagerXbox

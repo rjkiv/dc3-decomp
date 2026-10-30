@@ -18,7 +18,7 @@ public:
 
 private:
     HANDLE mThread; // 0x0
-    DWORD mMicIndex; // 0x4
+    DWORD mIndex; // 0x4
     volatile bool mShutdown; // 0x8
     bool mIsActive; // 0x9
     float mGain; // 0xc

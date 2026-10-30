@@ -111,12 +111,11 @@ extern GamePanel *TheGamePanel;
 
 class LatencyCallback : public RndOverlay::Callback {
 public:
-    LatencyCallback() : unk4(0) {}
+    LatencyCallback() : mWhite(0) {}
     virtual ~LatencyCallback() {}
     virtual float UpdateOverlay(RndOverlay *o, float y);
 
-private:
-    bool unk4;
+    bool mWhite; // 0x4
 };
 
 class LoopVizCallback : public RndOverlay::Callback {
@@ -127,13 +126,12 @@ public:
 
     void DrawHashMarks(float, float, float, int, int, bool);
 
-private:
-    DebugMeter mDebugMeter1; // 0x4
-    DebugMeter mDebugMeter2; // 0x24
-    int unk44;
-    int unk48;
-    int unk4c;
-    int unk50;
-    float unk54;
-    float unk58;
+    DebugMeter mSongMeter; // 0x4
+    DebugMeter mLoopMeter; // 0x24
+    int mLoopStart; // 0x44
+    int mLoopEnd; // 0x48
+    int mOldLoopStart; // 0x4c
+    int mOldLoopEnd; // 0x50
+    float mHighlightLoopStart; // 0x54
+    float mHighlightLoopEnd; // 0x58
 };

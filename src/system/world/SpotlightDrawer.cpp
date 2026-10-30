@@ -7,6 +7,7 @@
 #include "rndobj/BoxMap.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
+#include "rndobj/Mesh.h"
 #include "rndobj/MultiMesh.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Stats_NG.h"

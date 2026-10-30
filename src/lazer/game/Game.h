@@ -81,8 +81,6 @@ public:
     void LoadNewSong(Symbol, Symbol);
     void StartIntro();
     void SetRealTime(bool);
-    void ResetAudio();
-    void SetLoop(bool);
     void SetForegroundVolume(float);
     void SetBackgroundVolume(float);
     int GetNumRestarts() const;
@@ -103,6 +101,12 @@ private:
     void SetPaused(bool, bool);
     bool HandleWait();
     void CheckForSkeletonLoss(class Skeleton const *const (&)[6]);
+    void ResetAudio();
+    void SetLoop(bool);
+
+    // new
+    void SendMoveBeat(int, HamMove *);
+    void WaitUntilReady();
 
     DataNode OnSetShuttle(DataArray *);
     DataNode OnResetDetection(DataArray *);
