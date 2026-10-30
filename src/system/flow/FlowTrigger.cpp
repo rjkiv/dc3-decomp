@@ -136,20 +136,11 @@ bool FlowTrigger::ActivateWithParams(Hmx::Object *o, DataArray *a) {
     Symbol sym("anon");
     if (mTriggerEvents.size() != 0) {
         if (mTriggerEvents.size() > 1) {
-            sym = MakeString("Event:%s...", mTriggerEvents.front());
-            goto flow_event;
+            sym = MakeString("Event:%s...", mTriggerEvents.front().Str());
         } else {
-            sym = MakeString("Event:%s", mTriggerEvents.front());
-            goto flow_event;
+            sym = MakeString("Event:%s", mTriggerEvents.front().Str());
         }
-    }
-    if (mTriggerProperties.empty()) {
-        goto flow_event;
-    }
-    if (mTriggerProperties.size() == 0) {
-        goto flow_event;
-    }
-    if (!mTriggerProperties.empty()) {
+    } else if (mTriggerProperties.size() != 0) {
         PropTriggerDefn &defn = mTriggerProperties.front();
         if (mTriggerProperties.size() > 1) {
             sym = MakeString(
@@ -161,34 +152,27 @@ bool FlowTrigger::ActivateWithParams(Hmx::Object *o, DataArray *a) {
             );
         }
     }
-flow_event:
     timer.Stop();
     TheFlowMgr->AddEventTime(sym, timer.Ms());
     return ret;
 }
 
 DataNode FlowTrigger::PropTriggerDefn::GetPathDisplay(DataArray *a) {
-    if (mProvider && mPropPath.Type() == kDataArray) {
-        if (mPropPath.Array()->Size() != 0) {
-            String str;
-            mPropPath.Print(str, true, 0);
-            return MakeString("%s->%s", mProvider->Name(), str.c_str());
-        }
+    if (!mProvider || mPropPath.Type() != kDataArray || mPropPath.Array()->Size() == 0) {
+        return "<none>";
     }
-    return "<none>";
+    String str;
+    mPropPath.Print(str, true, 0);
+    return MakeString("%s->%s", mProvider->Name(), str.c_str());
 }
 
 Hmx::Object *FlowTrigger::GetEventProvider() {
     if (mEventProvider) {
         return mEventProvider;
+    } else if (GetOwnerFlow()) {
+        return GetTopFlow()->Dir();
     } else {
-        ObjectDir *dir;
-        if (GetOwnerFlow()) {
-            dir = GetTopFlow()->Dir();
-        } else {
-            dir = Dir();
-        }
-        return dir;
+        return Dir();
     }
 }
 
@@ -196,26 +180,26 @@ DataArray *FlowTrigger::GetEventEditorDef(Symbol s) {
     DataArray *eval;
     if (mEventProvider && mEventProvider->TypeDef()
         && mEventProvider->TypeDef()->FindArray("supported_events", false)) {
-        eval = mEventProvider->TypeDef()->FindArray("supported_events", true);
-    } else if (mEventProvider
-               && mEventProvider->ObjectDef(gNullStr)->FindArray(
-                   "supported_events", false
-               )) {
-        eval = mEventProvider->ObjectDef(gNullStr)->FindArray("supported_events", true);
+        eval = mEventProvider->TypeDef()->FindArray("supported_events")->Array(1);
+    } else if (
+        mEventProvider
+        && mEventProvider->ObjectDef(gNullStr)->FindArray("supported_events", false)
+    ) {
+        eval =
+            mEventProvider->ObjectDef(gNullStr)->FindArray("supported_events")->Array(1);
     } else {
         Flow *owner = GetOwnerFlow();
         if (owner->TypeDef() && owner->TypeDef()->FindArray("supported_events", false)) {
-            eval = owner->TypeDef()->FindArray("supported_events", true);
+            eval = owner->TypeDef()->FindArray("supported_events")->Array(1);
         } else if (owner->ObjectDef(gNullStr)->FindArray("supported_events", false)) {
-            eval = owner->ObjectDef(gNullStr)->FindArray("supported_events", true);
+            eval = owner->ObjectDef(gNullStr)->FindArray("supported_events")->Array(1);
         } else
             return nullptr;
     }
-    DataArray *a = eval->Array(1);
-    if (a) {
-        a = a->FindArray(s, false);
-        if (a)
-            return a;
+    if (eval) {
+        eval = eval->FindArray(s, false);
+        if (eval)
+            return eval;
     }
     return nullptr;
 }
