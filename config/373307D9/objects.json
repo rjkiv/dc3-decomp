@@ -251,7 +251,7 @@
             "system/dsp/FlangerEffect.cpp": "NonMatching",
             "system/dsp/WahEffect.cpp": "NonMatching",
             "system/flow/DrivenPropertyEntry.cpp": "Matching",
-            "system/flow/DrivenPropertyMathOps.cpp": "NonMatching",
+            "system/flow/DrivenPropertyMathOps.cpp": "Matching",
             "system/flow/Flow.cpp": "Matching",
             "system/flow/FlowAnimate.cpp": "Matching",
             "system/flow/FlowCommand.cpp": "NonMatching",

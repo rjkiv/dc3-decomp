@@ -81,7 +81,7 @@ void FlowMathOp::Load(BinStream &bs, ObjectDir *dir) {
     }
 }
 
-float FlowMathOp::Apply(float f1) {
+float FlowMathOp::Apply(float val) {
     float y = mValue;
     if (mPropertyProvider && mPropertyPath.Type() == kDataArray) {
         const DataNode *prop = mPropertyProvider->Property(mPropertyPath.Array(), false);
@@ -94,9 +94,11 @@ float FlowMathOp::Apply(float f1) {
         if (mCustom.Type() == kDataString) {
             String str = mCustom.Str();
             DataNode n;
-            if (!str.empty()) {
-                DataVariable("val") = f1;
-                float ret = f1;
+            if (str.empty()) {
+                return val;
+            } else {
+                DataVariable("val") = val;
+                float ret = val;
                 MILO_TRY {
                     n = DataReadString(str.c_str());
                     n.Array()->Release();
@@ -118,80 +120,80 @@ float FlowMathOp::Apply(float f1) {
         } else {
             goto script;
         }
-        return f1;
+        return val;
     }
     case kAdd:
-        return f1 + y;
+        return val + y;
     case kSubtract:
-        return f1 - y;
+        return val - y;
     case kMultiply:
-        return f1 * y;
+        return val * y;
     case kDivide:
         if (y == 0) {
             y = 0.0001f;
         }
-        return f1 / y;
+        return val / y;
     case kVariance:
-        return RandomFloat(0, y * 2) - y + f1;
+        return RandomFloat(0, y * 2) - y + val;
     case kClampMin:
-        if (f1 >= y) {
-            return f1;
+        if (val >= y) {
+            return val;
         } else {
             return y;
         }
     case kInitValue:
         return y;
     case kClampMax:
-        if (f1 <= y) {
-            return f1;
+        if (val <= y) {
+            return val;
         } else {
             return y;
         }
     case kWrap:
         if (y <= 0) {
-            return f1;
+            return val;
         } else {
-            return fmod(f1, y);
+            return fmod(val, y);
         }
     case kRound: {
         if (y == 0) {
             y = 1;
         }
-        int num = (((y / 2) + f1) / y);
+        int num = (((y / 2) + val) / y);
         return (float)num * y;
     }
     case kRoundDown:
         if (y <= 0) {
             y = 1;
         }
-        return floorf(f1 / y) * y;
+        return floorf(val / y) * y;
     case kRoundUp:
         if (y <= 0) {
             y = 1;
         }
-        return ceilf(f1 / y) * y;
+        return ceilf(val / y) * y;
     case kRangeToDb: {
-        float clamped = Clamp(0.0f, y, f1);
+        float clamped = Clamp(0.0f, y, val);
         if (y != 0) {
             clamped = clamped / y;
         }
         return RatioToDb(clamped);
     }
     case kRangeToInverseDb: {
-        float clamped = Clamp(0.0f, y, f1);
+        float clamped = Clamp(0.0f, y, val);
         if (y != 0) {
             clamped = clamped / y;
         }
         return RatioToDb(1.0f - clamped);
     }
     case kAbsoluteValue:
-        return fabs(f1);
+        return fabs(val);
     case kSine:
-        return sin(f1);
+        return sin(val);
     case kCoSine:
-        return cos(f1);
+        return cos(val);
     case kPower:
-        return pow(f1, y);
+        return pow(val, y);
     case kCustom:
     script:
         if (mCustom.Type() == kDataSymbol) {
@@ -199,14 +201,14 @@ float FlowMathOp::Apply(float f1) {
             DataArray *mathOpArray = cfg->FindArray(mCustom.Sym(), false);
             if (mathOpArray) {
                 DataArray *scriptArr = mathOpArray->FindArray("script");
-                DataVariable("val") = f1;
+                DataVariable("val") = val;
                 DataVariable("prop_val") = y;
                 return scriptArr->Float(1);
             }
         }
-        return f1;
+        return val;
     default:
         MILO_NOTIFY_ONCE("Bad mathop operation value");
-        return f1;
+        return val;
     }
 }
