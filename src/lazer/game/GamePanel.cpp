@@ -57,7 +57,7 @@ static float sFloat1 = 0;
 static float sFloat2 = 0;
 
 float LatencyCallback::UpdateOverlay(RndOverlay *o, float f2) {
-    Hmx::Color color = unk4 ? Hmx::Color(1, 1, 1) : Hmx::Color(0, 0, 0);
+    Hmx::Color color = mWhite ? Hmx::Color(1, 1, 1) : Hmx::Color(0, 0, 0);
     TheRnd.DrawRectScreen(
         Hmx::Rect(0, 0.875f, 0.125f, 0.125f), color, nullptr, nullptr, nullptr
     );
@@ -70,9 +70,10 @@ float LatencyCallback::UpdateOverlay(RndOverlay *o, float f2) {
 #pragma region LoopVizCallback
 
 LoopVizCallback::LoopVizCallback()
-    : mDebugMeter1(0.1f, 0.12f, 0.8f, 0.03f, Hmx::Color(0.1f, 0.1f, 0.1f)),
-      mDebugMeter2(0.25f, 0.19f, 0.5f, 0.03f, Hmx::Color(0, 0, 0.8f)), unk44(0), unk48(0),
-      unk4c(0), unk50(0), unk54(0), unk58(0) {}
+    : mSongMeter(0.1f, 0.12f, 0.8f, 0.03f, Hmx::Color(0.1f, 0.1f, 0.1f)),
+      mLoopMeter(0.25f, 0.19f, 0.5f, 0.03f, Hmx::Color(0, 0, 0.8f)), mLoopStart(0),
+      mLoopEnd(0), mOldLoopStart(0), mOldLoopEnd(0), mHighlightLoopStart(0),
+      mHighlightLoopEnd(0) {}
 
 void LoopVizCallback::DrawHashMarks(
     float f1, float f2, float f3, int i4, int i5, bool b6
@@ -104,8 +105,8 @@ void LoopVizCallback::DrawHashMarks(
 
 float LoopVizCallback::UpdateOverlay(RndOverlay *o, float y) {
     if (TheMaster && TheMaster->GetAudio() && TheMaster->GetAudio()->GetSongStream()) {
-        unk54 -= TheTaskMgr.DeltaSeconds();
-        unk58 -= TheTaskMgr.DeltaSeconds();
+        mHighlightLoopStart -= TheTaskMgr.DeltaSeconds();
+        mHighlightLoopEnd -= TheTaskMgr.DeltaSeconds();
         TheRnd.DrawRectScreen(
             Hmx::Rect(0.05f, 0.1f, 0.9f, 0.2f),
             Hmx::Color(0, 0, 0, 0.6f),
@@ -115,13 +116,13 @@ float LoopVizCallback::UpdateOverlay(RndOverlay *o, float y) {
         );
         int i4c, i48;
         TheMaster->GetAudio()->GetCurrLoopBeats(i4c, i48);
-        if (i4c != unk44) {
-            unk54 = 3;
-            unk44 = i4c;
+        if (i4c != mLoopStart) {
+            mHighlightLoopStart = 3;
+            mLoopStart = i4c;
         }
-        if (i48 != unk48) {
-            unk58 = 3;
-            unk48 = i48;
+        if (i48 != mLoopEnd) {
+            mHighlightLoopEnd = 3;
+            mLoopEnd = i48;
         }
         float beat = MsToBeat(TheMaster->StreamMs());
         float f14 = (beat - (float)i4c) / (float)(i48 - i4c);
@@ -133,10 +134,10 @@ float LoopVizCallback::UpdateOverlay(RndOverlay *o, float y) {
         int eventBeat = TheMaster->EventBeat(end);
         float f16 = (float)i4c / (float)eventBeat;
         float f12 = (float)i48 / (float)eventBeat;
-        mDebugMeter1.Draw();
+        mSongMeter.Draw();
         Hmx::Color color(0.8f, 0.8f, 0.8f);
-        mDebugMeter1.DrawBar(f16, f12 - f16, color);
-        mDebugMeter1.DrawBar(f16, (f12 - f16) * f14, color);
+        mSongMeter.DrawBar(f16, f12 - f16, color);
+        mSongMeter.DrawBar(f16, (f12 - f16) * f14, color);
         // more...
         if (stream->IsPastStreamJumpPointOfNoReturn()) {
         }

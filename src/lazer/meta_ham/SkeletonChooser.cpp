@@ -459,15 +459,15 @@ void SkeletonChooser::SwitchActiveToPlayerIndexImmediate(int playerIndex) {
 }
 
 bool SkeletonChooser::ShouldWaitForRecovery() {
-    int id0 = TheGameData->Player(0)->GetSkeletonTrackingID();
-    int id1 = TheGameData->Player(1)->GetSkeletonTrackingID();
+    int tracking_id = TheGameData->Player(0)->GetSkeletonTrackingID();
+    int tracking_id_00 = TheGameData->Player(1)->GetSkeletonTrackingID();
     bool skel0 = true;
-    if (id0 > 0) {
-        skel0 = TheGestureMgr->GetSkeletonByTrackingID(id0);
+    if (tracking_id > 0) {
+        skel0 = TheGestureMgr->GetSkeletonByTrackingID(tracking_id);
     }
     bool skel1 = true;
-    if (id1 > 0) {
-        skel1 = TheGestureMgr->GetSkeletonByTrackingID(id1);
+    if (tracking_id_00 > 0) {
+        skel1 = TheGestureMgr->GetSkeletonByTrackingID(tracking_id_00);
     }
     if ((!skel0 || !skel1) && TheGestureMgr->GetSkeletonRecoverer().WaitingToRecover()) {
         return true;
@@ -1180,4 +1180,12 @@ void SkeletonChooser::DrawDebug() {
             TheRnd.DrawStringScreen(buf, vec2, textColor, true);
         }
     }
+}
+
+void SkeletonChooser::ChoosePlayerSides() {
+    unsigned int tracking_id_00 = TheGameData->Player(0)->GetSkeletonTrackingID();
+    unsigned int tracking_id = TheGameData->Player(1)->GetSkeletonTrackingID();
+    static Symbol ui_nav_mode("ui_nav_mode");
+    static Symbol game("game");
+    static Symbol sided_colors_locked("sided_colors_locked");
 }

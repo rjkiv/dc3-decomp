@@ -146,7 +146,7 @@ namespace ATG {
                 pOutputLockedParameters
             );
             if (SUCCEEDED(ret)) {
-                mWav = *pInputLockedParameters->pFormat;
+                m_wfx = *pInputLockedParameters->pFormat;
             }
             return ret;
         }
@@ -162,7 +162,7 @@ namespace ATG {
                 memset(
                     pInputProcessParameters->pBuffer,
                     0,
-                    pInputProcessParameters->ValidFrameCount * mWav.nChannels * 4
+                    pInputProcessParameters->ValidFrameCount * m_wfx.nChannels * 4
                 );
             } else if (pInputProcessParameters->BufferFlags != XAPO_BUFFER_VALID) {
                 EndProcess();
@@ -172,15 +172,17 @@ namespace ATG {
                 *params,
                 (float *)pInputProcessParameters->pBuffer,
                 pInputProcessParameters->ValidFrameCount,
-                mWav.nChannels
+                m_wfx.nChannels
             );
             EndProcess();
         }
 
     protected:
         CSampleXAPOBase()
-            : CXAPOParametersBase(&m_regProps, (BYTE *)mParams, sizeof(Params), false) {
-            XMemSet((VOID *)mParams, 0, sizeof(mParams));
+            : CXAPOParametersBase(
+                  &m_regProps, (BYTE *)m_parameters, sizeof(Params), false
+              ) {
+            XMemSet((VOID *)m_parameters, 0, sizeof(m_parameters));
         }
         virtual ~CSampleXAPOBase() {}
         virtual void OnSetParameters(const void *pParameters, UINT32 ParameterByteSize) {
@@ -190,9 +192,10 @@ namespace ATG {
         virtual void OnSetParameters(const Params &) {}
         virtual void
         DoProcess(const Params &, float *__restrict, unsigned int, unsigned int) = 0;
+        const WAVEFORMATEX &WaveFormat() { return m_wfx; }
 
-        Params mParams[3];
-        WAVEFORMATEX mWav;
+        Params m_parameters[3]; // 0x40
+        WAVEFORMATEX m_wfx; // 0x4c
     };
 
     template <class Effect, typename Params>

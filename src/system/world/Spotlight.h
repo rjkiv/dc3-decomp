@@ -129,6 +129,7 @@ public:
     bool GetCastShadow() const { return mCastShadow; }
     bool FlareEnabled() const { return mFlareEnabled; }
     void SetTargetExists(bool b) { mTargetExists = b; }
+    bool TargetExists() const { return mTargetExists; }
     void SetAnimatingFromPreset(bool b) { mAnimatingFromPreset = b; }
     RndTransformable *ResolveTarget();
     void SetFlareEnabled(bool);
@@ -147,6 +148,8 @@ public:
     static void RemoveFromLists(Spotlight *);
     static RndMesh *GetDiskMesh() { return sDiskMesh; }
     bool HasBeam() const { return 0 < mBeam.mLength; }
+    RndMesh *LightCan() { return mLightCanMesh; }
+    bool SortCan() const { return mLightCanSort; }
 
 protected:
     Spotlight();

@@ -289,47 +289,47 @@ void SkeletonIdentifier::Poll() {
 
 void SkeletonIdentifier::DrawDebug() {
     if (mDrawDebug) {
-        static Hmx::Color bgColor(0.2f, 0.2f, 0.2f, 0.7f);
-        static Hmx::Color textColor(1.0f, 1.0f, 1.0f, 1.0f);
-        static float sF1 = 0.03f;
-        static float sF2 = 0.1f;
-        static float sF3 = 0.8f;
-        static float sF4 = 0.7f;
-        static float sF5 = 0.25f;
+        static float sLeft = 0.1f;
+        static float sTop = 0.7f;
+        static float sRectWidth = 0.8f;
+        static float sRectHeight = 0.25f;
+        static Hmx::Color sRectColor(0.2f, 0.2f, 0.2f, 0.7f);
+        static float sSpaceY = 0.03f;
+        static Hmx::Color sTextColor(1.0f, 1.0f, 1.0f, 1.0f);
         Skeleton *activeSkel = TheGestureMgr->GetActiveSkeleton();
         TheRnd.DrawRectScreen(
-            Hmx::Rect(sF2, sF4 - 0.05f, sF3, sF5 + 0.05f),
-            bgColor,
+            Hmx::Rect(sLeft, sTop - 0.05f, sRectWidth, sRectHeight + 0.05f),
+            sRectColor,
             nullptr,
             nullptr,
             nullptr
         );
-        char buf[200];
+        char string[200];
         for (int i = 0; i < 7; i++) {
             switch (i) {
             case 0: {
                 if (activeSkel && activeSkel->IsTracked()) {
                     int enrollmentIdx = activeSkel->GetEnrollmentIndex();
                     sprintf_s(
-                        buf,
+                        string,
                         "Active skeleton tracked: %d %s",
                         mEnrolledPlayers[enrollmentIdx].mPadNum,
                         EnrollmentIndexString(enrollmentIdx)
                     );
                 } else {
-                    sprintf_s(buf, "Skeleton not tracked");
+                    sprintf_s(string, "Skeleton not tracked");
                 }
                 break;
             }
             case 1: {
                 int secondaryIndex = TheGestureMgr->GetSecondarySkeletonIndex(false);
                 if (secondaryIndex < 0) {
-                    sprintf_s(buf, "Skeleton not tracked");
+                    sprintf_s(string, "Skeleton not tracked");
                 } else {
                     int enrollmentIdx =
                         TheGestureMgr->GetSkeleton(secondaryIndex).GetEnrollmentIndex();
                     sprintf_s(
-                        buf,
+                        string,
                         "Other skeleton tracked: %d %s",
                         mEnrolledPlayers[enrollmentIdx].mPadNum,
                         EnrollmentIndexString(enrollmentIdx)
@@ -339,12 +339,12 @@ void SkeletonIdentifier::DrawDebug() {
             }
             case 2:
             case 5: {
-                buf[0] = 0;
+                string[0] = 0;
                 break;
             }
             case 3: {
                 sprintf_s(
-                    buf,
+                    string,
                     "Player 1: %d %s",
                     TheGameData->Player(0)->PadNum(),
                     TheGameData->Player(0)->Provider()->Property("player_name")->Str()
@@ -353,7 +353,7 @@ void SkeletonIdentifier::DrawDebug() {
             }
             case 4: {
                 sprintf_s(
-                    buf,
+                    string,
                     "Player 2: %d %s",
                     TheGameData->Player(1)->PadNum(),
                     TheGameData->Player(1)->Provider()->Property("player_name")->Str()
@@ -361,13 +361,15 @@ void SkeletonIdentifier::DrawDebug() {
                 break;
             }
             case 6: {
-                sprintf_s(buf, "Identity Status: %i", mIdentityStatus);
+                sprintf_s(string, "Identity Status: %i", mIdentityStatus);
                 break;
             }
             default:
                 break;
             }
-            TheRnd.DrawStringScreen(buf, Vector2(sF2, i * sF1 + sF4), textColor, true);
+            TheRnd.DrawStringScreen(
+                string, Vector2(sLeft, i * sSpaceY + sTop), sTextColor, true
+            );
         }
         for (int i = 0; i < 8; i++) {
             TheRnd.DrawStringScreen(
@@ -377,8 +379,8 @@ void SkeletonIdentifier::DrawDebug() {
                     mEnrolledPlayers[i].mPadNum,
                     mEnrolledPlayers[i].mPlayerName
                 ),
-                Vector2(0.3f, i * sF1 + 0.1f),
-                textColor,
+                Vector2(0.3f, i * sSpaceY + 0.1f),
+                sTextColor,
                 true
             );
         }
@@ -426,7 +428,7 @@ DataNode SkeletonIdentifier::OnMsg(const SkeletonIdentifiedMsg &msg) {
         int enrollmentIdx = msg.GetEnrollmentIndex();
         int skeletonIndex = msg.GetSkeletonIndex();
         MILO_ASSERT(skeletonIndex >=0 && skeletonIndex < NUM_SKELETONS, 0x9e);
-        if (mIdentityStatus == 1) {
+        if (mIdentityStatus == kIdentityStatus_Identifying) {
             bool b3 = false;
             if (enrollmentIdx != -2) {
                 if (enrollmentIdx == -1) {

@@ -91,9 +91,9 @@ void DingoJob::CleanUp(bool success) {
 }
 
 bool DingoJob::CheckReqResult() {
-    JsonConverter converter;
-    JsonObject *jObj = nullptr;
-    ParseResponse(&converter, &jObj, nullptr);
+    JsonConverter json;
+    JsonObject *response = nullptr;
+    ParseResponse(&json, &response, nullptr);
     if (mResult == -3) {
         bool authenticating = TheServer.IsAuthenticating();
         if (!authenticating) {
@@ -129,10 +129,13 @@ void DingoJob::StartImpl() {
 void DingoJob::AddContent(HttpReq *httpReq) {
     MILO_ASSERT(mDataPoint, 0xf1);
     MILO_ASSERT(httpReq, 0xf2);
-    String str1, str2;
-    mDataPoint->ToJSON(str1);
-    URLEncode(str1.c_str(), str2, false);
-    mParams = new char[str2.length()];
+    String unencoded_params;
+    String params;
+    mDataPoint->ToJSON(unencoded_params);
+    URLEncode(unencoded_params.c_str(), params, false);
+    mParams = new char[params.length()];
+
+    httpReq->SetContent(mParams);
 }
 
 void DingoJob::SetDataPoint(const DataPoint &point) {

@@ -1,6 +1,7 @@
 #include "world/SpotlightDrawer_NG.h"
 #include "macros.h"
 #include "math/Color.h"
+#include "math/Geo.h"
 #include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
@@ -9,6 +10,7 @@
 #include "os/Timer.h"
 #include "rnddx9/Rnd.h"
 #include "rnddx9/Tex.h"
+#include "rndobj/BaseMaterial.h"
 #include "rndobj/Draw.h"
 #include "rndobj/HiResScreen.h"
 #include "rndobj/RenderState.h"
@@ -16,6 +18,7 @@
 #include "rndobj/Rnd.h"
 #include "rndobj/Rnd_NG.h"
 #include "rndobj/ShaderMgr.h"
+#include "rndobj/ShaderOptions.h"
 #include "rndobj/Tex.h"
 #include "utl/Loader.h"
 #include "world/Dir.h"
@@ -346,4 +349,40 @@ bool NgSpotlightDrawer::CheckRTs(SpotlightResources *sr) {
         );
     }
     return true;
+}
+
+void NgSpotlightDrawer::BlurRT(float dx, float dy) {
+    float Width = RTWidth();
+    float Height = RTHeight();
+    Hmx::Rect blurRect(0, 0, Width, Height);
+    TheShaderMgr.SetNumTaps(5);
+    float weights[5] = { 0.1f, 0.25f, 0.3f, 0.25f, 0.1f };
+    float invw = 1 / Width;
+    float invh = 1 / Height;
+
+    for (int i = -2; i <= 2; i++) {
+        Vector4 fogVec(i * invw * dx, i * invh * dy, 1.0f, 1.0f);
+        TheShaderMgr.SetPConstant(
+            (PShaderConstant)(kPShader_BlurSampleOffsets + i + 2), fogVec
+        );
+        Vector4 weightVec(weights[i + 2], weights[i + 2], weights[i + 2], weights[i + 2]);
+        TheShaderMgr.SetPConstant(
+            (PShaderConstant)(kPShader_BlurSampleWeights + i + 2), weightVec
+        );
+    }
+
+    TheRenderState.SetTextureClamp(0, RndRenderState::kClamp);
+    TheRenderState.SetTextureFilter(0, RndRenderState::kLinear, false);
+
+    DxTex *rt = SR().mDepthRT;
+    TheDxRnd->SetRenderTarget(0, rt->GetRT());
+
+    RndMat *mat = TheShaderMgr.GetWork();
+    mat->SetDiffuseTex(SR().mDepthRT);
+    mat->SetZMode(BaseMaterial::kDisable);
+    mat->SetTexWrap(BaseMaterial::kClamp);
+    mat->SetBlend(BaseMaterial::kBlendSrc);
+    TheNgRnd.DrawRect(blurRect, mat, kBlurShader, Hmx::Color(), 0, 0);
+    TheDxRnd->Resolve(0, 0, rt->Tex(), 0, 0, 0, 0, 1.0f, 0, 0);
+    TheShaderMgr.SetNumTaps(1);
 }
