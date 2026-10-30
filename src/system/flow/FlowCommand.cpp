@@ -131,46 +131,46 @@ bool FlowCommand::Activate() {
 }
 
 DataNode FlowCommand::GetHandlerDef() {
-    if (mObject && !mHandler.Null()) {
-        DataArray *typeDef = mObject->TypeDef();
-        if (typeDef) {
-            if (typeDef->FindArray("flow_commands", false)) {
-                DataArray *cmds = typeDef->FindArray("flow_commands");
-                if (cmds->FindArray(mHandler, false)) {
-                    return cmds->FindArray(mHandler);
-                } else {
-                    for (int i = 1; i < cmds->Size(); i++) {
-                        if (cmds->Type(i) == kDataArray) {
-                            if (cmds->Array(i)->Sym(0) == mHandler) {
-                                return cmds->Array(i);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        std::vector<Symbol> superClasses;
-        superClasses.push_back(mObject->ClassName());
-        ListSuperClasses(mObject->ClassName(), superClasses);
-        for (int i = 0; i < superClasses.size(); i++) {
-            DataArray *cmds =
-                mObject->ObjectDef(superClasses[i])->FindArray("flow_commands", false);
-            if (cmds) {
-                DataArray *ret = cmds->FindArray(mHandler, false);
-                if (ret) {
-                    return ret;
-                }
-                for (int j = 1; j < cmds->Size(); j++) {
-                    if (cmds->Type(j) == kDataArray) {
-                        if (cmds->Array(j)->Sym(0) == mHandler) {
-                            return cmds->Array(j);
-                        }
-                    }
-                }
-            }
-        }
-        return 0;
-    } else {
+    if (!mObject || mHandler.Null()) {
         return 0;
     }
+
+    DataArray *typeDef = mObject->TypeDef();
+    if (typeDef) {
+        if (typeDef->FindArray("flow_commands", false)) {
+            DataArray *cmds = typeDef->FindArray("flow_commands");
+            if (cmds->FindArray(mHandler, false)) {
+                return cmds->FindArray(mHandler);
+            } else {
+                for (int i = 1; i < cmds->Size(); i++) {
+                    if (cmds->Type(i) == kDataArray) {
+                        if (cmds->Array(i)->Sym(0) == mHandler) {
+                            return cmds->Array(i);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    std::vector<Symbol> superClasses;
+    superClasses.push_back(mObject->ClassName());
+    ListSuperClasses(mObject->ClassName(), superClasses);
+    for (int i = 0; i < superClasses.size(); i++) {
+        DataArray *cmds =
+            mObject->ObjectDef(superClasses[i])->FindArray("flow_commands", false);
+        if (cmds) {
+            DataArray *ret = cmds->FindArray(mHandler, false);
+            if (ret) {
+                return ret;
+            }
+            for (int j = 1; j < cmds->Size(); j++) {
+                if (cmds->Type(j) == kDataArray) {
+                    if (cmds->Array(j)->Sym(0) == mHandler) {
+                        return cmds->Array(j);
+                    }
+                }
+            }
+        }
+    }
+    return 0;
 }
