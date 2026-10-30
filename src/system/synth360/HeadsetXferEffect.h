@@ -17,7 +17,7 @@ public:
     virtual ~HeadsetXferEffect() {}
     virtual void DoProcess(
         const HeadsetXferEffectParams &params,
-        float *pData,
+        float *__restrict pData,
         unsigned int cFrames,
         unsigned int cChannels
     );
