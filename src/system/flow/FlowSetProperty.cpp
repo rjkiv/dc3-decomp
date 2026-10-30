@@ -89,15 +89,16 @@ void PropertyTask::Poll(float f1) {
         ObjPtr<PropertyTask> task(this);
         task = this;
         SetProperty(mTargetValue);
-        if (task) {
-            if (mEventReciever) {
-                static Message msg("on_anim_event", Symbol("ended"));
-                Hmx::Object *obj = mEventReciever;
-                mEventReciever = nullptr;
-                obj->Handle(msg, false);
-            }
-            delete this;
+        if (!task) {
+            return;
         }
+        if (mEventReciever) {
+            static Message msg("on_anim_event", Symbol("ended"));
+            Hmx::Object *obj = mEventReciever;
+            mEventReciever = nullptr;
+            obj->Handle(msg, false);
+        }
+        delete this;
     } else {
         float res = pt2EaseFuncion(f1 / mTime, mEasePower, 1);
         if (mUseColorInterp) {
@@ -105,7 +106,7 @@ void PropertyTask::Poll(float f1) {
             c.UnpackRgb(mStartValue.Int());
             Hmx::Color c2;
             c2.UnpackRgb(mTargetValue.Int());
-            Add(c, c2, c);
+            Interp(c, c2, res, c);
             int packed = c.PackRgb();
             mTarget->SetProperty(mProp.Array(), packed);
         } else {

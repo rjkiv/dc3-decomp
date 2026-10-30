@@ -129,23 +129,24 @@ inline float EaseBounceOutIn(float t, float power, float) {
         return (EaseBounceIn(t * 2 - 1.0f, 0.0f, 0.0f) + 1.0f) / 2;
 }
 
-inline float EaseElasticIn(float t, float power, float f3) {
+inline float EaseElasticIn(float t, float amp, float period) {
     MILO_ASSERT(t >= 0 && t <= 1, 145);
     if (t > 0 && t < 1) {
-        if (f3 <= 0) {
-            f3 = 0.45f;
+        if (period <= 0) {
+            period = 0.45f;
         }
         float f7;
-        if (power < 1) {
-            f7 = f3 / 4;
-            power = 1;
+        // stupid bullshit way to spawn 1 as an int, converted to float
+        if (amp < abs(1)) {
+            f7 = period / 4;
+            amp = 1;
         } else {
-            f7 = (asinf(1.0f / power)) * f3 * 0.15915494f;
+            f7 = (asinf(1.0f / amp)) * period / (2 * PI);
         }
         float sub6 = t - 1;
         float powed = pow(2.0, sub6 * 10.0f);
-        float sined = FastSin(((sub6 - f7) / f3) * 2 * PI);
-        return -(sined * powed * f3);
+        float sined = FastSin(((sub6 - f7) / period) * 2 * PI);
+        return -(sined * powed * amp);
     } else {
         return t;
     }
@@ -323,8 +324,8 @@ inline float EaseStairstep(float t, float power, float f3) {
     }
     float tmp_f30 = t * f3;
     float tmp_f26 = floor(tmp_f30);
-    f3 = 1.0f / f3; // this is SUPPOSED to be here, but it's getting scheduled for later
-    return (EasePolyInOut(tmp_f30 - tmp_f26, power, 0.0f) + tmp_f26) * f3;
+    // good ole distributive property
+    return EasePolyInOut(tmp_f30 - tmp_f26, power, 0.0f) / f3 + tmp_f26 / f3;
 }
 
 inline float EaseThirdStairstep(float t, float power, float) {

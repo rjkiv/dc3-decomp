@@ -269,7 +269,7 @@
             "system/flow/FlowQueueable.cpp": "NonMatching",
             "system/flow/FlowRun.cpp": "Matching",
             "system/flow/FlowSequence.cpp": "Matching",
-            "system/flow/FlowSetProperty.cpp": "NonMatching",
+            "system/flow/FlowSetProperty.cpp": "Matching",
             "system/flow/FlowSlider.cpp": "NonMatching",
             "system/flow/FlowSound.cpp": "Matching",
             "system/flow/FlowSwitch.cpp": "Matching",
