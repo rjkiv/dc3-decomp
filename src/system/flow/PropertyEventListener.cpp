@@ -37,10 +37,16 @@ void PropertyEventListener::GenerateAutoNames(FlowNode *node, bool clear) {
     if (clear) {
         mAutoPropEntries.clear();
     }
-    FOREACH (it, node->GetDrivenProperties()) {
+    auto &props = node->GetDrivenProperties();
+    FOREACH (it, props) {
         FOREACH (op, it->mMathOps) {
-            AutoPropEntry entry(node);
-            mAutoPropEntries.push_back(entry);
+            Hmx::Object *prov = op->mPropertyProvider;
+            if (prov) {
+                AutoPropEntry entry(node);
+                entry.mProvider = prov;
+                entry.mPropPath = op->mPropertyPath.Array();
+                mAutoPropEntries.push_back(entry);
+            }
         }
     }
 }
