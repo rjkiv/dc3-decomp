@@ -242,7 +242,12 @@ public:
 
         T1 *operator*() { return mNode->Ptr(); }
 
-        iterator operator++(int);
+        iterator operator++(int) {
+            iterator tmp = *this;
+            ++*this;
+            return tmp;
+        }
+
         iterator operator++() {
             mNode++;
             return *this;

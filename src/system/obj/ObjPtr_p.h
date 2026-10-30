@@ -4,6 +4,7 @@
 #include "obj/Object.h"
 #include "utl/BinStream.h" /* IWYU pragma: keep */
 #include "os/Debug.h" /* IWYU pragma: keep */
+#include "utl/MemMgr.h"
 #include "utl/PoolAlloc.h"
 #include <cstddef> /* IWYU pragma: keep */
 
@@ -267,6 +268,37 @@ typename ObjPtrVec<T1, T2>::iterator ObjPtrVec<T1, T2>::FindRef(ObjRef *ref) {
         return static_cast<Node *>(ref);
     } else {
         return end();
+    }
+}
+
+template <class T1, class T2>
+template <typename Cmp>
+void ObjPtrVec<T1, T2>::sort(const Cmp &cmp) {
+    MemDoTempAllocations tmp;
+    std::vector<T1 *> items;
+    items.resize(size());
+    for (unsigned int i = 0; i < size(); i++) {
+        items[i] = mVec[i];
+    }
+    std::sort(items.begin(), items.end(), cmp);
+    for (unsigned int i = 0; i < size(); i++) {
+        mVec[i].SetObjConcrete(items[i]);
+    }
+}
+
+template <class T1, class T2>
+void ObjPtrVec<T1, T2>::unique() {
+    if (!empty()) {
+        auto it = begin();
+        T1 *obj = *it++;
+        while (it != end()) {
+            if (*it == obj) {
+                erase(it);
+            } else {
+                obj = *it;
+                ++it;
+            }
+        }
     }
 }
 

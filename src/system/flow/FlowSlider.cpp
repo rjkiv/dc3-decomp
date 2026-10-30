@@ -8,7 +8,11 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 
-bool SliderChildSort(FlowNode *, FlowNode *);
+bool SliderChildSort(FlowNode *n1, FlowNode *n2) {
+    FlowValueCase *v1 = (FlowValueCase *)n1;
+    FlowValueCase *v2 = (FlowValueCase *)n2;
+    return v1->GetValue() < v2->GetValue();
+}
 
 FlowSlider::FlowSlider()
     : PropertyEventListener(this), mPersistent(1), mAlwaysRun(0), mValue(0),
@@ -150,4 +154,21 @@ void FlowSlider::ReActivate() {
     }
     Symbol sym = MakeString("%s: %s->%s", ClassName(), flow->Dir()->Name(), flow->Name());
     TheFlowMgr->AddEventTime(sym, timer.Ms());
+}
+
+void FlowSlider::UpdateActivations() {
+    float old = FlowNode::sIntensity;
+    auto it = mChildNodes.begin();
+    auto it8 = mChildNodes.begin();
+    auto it6 = mChildNodes.begin();
+    for (; it != mChildNodes.end(); ++it) {
+        it6++;
+        FlowValueCase *cur = static_cast<FlowValueCase *>(*it);
+
+        // yeah idk man
+        if (it6 != mChildNodes.end()) {
+        } else {
+        }
+    }
+    sIntensity = old;
 }
