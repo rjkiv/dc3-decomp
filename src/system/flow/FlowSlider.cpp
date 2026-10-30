@@ -156,19 +156,19 @@ void FlowSlider::ReActivate() {
     TheFlowMgr->AddEventTime(sym, timer.Ms());
 }
 
-void FlowSlider::UpdateActivations() {
-    float old = FlowNode::sIntensity;
-    auto it = mChildNodes.begin();
-    auto it8 = mChildNodes.begin();
-    auto it6 = mChildNodes.begin();
-    for (; it != mChildNodes.end(); ++it) {
-        it6++;
-        FlowValueCase *cur = static_cast<FlowValueCase *>(*it);
+// void FlowSlider::UpdateActivations() {
+//     float old = FlowNode::sIntensity;
+//     auto it = mChildNodes.begin();
+//     auto it8 = mChildNodes.begin();
+//     auto it6 = mChildNodes.begin();
+//     for (; it != mChildNodes.end(); ++it) {
+//         it6++;
+//         FlowValueCase *cur = static_cast<FlowValueCase *>(*it);
 
-        // yeah idk man
-        if (it6 != mChildNodes.end()) {
-        } else {
-        }
-    }
-    sIntensity = old;
-}
+//         // yeah idk man
+//         if (it6 != mChildNodes.end()) {
+//         } else {
+//         }
+//     }
+//     sIntensity = old;
+// }
