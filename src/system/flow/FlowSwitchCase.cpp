@@ -195,74 +195,62 @@ void FlowSwitchCase::UseLastValueChanged() {
     }
 }
 
+// should call the DataNode operator> overload, but it's used elsewhere
+FORCEINLINE bool GTHack(const DataNode &n1, const DataNode &n2) {
+    if ((n1.Type() == kDataInt || n1.Type() == kDataFloat)
+        && (n2.Type() == kDataInt || n2.Type() == kDataFloat)) {
+        return n1.LiteralFloat() > n2.LiteralFloat();
+    }
+    return false;
+}
+
 bool FlowSwitchCase::IsValidCase(
-    FlowNode *flownode, DataNode *n1, const DataNode *n2, bool b4
+    FlowNode *parent, DataNode *lhs, const DataNode *lastValue, bool trans
 ) {
+    bool ret;
     PushDrivenProperties();
     if (mOperator == kTransition) {
         if (mUseLastValue) {
-            mFromValue = *n2;
+            mFromValue = *lastValue;
         }
-        if (n1->Type() != mFromValue.Node().Type()
-            || n2->Type() != mToValue.Node().Type()) {
+        if (lhs->Type() != mToValue.Node().Type()
+            || lhs->Type() != mFromValue.Node().Type()) {
             return false;
-        } else if (
-            n1->Equal(mFromValue.Node(), nullptr, true)
-            && n2->Equal(mToValue.Node(), nullptr, true)
-        ) {
-            return true;
         } else {
-            return false;
+            ret = *lhs == mToValue.Node() && *lastValue == mFromValue.Node();
         }
     } else {
         if (mUseLastValue) {
-            mToValue = *n2;
+            mToValue = *lastValue;
         }
         switch (mOperator) {
         case kEquals: {
-            return n1->Equal(mToValue.Node(), nullptr, true);
+            ret = *lhs == mToValue.Node();
+            break;
         }
         case kNotEquals: {
-            return *n1 != mToValue.Node();
+            ret = *lhs != mToValue.Node();
+            break;
         }
         case kGreaterThan: {
-            DataNode to = mToValue.Node();
-            if ((n1->Type() == kDataInt || n1->Type() == kDataFloat)
-                && (to.Type() == kDataInt || to.Type() == kDataFloat)) {
-                return n1->LiteralFloat() > to.LiteralFloat();
-            } else {
-                return false;
-            }
+            ret = GTHack(*lhs, mToValue.Node());
+            break;
         }
         case kGreaterThanOrEquals: {
-            DataNode to = mToValue.Node();
-            if ((n1->Type() == kDataInt || n1->Type() == kDataFloat)
-                && (to.Type() == kDataInt || to.Type() == kDataFloat)) {
-                return n1->LiteralFloat() >= to.LiteralFloat();
-            } else {
-                return false;
-            }
+            ret = *lhs >= mToValue.Node();
+            break;
         }
         case kLessThan: {
-            DataNode to = mToValue.Node();
-            if ((n1->Type() == kDataInt || n1->Type() == kDataFloat)
-                && (to.Type() == kDataInt || to.Type() == kDataFloat)) {
-                return n1->LiteralFloat() < to.LiteralFloat();
-            } else {
-                return false;
-            }
+            ret = *lhs < mToValue.Node();
+            break;
         }
         case kLessThanOrEquals: {
-            DataNode to = mToValue.Node();
-            if ((n1->Type() == kDataInt || n1->Type() == kDataFloat)
-                && (to.Type() == kDataInt || to.Type() == kDataFloat)) {
-                return n1->LiteralFloat() <= to.LiteralFloat();
-            } else {
-                return false;
-            }
+            ret = *lhs <= mToValue.Node();
+            break;
         }
         default:
             return false;
         }
     }
+    return ret;
 }

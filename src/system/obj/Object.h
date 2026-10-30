@@ -517,7 +517,7 @@ public:
             return mNode;
     }
 
-    // operator DataNode() const;
+    operator DataNode() const { return mNode; }
 
     DataNodeObjTrack &operator=(const DataNode &node) {
         mNode = node.Evaluate();

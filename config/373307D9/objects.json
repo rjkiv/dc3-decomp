@@ -273,7 +273,7 @@
             "system/flow/FlowSlider.cpp": "NonMatching",
             "system/flow/FlowSound.cpp": "Matching",
             "system/flow/FlowSwitch.cpp": "Matching",
-            "system/flow/FlowSwitchCase.cpp": "NonMatching",
+            "system/flow/FlowSwitchCase.cpp": "Matching",
             "system/flow/FlowTimer.cpp": "NonMatching",
             "system/flow/FlowTrigger.cpp": "NonMatching",
             "system/flow/FlowValueCase.cpp": "Matching",

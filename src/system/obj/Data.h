@@ -250,9 +250,32 @@ public:
         return dynamic_cast<T *>(GetObj(source));
     }
 
-    bool Equal(const DataNode &, DataArray *, bool) const;
+    bool
+    Equal(const DataNode &rhs, DataArray *source = nullptr, bool notify = true) const;
+    bool operator==(const DataNode &n) const { return Equal(n); }
     bool operator!=(const DataNode &n) const;
-    bool operator>(const DataNode &) const;
+    bool operator>(const DataNode &n) const;
+    FORCEINLINE bool operator>=(const DataNode &n) const {
+        if ((Type() == kDataInt || Type() == kDataFloat)
+            && (n.Type() == kDataInt || n.Type() == kDataFloat)) {
+            return LiteralFloat() >= n.LiteralFloat();
+        }
+        return false;
+    }
+    FORCEINLINE bool operator<(const DataNode &n) const {
+        if ((Type() == kDataInt || Type() == kDataFloat)
+            && (n.Type() == kDataInt || n.Type() == kDataFloat)) {
+            return LiteralFloat() < n.LiteralFloat();
+        }
+        return false;
+    }
+    FORCEINLINE bool operator<=(const DataNode &n) const {
+        if ((Type() == kDataInt || Type() == kDataFloat)
+            && (n.Type() == kDataInt || n.Type() == kDataFloat)) {
+            return LiteralFloat() <= n.LiteralFloat();
+        }
+        return false;
+    }
     bool NotNull() const;
     bool operator!() const { return !NotNull(); }
     DataNode &operator=(const DataNode &n);
