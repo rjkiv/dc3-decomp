@@ -96,6 +96,15 @@ BEGIN_LOADS(FlowIf)
     }
 END_LOADS
 
+// should call the DataNode operator> overload, but it's used elsewhere
+FORCEINLINE bool GTHack(const DataNode &n1, const DataNode &n2) {
+    if ((n1.Type() == kDataInt || n1.Type() == kDataFloat)
+        && (n2.Type() == kDataInt || n2.Type() == kDataFloat)) {
+        return n1.LiteralFloat() > n2.LiteralFloat();
+    }
+    return false;
+}
+
 bool FlowIf::Activate() {
     FLOW_LOG("Activate\n");
     mRequestingStop = false;
@@ -110,57 +119,25 @@ bool FlowIf::Activate() {
     bool activate = false;
     switch (mOperator) {
     case FlowSwitchCase::kEquals:
-        activate = mFirstValue.Node().Equal(mSecondValue.Node(), nullptr, true);
+        activate = mFirstValue.Node() == mSecondValue.Node();
         break;
     case FlowSwitchCase::kNotEquals:
         activate = mFirstValue.Node() != mSecondValue.Node();
         break;
     case FlowSwitchCase::kGreaterThan: {
-        DataNode n1 = mFirstValue.Node();
-        DataNode n2 = mSecondValue.Node();
-        if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {
-            activate = false;
-        } else if (n2.Type() != kDataInt && n2.Type() != kDataFloat) {
-            activate = false;
-        } else {
-            activate = n1.LiteralFloat() > n2.LiteralFloat();
-        }
+        activate = GTHack(mFirstValue.Node(), mSecondValue.Node());
         break;
     }
     case FlowSwitchCase::kGreaterThanOrEquals: {
-        DataNode n1 = mFirstValue.Node();
-        DataNode n2 = mSecondValue.Node();
-        if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {
-            activate = false;
-        } else if (n2.Type() != kDataInt && n2.Type() != kDataFloat) {
-            activate = false;
-        } else {
-            activate = n1.LiteralFloat() >= n2.LiteralFloat();
-        }
+        activate = mFirstValue.Node() >= mSecondValue.Node();
         break;
     }
     case FlowSwitchCase::kLessThan: {
-        DataNode n1 = mFirstValue.Node();
-        DataNode n2 = mSecondValue.Node();
-        if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {
-            activate = false;
-        } else if (n2.Type() != kDataInt && n2.Type() != kDataFloat) {
-            activate = false;
-        } else {
-            activate = n1.LiteralFloat() < n2.LiteralFloat();
-        }
+        activate = mFirstValue.Node() < mSecondValue.Node();
         break;
     }
     case FlowSwitchCase::kLessThanOrEquals: {
-        DataNode n1 = mFirstValue.Node();
-        DataNode n2 = mSecondValue.Node();
-        if (n1.Type() != kDataInt && n1.Type() != kDataFloat) {
-            activate = false;
-        } else if (n2.Type() != kDataInt && n2.Type() != kDataFloat) {
-            activate = false;
-        } else {
-            activate = n1.LiteralFloat() <= n2.LiteralFloat();
-        }
+        activate = mFirstValue.Node() <= mSecondValue.Node();
         break;
     }
     default:

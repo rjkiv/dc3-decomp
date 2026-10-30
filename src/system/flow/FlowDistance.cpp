@@ -3,6 +3,7 @@
 #include "flow/FlowManager.h"
 #include "flow/FlowNode.h"
 #include "math/Vec.h"
+#include "math/Vec.inl"
 #include "obj/Object.h"
 #include "utl/BinStream.h"
 
@@ -120,6 +121,43 @@ void FlowDistance::RequestStop() {
 void FlowDistance::RequestStopCancel() {
     FLOW_LOG("RequestStopCancel\n");
     FlowNode::RequestStopCancel();
+}
+
+void FlowDistance::Execute(QueueState state) {
+    bool start = false;
+    bool stop = false;
+    float dist = Distance(mOne->WorldXfm().v, mTwo->WorldXfm().v);
+    if (mDriveIntensity && mRunInRange) {
+        float old = mIntensity;
+        mIntensity = Clamp(0.0f, 1.0f, 1 - dist / mDistance);
+        if (mIntensity != old) {
+            UpdateIntensity();
+        }
+    }
+    if (mInRange) {
+        if (dist > mDistance) {
+            mInRange = false;
+            if (mRunInRange) {
+                stop = true;
+            } else {
+                start = true;
+            }
+        }
+    } else {
+        if (dist <= mDistance) {
+            mInRange = true;
+            if (mRunInRange) {
+                start = true;
+            } else {
+                stop = true;
+            }
+        }
+    }
+    if (stop) {
+        FlowNode::RequestStop();
+    } else if (start) {
+        FlowNode::Activate();
+    }
 }
 
 bool FlowDistance::IsRunning() {
