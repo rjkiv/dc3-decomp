@@ -275,7 +275,7 @@
             "system/flow/FlowSwitch.cpp": "Matching",
             "system/flow/FlowSwitchCase.cpp": "Matching",
             "system/flow/FlowTimer.cpp": "NonMatching",
-            "system/flow/FlowTrigger.cpp": "NonMatching",
+            "system/flow/FlowTrigger.cpp": "Matching",
             "system/flow/FlowValueCase.cpp": "Matching",
             "system/flow/FlowWhile.cpp": "Matching",
             "system/flow/PropertyEventListener.cpp": "Matching",
