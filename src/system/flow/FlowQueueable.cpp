@@ -72,16 +72,16 @@ void FlowQueueable::ChildFinished(FlowNode *n) {
                 }
             } else if (mListeners.size() > 1) {
                 Hmx::Object *obj = mListeners.front();
+                auto first = mListeners.begin();
                 bool found = false;
-                for (auto it = NextItr(mListeners.begin(), 1); it != mListeners.end();
-                     ++it) {
+                for (auto it = NextItr(first, 1); it != mListeners.end(); ++it) {
                     if (*it == obj) {
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    ReleaseListener(mListeners.front());
+                    ReleaseListener(*first);
                 }
                 mListeners.pop_front();
                 ActivateTrigger();
