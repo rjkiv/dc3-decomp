@@ -851,7 +851,7 @@
             "system/world/ColorPalette.cpp": "Matching",
             "system/world/Crowd.cpp": "NonMatching",
             "system/world/Crowd3DCharHandle.cpp": "Matching",
-            "system/world/DefaultPhysicsManager.cpp": "NonMatching",
+            "system/world/DefaultPhysicsManager.cpp": "Matching",
             "system/world/Dir.cpp": "Matching",
             "system/world/FreeCamera.cpp": "Matching",
             "system/world/Instance.cpp": "NonMatching",
