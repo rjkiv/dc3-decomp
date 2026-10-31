@@ -6,14 +6,71 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "rndobj/Dir.h"
-#include "rndobj/Mesh.h"
 #include "utl/MemMgr.h"
-#include "world/PhysicsVolume.h"
 
-struct RayCast;
-class RayCastListener;
-class DetectionVolumeListener;
-class ContactStateListener;
+enum CollisionFilter {
+    COL_FILTER_ALL = 0,
+    COL_FILTER_FIXED = 1,
+    COL_FILTER_FIXED_DETECTABLE = 2,
+    COL_FILTER_KEYFRAMED = 3,
+    COL_FILTER_DYNAMIC = 4,
+    COL_FILTER_DYNAMIC_FAST = 5,
+    COL_FILTER_DYNAMIC_ALL = 6,
+    COL_FILTER_PHYSICS_VOLUME_ALL = 7,
+    COL_FILTER_PHYSICS_VOLUME_F = 8,
+    COL_FILTER_PHYSICS_VOLUME_D = 9,
+    COL_FILTER_PHYSICS_VOLUME_K = 10,
+    COL_FILTER_PHYSICS_VOLUME_DK = 11,
+    COL_FILTER_PHYSICS_VOLUME_DF = 12,
+    COL_FILTER_PHYSICS_VOLUME_KF = 13,
+    COL_FILTER_PLAYER = 14,
+    COL_FILTER_PLAYER_CAST = 15,
+    COL_FILTER_VOLUME_DETECTABLE = 16,
+    COL_FILTER_LIGHTNING_CAST = 17,
+    COL_FILTER_RAYCAST_GROUND = 18
+};
+
+enum PhysMotionState {
+    /** "Things can collide with me, but I don't move." */
+    Motion_Fixed = 0,
+    /** "Things can collide with me, and I can be moved by animations." */
+    Motion_Keyframed = 1,
+    /** "My motion is fully derived from the physics engine" */
+    Motion_Dynamic = 2,
+    Motion_Initial = 3
+};
+
+enum PhysicsVolumeType {
+    kPhysicsVolumeBox = 0,
+    kPhysicsVolumeSphere = 1
+};
+
+class RayCastListener {
+public:
+    virtual ~RayCastListener();
+    virtual void Reset();
+    virtual float operator()(Hmx::Object *, ObjectDir *, const Vector3 &, float) = 0;
+};
+
+class RayCastClosest : public RayCastListener {
+public:
+    virtual void Reset();
+    virtual float operator()(Hmx::Object *, ObjectDir *, const Vector3 &, float);
+
+    Hmx::Object *mHitObj; // 0x4
+    ObjectDir *mHitObjParentProxy; // 0x8
+    Vector3 mHitNormal; // 0xC
+    float mHitFraction; // 0x1C
+};
+
+class RayCastAny : public RayCastListener {
+public:
+    virtual void Reset();
+    virtual float operator()(Hmx::Object *, ObjectDir *, const Vector3 &, float);
+
+    bool mHit; // 0x4
+    Hmx::Object *mHitObj; // 0x8
+};
 
 class RayCastContainer {
 public:
@@ -25,14 +82,46 @@ public:
     MEM_OVERLOAD(RayCastContainer, 0xB8);
 };
 
-enum PhysMotionState {
-    /** "Things can collide with me, but I don't move." */
-    kPhysMotion_Fixed = 0,
-    /** "Things can collide with me, and I can be moved by animations." */
-    kPhysMotion_Keyframed = 1,
-    /** "My motion is fully derived from the physics engine" */
-    kPhysMotion_Dynamic = 2,
-    kPhysMotion_Initial = 3
+struct RayCast {
+    Segment line; // 0x0
+    unsigned int filter; // 0x20
+    RayCastListener *colCallback; // 0x24
+};
+
+class DetectionVolumeListener {
+public:
+    virtual ~DetectionVolumeListener() {}
+    virtual void OnCollidableEnter(Hmx::Object *obj, ObjectDir *objOwnerDir) = 0;
+    virtual void OnCollidableExit(Hmx::Object *obj, ObjectDir *objOwnerDir) = 0;
+};
+
+class DetectionVolume : public Hmx::Object {
+public:
+    virtual ~DetectionVolume() {}
+    virtual void SetActiveState(bool active) = 0;
+    virtual bool GetActiveState() const = 0;
+    virtual void Reset(const Transform &trans) = 0; // 0x60
+    virtual void ApplyRadialForce(float force) {} // 0x64
+    virtual void ApplyTangentialForce(Vector3 force) {} // 0x68
+    virtual void ApplyDirectionalForce(const Vector3 &force) {} // 0x6c
+    virtual void ApplyRadialImpulse(float force) {} // 0x70
+    virtual void ApplyDirectionalImpulse(const Vector3 &force) {} // 0x74
+    virtual void ApplyDirectionalLinearVelocity(const Vector3 &force) {} // 0x78
+    virtual void SetCollisionFilter(CollisionFilter filter) {} // 0x7c
+    virtual void GetOverlaps(std::list<std::pair<Hmx::Object *, ObjectDir *> > &penObjs) {
+    } // 0x80
+
+protected:
+    DetectionVolumeListener *mListener; // 0x2c
+};
+
+class ContactStateListener {
+public:
+    virtual ~ContactStateListener();
+    virtual void ContactStart(Hmx::Object *) = 0;
+    virtual void ContactStop(Hmx::Object *) = 0;
+    virtual void ContactEvent(Vector4, Hmx::Object *) = 0;
+    virtual Hmx::Object *GetHmxObject() = 0;
 };
 
 class PhysicsManager : public Hmx::Object {
@@ -84,7 +173,7 @@ public:
     virtual void MakeFixed(Hmx::Object *target) {} // 0x88
     virtual void ResetMotionState(Hmx::Object *target) {} // 0x8c
     virtual PhysMotionState GetMotionState(Hmx::Object *target) {
-        return kPhysMotion_Fixed;
+        return Motion_Fixed;
     } // 0x90
     virtual void SetMotionState(Hmx::Object *target, PhysMotionState state) {} // 0x94
     virtual void ResetMotionType(Hmx::Object *target) {} // 0x98

@@ -34,7 +34,9 @@ private:
 class RayCastDefaultContainer : public RayCastContainer {
 public:
     RayCastDefaultContainer(
-        const Box &, std::list<RndMesh *>, std::map<Hmx::Object *, ObjectDir *> &
+        const Box &b,
+        std::list<RndMesh *> activeObjs,
+        std::map<Hmx::Object *, ObjectDir *> &objMap
     );
     virtual ~RayCastDefaultContainer() {}
     virtual Hmx::Object *FindNearest(const Segment &, float &, Vector3 &, Hmx::Object *&);

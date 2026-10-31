@@ -19,6 +19,8 @@ namespace {
     Box gPhysicsVolumeBox(Vector3(-0.5f, -0.5f, -0.5f), Vector3(0.5f, 0.5f, 0.5f));
 }
 
+bool PhysicsVolume::sShowing = false;
+
 PhysicsVolume::PhysicsVolume()
     : mVolume(nullptr), mShapeType(kPhysicsVolumeBox), mOverlapping(0),
       mDirectionalForce(Vector3::GetZero()), mTangentialForce(Vector3::GetZero()),
@@ -260,8 +262,9 @@ void PhysicsVolume::CreatePhysicsVolume(PhysicsManager *mgr) {
         s.radius = Length(v);
         s.center = WorldXfm().v;
         SetSphere(s);
-        mVolume =
-            mgr->MakeDetectionVolume(this, WorldXfm(), mShapeType, mCollisionFilter);
+        mVolume = mgr->MakeDetectionVolume(
+            this, WorldXfm(), (PhysicsVolumeType)mShapeType, mCollisionFilter
+        );
         SetActiveState(mActive);
     }
 }

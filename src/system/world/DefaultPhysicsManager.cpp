@@ -71,9 +71,12 @@ DefaultPhysicsManager::DefaultPhysicsManager(RndDir *d)
     : PhysicsManager(d), mCollidableRefs(this, kObjListOwnerControl) {}
 
 bool DefaultPhysicsManager::Replace(ObjRef *from, Hmx::Object *to) {
-    if (from->Parent() != &mCollidableRefs) {
+    ObjRef *ref = from->Parent() == &mCollidableRefs ? from : nullptr;
+    if (ref) {
         Hmx::Object *obj = from->GetObj();
-        mCollidableRefs.remove(obj);
+        mCollidableRefs.erase(
+            *reinterpret_cast<ObjPtrList<Hmx::Object>::iterator *>(&ref)
+        );
         RemoveCollidable(obj);
         return true;
     } else {
