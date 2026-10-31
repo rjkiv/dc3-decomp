@@ -78,12 +78,12 @@ public:
     void UpdateBoxMap();
     void ApplyLightingApprox(BoxMapLighting &, float) const;
 
-    const SpotDrawParams &Params() const { return mParams; }
-
     static SpotlightDrawer *Current() { return sCurrent; }
     static bool DrawNGSpotlights();
     static void DrawLight(Spotlight *);
     static void RemoveFromLists(Spotlight *);
+
+    SpotDrawParams &Params() { return mParams; }
 
 protected:
     // RndDrawable
@@ -102,6 +102,8 @@ protected:
     virtual void ClearPostProc() {}
 
     SpotlightDrawer();
+
+    const SpotDrawParams &Params() const { return mParams; }
 
     static SpotlightDrawer *sCurrent;
     static SpotlightDrawer *sDefault;

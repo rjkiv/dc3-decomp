@@ -172,6 +172,7 @@ public:
     void OnKeyframeCmd(KeyframeCmd cmd);
     void ResetEvents();
     void SetFrameEx(float frame, float blend, bool same);
+    void TranslateColor(const Hmx::Color &col, Hmx::Color &res);
 
     void SetHue(LightHue *hue) { mHue = hue; }
     Symbol GetCategory() const { return mCategory; }
@@ -208,6 +209,9 @@ protected:
     );
     void AnimateSpotFromPreset(
         Spotlight *spot, const LightPreset::SpotlightEntry &entry, float blend
+    );
+    void AnimateSpotlightDrawerFromPreset(
+        SpotlightDrawer *sd, const LightPreset::SpotlightDrawerEntry &entry, float blend
     );
     void ApplyState(LightPreset::Keyframe const &frame);
     void SetKeyframe(Keyframe &frame);

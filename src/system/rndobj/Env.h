@@ -55,6 +55,7 @@ public:
 
     const Transform &ColorXfm() const;
     bool FogEnable() const;
+    void SetFogEnable(bool b) { mAmbientFogOwner->mFogEnable = b; }
     Transform LRFadeRef() const;
     void RemoveLight(RndLight *l);
     void AddLight(RndLight *l);
@@ -72,6 +73,7 @@ public:
     float FadeEnd() const { return mFadeEnd; }
     bool GetAnimateFromPreset() const { return mAnimateFromPreset; }
     const Hmx::Color &FogColor() const { return mAmbientFogOwner->mFogColor; }
+    void SetFogColor(const Hmx::Color &c) { mAmbientFogOwner->mFogColor = c; }
     float GetFogStart() const { return mAmbientFogOwner->mFogStart; }
     float GetFogEnd() const { return mAmbientFogOwner->mFogEnd; }
     void SetFogRange(float start, float end) {
