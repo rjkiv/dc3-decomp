@@ -21,10 +21,12 @@ void EventTask::Poll(float f1) {
     if (!mOwner) {
         MILO_NOTIFY("EventTask::Poll NULL mOwner");
     } else {
-        for (; mItr != mCases->end()
-             && f1 >= static_cast<FlowValueCase *>((FlowNode *)*mItr)->GetValue();
-             ++mItr) {
-            mOwner->OnKeyframe(*mItr);
+        for (; mItr != mCases->end(); ++mItr) {
+            FlowValueCase *cur = static_cast<FlowValueCase *>(*mItr);
+            if (f1 < cur->GetValue()) {
+                break;
+            }
+            mOwner->OnKeyframe(cur);
         }
         if (f1 >= mTime) {
             mOwner->OnTimerEnd();

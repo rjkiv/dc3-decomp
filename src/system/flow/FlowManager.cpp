@@ -56,8 +56,12 @@ void FlowManager::AddEventTime(Symbol s, float f1) {
 }
 
 void FlowManager::Poll() {
+    int numNodes = mNodeList.size();
     float f17 = 0;
+    float oldTaskTime = mTaskTime;
     mTaskTime = 0;
+    float release = mReleaseTime;
+
     Timer timer;
     timer.Reset();
     timer.Start();
@@ -74,8 +78,10 @@ void FlowManager::Poll() {
     }
     mInPoll = false;
     timer.Stop();
+
+    float f0 = mTaskTime + oldTaskTime;
     mEditUpdate = false;
-    float timerMs = timer.Ms();
+    float timerMs = timer.Ms() - mTaskTime;
     Symbol s114 = 0;
     Symbol s11c = 0;
     float f18 = -1;
@@ -112,7 +118,7 @@ void FlowManager::Poll() {
             }
         }
         if (mOverlay->Showing()) {
-            MILO_LOG(
+            *mOverlay << MakeString(
                 "Worst:   FlowTime: %s  %.3f    TaskTime: %s  %.3f\n",
                 s114.Str(),
                 f18,
@@ -121,21 +127,25 @@ void FlowManager::Poll() {
             );
         }
     }
-    f17 = (timerMs + f17) + mReleaseTime;
+    float totalEventMs = (timerMs + f17) + mReleaseTime;
     if (mOverlay->Showing()) {
-        MILO_LOG(
+        *mOverlay << MakeString(
             "Events: %.3f ms  %i Commands in %.3f ms  Release: %.3f ms  Tasks: %.3f ms\n",
             f17,
-            (int)mNodeList.size()
+            numNodes,
+            timerMs,
+            release,
+            f0
         );
     }
-    mAverages[mFrameIdx] = f17;
+    mAverages[mFrameIdx] = totalEventMs;
     mFrameIdx++;
-    if (f17 > mWorstFrame) {
-        mWorstFrame = f17;
-        DataArrayPtr ptr(s114, f18, s11c, f19, f17);
+    if (totalEventMs > mWorstFrame) {
+        mWorstFrame = totalEventMs;
+        DataArrayPtr ptr(s114, f18, s11c, f19, totalEventMs);
         mPeakFrameData = ptr;
     }
+    float peak = mWorstFrame;
     if (mFrameIdx >= 60) {
         mCurAverage = 0;
         for (int i = 0; i < 60; i++) {
@@ -143,6 +153,7 @@ void FlowManager::Poll() {
         }
         mWorstFrame = 0;
         mFrameIdx = 0;
+        mCurAverage /= 60;
         if (mPeakFrameData.Type() == kDataArray) {
             DataArray *a = mPeakFrameData.Array();
             if (a->Float(1) > 0 && mPeakOverlay->Showing()) {
@@ -155,12 +166,15 @@ void FlowManager::Poll() {
     }
     if (mOverlay->Showing()) {
         *mOverlay << MakeString(
-            "Average: %.3f ms   Peak: %.3f ms    Frame: %.3f ms\n", mCurAverage, 0, f17
+            "Average: %.3f ms   Peak: %.3f ms    Frame: %.3f ms\n",
+            mCurAverage,
+            peak,
+            totalEventMs
         );
     }
     Timer *t = AutoTimer::GetTimer("flow");
     if (t) {
-        t->SetLastMs(f17);
+        t->SetLastMs(totalEventMs);
     }
     mEventTimes.clear();
     mReleaseTime = 0;
