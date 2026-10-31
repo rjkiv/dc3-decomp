@@ -937,7 +937,6 @@ void LightPreset::SetFrameEx(float frame, float blend, bool same) {
         return;
     } else {
         Keyframe *kf7 = nullptr;
-        float a = 1;
         float f74 = 1.0f;
         Keyframe *kf5;
         if (mManual) {
@@ -972,8 +971,7 @@ void LightPreset::SetFrameEx(float frame, float blend, bool same) {
 
         } else {
             int i78, i7c;
-            GetKey(frame, i78, i7c, a);
-            f74 = a;
+            GetKey(frame, i78, i7c, f74);
             kf5 = &mKeyframes[i7c];
             if (i78 != -1) {
                 kf7 = &mKeyframes[i78];

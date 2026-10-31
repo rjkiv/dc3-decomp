@@ -147,7 +147,7 @@ protected:
     ObjPtr<RndTransformable> mFocus; // 0xb8
     /** "Force character Level of Detail.
         -1 means no LOD is forced." */
-    LODType mCharForceLod; // 0xcc
+    int mCharForceLod; // 0xcc
     /**  Assign a seed to generate random colors in the crowd using .pal*/
     int mRandomColorSeed; // 0xd0
     int mModifyStamp; // 0xd4

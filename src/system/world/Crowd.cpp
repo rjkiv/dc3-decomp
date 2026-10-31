@@ -690,7 +690,7 @@ void WorldCrowd::Draw3DChars() {
                         curChar->SetSpotCutout(false);
                     }
                     if (mCharForceLod != -1) {
-                        curChar->SetLodType(mCharForceLod);
+                        curChar->SetLodType((LODType)mCharForceLod);
                     }
                     curChar->Draw();
                     if (mCharForceLod != -1) {
