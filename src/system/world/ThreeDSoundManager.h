@@ -8,14 +8,17 @@
 class WorldDir;
 
 class ThreeDSoundManager {
-    friend class WorldDir;
-
 public:
     ThreeDSoundManager(WorldDir *);
     ~ThreeDSoundManager();
 
     void SyncObjects();
     void Poll();
+
+    ObjPtrList<ThreeDSound, ObjectDir> &GetSounds() { return mSounds; }
+    float GetDopplerShiftPower() const { return mDopplerShiftPower; }
+    void SetDopplerShiftPower(float power) { mDopplerShiftPower = power; }
+    RndTransformable *GetListener() const { return mListener; }
     void SetListener(RndTransformable *t) {
         mListener = t;
         mIgnoreDopplerThisFrame = true;

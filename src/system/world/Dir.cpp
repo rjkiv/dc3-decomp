@@ -238,12 +238,12 @@ BEGIN_PROPSYNCS(WorldDir)
     SYNC_PROP_MODIFY(hud, mHud, SyncObjects())
     SYNC_PROP_SET(
         doppler_power,
-        mSoundManager.mDopplerShiftPower,
-        mSoundManager.mDopplerShiftPower = _val.Float()
+        mSoundManager.GetDopplerShiftPower(),
+        mSoundManager.SetDopplerShiftPower(_val.Float())
     )
     SYNC_PROP_SET(
         listener,
-        mSoundManager.mListener.Ptr(),
+        mSoundManager.GetListener(),
         mSoundManager.SetListener(_val.Obj<RndTransformable>())
     )
     SYNC_PROP(explicit_postproc, mExplicitPostProc)
@@ -258,8 +258,8 @@ BEGIN_SAVES(WorldDir)
     bs << mCamShotOverrides << mPS3PerPixelHides << mPS3PerPixelShows;
     bs << mTestPreset1 << mTestPreset2 << mTestPresetBlend;
     bs << mHud;
-    bs << mSoundManager.mDopplerShiftPower;
-    ObjPtr<RndTransformable> listener(this, mSoundManager.mListener);
+    bs << mSoundManager.GetDopplerShiftPower();
+    ObjPtr<RndTransformable> listener(this, mSoundManager.GetListener());
     bs << listener;
     bs << mExplicitPostProc;
 END_SAVES
@@ -290,8 +290,8 @@ BEGIN_COPYS(WorldDir)
         COPY_MEMBER(mTestPreset2)
         COPY_MEMBER(mTestPresetBlend)
         COPY_MEMBER(mHud)
-        COPY_MEMBER(mSoundManager.mDopplerShiftPower)
-        mSoundManager.SetListener(c->mSoundManager.mListener);
+        mSoundManager.SetDopplerShiftPower(c->mSoundManager.GetDopplerShiftPower());
+        mSoundManager.SetListener(c->mSoundManager.GetListener());
         SyncHUD();
         COPY_MEMBER(mExplicitPostProc)
     END_COPYING_MEMBERS
@@ -411,7 +411,7 @@ void WorldDir::PostLoad(BinStream &bs) {
     if (d.rev >= 0x1C) {
         float x;
         d >> x;
-        mSoundManager.mDopplerShiftPower = x;
+        mSoundManager.SetDopplerShiftPower(x);
     }
     if (d.rev >= 0x1D) {
         ObjPtr<RndTransformable> trans(this);
