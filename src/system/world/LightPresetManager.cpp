@@ -5,7 +5,7 @@
 void PrintPreset(const char *str, LightPreset *preset) {
     if (preset) {
         MILO_LOG("%s: %s ", str, preset->Name());
-        if (preset->Manual()) {
+        if (preset->GetManual()) {
             MILO_LOG(
                 "Manual (Keyframe: %d), frame %f\n",
                 preset->GetCurrentKeyframe(),
@@ -60,7 +60,7 @@ void LightPresetManager::SyncObjects() {
     mPresets.clear();
     for (ObjDirItr<LightPreset> it(mParent, true); it != nullptr; ++it) {
         if (it->PlatformOk()) {
-            mPresets[it->Category()].push_back(it);
+            mPresets[it->GetCategory()].push_back(it);
         }
     }
 }

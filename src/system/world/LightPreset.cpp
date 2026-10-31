@@ -196,9 +196,9 @@ void LightPreset::SpotlightEntry::Load(BinStreamRev &d) {
         bool b;
         d >> b;
         if (b) {
-            mFlags |= kEnabled;
+            mFlags |= kFlareEnabled;
         } else {
-            mFlags &= ~kEnabled;
+            mFlags &= ~kFlareEnabled;
         }
         if (d.rev < 9) {
             int x;
@@ -222,8 +222,7 @@ void LightPreset::SpotlightEntry::CalculateDirection(Spotlight *s, Hmx::Quat &q)
 void LightPreset::SpotlightEntry::Animate(
     Spotlight *spot, const LightPreset::SpotlightEntry &entry, float f3
 ) {
-    float fout;
-    Interp(mIntensity, entry.mIntensity, f3, fout);
+    Interp(mIntensity, entry.mIntensity, f3, mIntensity);
     Hmx::Color c38(mColor);
     Hmx::Color c48(entry.mColor);
     Interp(c38, c48, f3, c38);
@@ -495,7 +494,7 @@ BEGIN_CUSTOM_PROPSYNC(LightPreset::EnvLightEntry)
     SYNC_PROP(position, o.mPosition)
     SYNC_PROP_SET(color, o.mColor.PackRgb(), )
     SYNC_PROP_SET(range, o.mRange, )
-    SYNC_PROP_SET(type, RndLight::TypeToStr(o.mType), ) {
+    SYNC_PROP_SET(type, RndLight::TypeToStr((RndLight::Type)o.mType), ) {
         static Symbol _s("rotation");
         if (sym == _s) {
             MakeRotMatrix(o.mOrientation, o.mCachedDisplayRot);
@@ -515,7 +514,7 @@ BEGIN_CUSTOM_PROPSYNC(LightPreset::SpotlightEntry)
     SYNC_PROP_SET(intensity, o.mIntensity, )
     SYNC_PROP_SET(color, (int)o.mColor, )
     SYNC_PROP(target, o.mTarget)
-    SYNC_PROP_SET(flare_enabled, o.mFlags & LightPreset::SpotlightEntry::kEnabled, ) {
+    SYNC_PROP_SET(flare_enabled, o.mFlags & LightPreset::kFlareEnabled, ) {
         static Symbol _s("rotation");
         if (sym == _s) {
             MakeRotMatrix(o.mOrientation, o.mCachedDisplayRot);
@@ -903,7 +902,7 @@ void LightPreset::AddSpotlightDrawer(SpotlightDrawer *sd) {
 void LightPreset::AddSpotlight(Spotlight *s, bool b) {
     mSpotlights.push_back(s);
     SpotlightEntry e(this);
-    FillSpotPresetData(s, e, -1);
+    FillSpotPresetData(s, e, kPropogateAll);
     if (b) {
         e.mIntensity = 0;
         e.mColor = 0;
@@ -915,7 +914,7 @@ void LightPreset::AddSpotlight(Spotlight *s, bool b) {
     mSpotlightState.push_back(e);
 }
 
-void LightPreset::SetSpotlight(Spotlight *s, int data) {
+void LightPreset::SetSpotlight(Spotlight *s, int propogateFlags) {
     uint idx;
     for (idx = 0; idx != mSpotlights.size(); idx++) {
         if (mSpotlights[idx] == s)
@@ -924,7 +923,7 @@ void LightPreset::SetSpotlight(Spotlight *s, int data) {
     if (idx == mSpotlights.size())
         AddSpotlight(s, false);
     for (uint i = 0; i != mKeyframes.size(); i++) {
-        FillSpotPresetData(s, mKeyframes[i].mSpotlightEntries[idx], data);
+        FillSpotPresetData(s, mKeyframes[i].mSpotlightEntries[idx], propogateFlags);
     }
 }
 
@@ -979,7 +978,7 @@ void LightPreset::SetFrameEx(float frame, float blend, bool b) {
         }
 
         bool b2 = false;
-        Keyframe *last = mLastKeyframe;
+        const Keyframe *last = mLastKeyframe;
         if (kf5 == last && mLastBlend == f74)
             b2 = true;
         if (!b2) {
@@ -1167,24 +1166,20 @@ void LightPreset::Animate(float f) {
     }
 }
 
-void LightPreset::FillSpotPresetData(Spotlight *spotlight, SpotlightEntry &entry, int i) {
-    if ((i & 1) != 0) {
+void LightPreset::FillSpotPresetData(
+    Spotlight *spotlight, SpotlightEntry &entry, int propogateType
+) {
+    if (propogateType & kColoring) {
         entry.mIntensity = spotlight->GetIntensity();
         entry.mColor = spotlight->GetColor().PackRgb();
     }
-    if ((i & 2) != 0) {
+    if (propogateType & kTargeting) {
         entry.mTarget = spotlight->GetTarget();
-        // something here is off
-        Hmx::Quat q;
-        if (entry.mTarget) {
-            q.Set(0, 0, 0, 0);
-        } else {
-            q.Set(spotlight->LocalXfm().m);
-        }
-        entry.mOrientation = q;
+        entry.mOrientation =
+            entry.mTarget ? Hmx::Quat(0, 0, 0, 0) : Hmx::Quat(spotlight->LocalXfm().m);
     }
-    if (i != 0 && spotlight->FlareEnabled()) {
-        entry.mFlags = entry.mFlags | 1;
+    if (propogateType != 0 && spotlight->FlareEnabled()) {
+        entry.mFlags = entry.mFlags | kFlareEnabled;
     }
 }
 
@@ -1280,7 +1275,7 @@ void LightPreset::AnimateState(
 
 void LightPreset::SetKeyframe(LightPreset::Keyframe &frame) {
     for (int i = 0; i != frame.mSpotlightEntries.size(); i++) {
-        FillSpotPresetData(mSpotlights[i], frame.mSpotlightEntries[i], -1);
+        FillSpotPresetData(mSpotlights[i], frame.mSpotlightEntries[i], kPropogateAll);
     }
 
     for (int i = 0; i != frame.mEnvironmentEntries.size(); i++) {

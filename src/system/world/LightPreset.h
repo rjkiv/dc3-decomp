@@ -26,10 +26,10 @@ class LightPreset : public RndAnimatable {
 public:
     struct EnvironmentEntry {
         EnvironmentEntry();
-        void Save(BinStream &) const;
-        void Load(BinStream &);
-        void Animate(const EnvironmentEntry &, float);
-        bool operator!=(const EnvironmentEntry &) const;
+        void Save(BinStream &d) const;
+        void Load(BinStream &d);
+        void Animate(const EnvironmentEntry &other, float blend);
+        bool operator!=(const EnvironmentEntry &other) const;
 
         /** "Ambient color" */
         Hmx::Color mAmbientColor; // 0x0
@@ -45,12 +45,12 @@ public:
 
     struct EnvLightEntry {
         EnvLightEntry();
-        void Save(BinStream &) const;
-        void Load(BinStream &);
-        void Animate(const EnvLightEntry &, float);
-        bool operator!=(const EnvLightEntry &) const;
+        void Save(BinStream &d) const;
+        void Load(BinStream &d);
+        void Animate(const EnvLightEntry &other, float blend);
+        bool operator!=(const EnvLightEntry &other) const;
 
-        Hmx::Quat mOrientation;
+        Hmx::Quat mOrientation; // 0x0
         /** "Light's position" */
         Vector3 mPosition; // 0x10
         /** "Light's color" */
@@ -58,23 +58,23 @@ public:
         /** "Falloff distance for point lights" */
         float mRange; // 0x30
         /** "Light type" */
-        RndLight::Type mType; // 0x34
+        unsigned int mType; // 0x34
         /** "Light transform" */
         Hmx::Matrix3 mCachedDisplayRot; // 0x38
     };
 
-    struct SpotlightEntry {
-        enum {
-            kEnabled = 1
-            // there's a flag for 2 but idk what it is
-        };
+    enum SpotlightFlags {
+        kFlareEnabled = 1,
+        kTargetExists = 2
+    };
 
+    struct SpotlightEntry {
         SpotlightEntry(Hmx::Object *owner);
-        void Save(BinStream &) const;
-        void Load(BinStreamRev &);
-        bool operator!=(const SpotlightEntry &) const;
-        void CalculateDirection(Spotlight *, Hmx::Quat &) const;
-        void Animate(Spotlight *, const SpotlightEntry &, float);
+        void Save(BinStream &d) const;
+        void Load(BinStreamRev &d);
+        bool operator!=(const SpotlightEntry &other) const;
+        void CalculateDirection(Spotlight *slight, Hmx::Quat &out) const;
+        void Animate(Spotlight *slight, const SpotlightEntry &other, float blend);
 
         float mIntensity; // 0x0
         unsigned int mColor; // 0x4 - packed
@@ -86,9 +86,9 @@ public:
 
     struct SpotlightDrawerEntry {
         SpotlightDrawerEntry();
-        void Save(BinStream &) const;
-        void Load(BinStreamRev &);
-        bool operator!=(const SpotlightDrawerEntry &) const;
+        void Save(BinStream &d) const;
+        void Load(BinStreamRev &d);
+        bool operator!=(const SpotlightDrawerEntry &other) const;
 
         /** "Global intensity scale" */
         float mTotal; // 0x0
@@ -101,11 +101,11 @@ public:
     };
 
     struct Keyframe {
-        Keyframe(Hmx::Object *);
-        void Save(BinStream &) const;
-        void Load(BinStreamRev &);
-        void LegacyLoadP9(BinStreamRev &);
-        void LegacyLoadStageKit(BinStream &);
+        Keyframe(Hmx::Object *owner);
+        void Save(BinStream &d) const;
+        void Load(BinStreamRev &d);
+        void LegacyLoadP9(BinStreamRev &d);
+        void LegacyLoadStageKit(BinStream &d);
 
         /** "Description of the keyframe" */
         String mDescription; // 0x0
@@ -140,6 +140,12 @@ public:
         kPresetLight
     };
 
+    enum PropogateFlags {
+        kColoring = 1,
+        kTargeting = 2,
+        kPropogateAll = -1,
+    };
+
     friend const char *GetName(LightPreset *preset, int idx, PresetObject obj);
 
     // Hmx::Object
@@ -159,47 +165,64 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(LightPreset)
-    void SetHue(LightHue *hue) { mHue = hue; }
-    Symbol Category() const { return mCategory; }
-    bool Manual() const { return mManual; }
 
-    int GetCurrentKeyframe(void) const;
-    bool PlatformOk(void) const;
-    void SetSpotlight(Spotlight *, int);
-    void OnKeyframeCmd(KeyframeCmd);
+    int GetCurrentKeyframe() const;
+    bool PlatformOk() const;
+    void SetSpotlight(Spotlight *spot, int propogateFlags);
+    void OnKeyframeCmd(KeyframeCmd cmd);
     void ResetEvents();
-    void SetFrameEx(float, float, bool);
+    void SetFrameEx(float frame, float blend, bool same);
+
+    void SetHue(LightHue *hue) { mHue = hue; }
+    Symbol GetCategory() const { return mCategory; }
+    bool GetManual() const { return mManual; }
+    const std::vector<Keyframe> &GetKeyframes() const { return mKeyframes; }
+    const ObjPtrVec<Spotlight> &GetSpotlights() const { return mSpotlights; }
+    const ObjPtrVec<RndEnviron> &GetEnvironments() const { return mEnvironments; }
+    const ObjPtrVec<RndLight> &GetLights() const { return mLights; }
+    const ObjPtrVec<SpotlightDrawer> &GetSpotlightDrawers() const {
+        return mSpotlightDrawers;
+    }
 
 protected:
     LightPreset();
 
     void Clear();
     void CacheFrames();
-    void GetKey(float, int &, int &, float &) const;
-    void RemoveLight(int);
-    void RemoveSpotlight(int);
-    void RemoveSpotlightDrawer(int);
-    void RemoveEnvironment(int);
-    void AddLight(RndLight *);
-    void AddSpotlightDrawer(SpotlightDrawer *);
-    void AddEnvironment(RndEnviron *);
-    void AdvanceManual(LightPreset::KeyframeCmd);
-    int NextManualFrame(LightPreset::KeyframeCmd) const;
-    void FillLightPresetData(RndLight *, LightPreset::EnvLightEntry &);
-    void AnimateLightFromPreset(RndLight *, const LightPreset::EnvLightEntry &, float);
-    void AnimateEnvFromPreset(RndEnviron *, const LightPreset::EnvironmentEntry &, float);
-    void AnimateSpotFromPreset(Spotlight *, const LightPreset::SpotlightEntry &, float);
-    void ApplyState(LightPreset::Keyframe const &);
-    void SetKeyframe(Keyframe &);
-    void FillEnvPresetData(RndEnviron *, EnvironmentEntry &);
+    void GetKey(float frame, int &prev, int &next, float &alpha) const;
+    void RemoveLight(int index);
+    void RemoveSpotlight(int index);
+    void RemoveSpotlightDrawer(int index);
+    void RemoveEnvironment(int index);
+    void AddLight(RndLight *light);
+    void AddSpotlightDrawer(SpotlightDrawer *sd);
+    void AddEnvironment(RndEnviron *env);
+    void AdvanceManual(LightPreset::KeyframeCmd cmd);
+    int NextManualFrame(LightPreset::KeyframeCmd cmd) const;
+    void FillLightPresetData(RndLight *l, LightPreset::EnvLightEntry &entry);
+    void AnimateLightFromPreset(
+        RndLight *l, const LightPreset::EnvLightEntry &entry, float blend
+    );
+    void AnimateEnvFromPreset(
+        RndEnviron *e, const LightPreset::EnvironmentEntry &entry, float blend
+    );
+    void AnimateSpotFromPreset(
+        Spotlight *spot, const LightPreset::SpotlightEntry &entry, float blend
+    );
+    void ApplyState(LightPreset::Keyframe const &frame);
+    void SetKeyframe(Keyframe &frame);
+    void FillEnvPresetData(RndEnviron *e, EnvironmentEntry &entry);
     void FillSpotlightDrawerPresetData(SpotlightDrawer *, SpotlightDrawerEntry &);
-    void AddSpotlight(Spotlight *, bool);
-    void FillSpotPresetData(Spotlight *, SpotlightEntry &, int);
-    void Animate(float);
+    void AddSpotlight(Spotlight *light, bool initToBlack);
+    void FillSpotPresetData(Spotlight *spot, SpotlightEntry &entry, int propogateType);
+    void Animate(float blend);
     void SyncNewSpotlights();
     void SyncKeyframeTargets();
-    void
-    AnimateState(const LightPreset::Keyframe &, const LightPreset::Keyframe &, float);
+    void AnimateState(
+        const LightPreset::Keyframe &frame,
+        const LightPreset::Keyframe &nextFrame,
+        float blend
+    );
 
     DataNode OnSetKeyframe(DataArray *);
     DataNode OnViewKeyframe(DataArray *);
@@ -225,7 +248,7 @@ protected:
     std::vector<EnvironmentEntry> mEnvironmentState; // 0xc4
     std::vector<EnvLightEntry> mLightState; // 0xd0
     std::vector<SpotlightDrawerEntry> mSpotlightDrawerState; // 0xdc
-    Keyframe *mLastKeyframe; // 0xe8
+    const Keyframe *mLastKeyframe; // 0xe8
     float mLastBlend; // 0xec
     float mStartBeat; // 0xf0
     float mManualFrameStart; // 0xf4
