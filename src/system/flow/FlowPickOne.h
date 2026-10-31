@@ -38,7 +38,6 @@ protected:
     FlowPickOne();
 
     void OnChoiceTypeChanged();
-    bool ValidIndex() const { return mChildIdx >= 0 && mChildIdx < mChildNodes.size(); }
 
     ObjPtrVec<FlowNode> mJukeList; // 0x5c
     /** "Style of choice made" */

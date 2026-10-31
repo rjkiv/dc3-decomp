@@ -334,7 +334,7 @@ public:
     bool empty() const { return mVec.empty(); }
     int size() const { return mVec.size(); }
     T1 *front() const { return *begin(); }
-    // T1* back() const;
+    T1 *back() const { return mVec.back(); }
 
     template <class S>
     void sort(const S &);

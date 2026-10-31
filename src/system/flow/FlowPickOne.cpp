@@ -64,7 +64,9 @@ bool FlowPickOne::Activate() {
 
     switch (mChoiceType) {
     case kChoiceOrdered: {
-        if (!ValidIndex()) {
+        int idx = mChildIdx;
+        bool valid = idx >= 0 && idx < mChildNodes.size();
+        if (!valid) {
             mChildIdx = 0;
         }
         ActivateChild(mChildNodes[mChildIdx]);
@@ -79,8 +81,9 @@ bool FlowPickOne::Activate() {
     case kChoiceRandomNoRepeat: {
         if (mChildNodes.size() > 1) {
             int randInt;
-            while (randInt = RandomInt(0, mChildNodes.size()), randInt == mChildIdx)
-                ;
+            do {
+                randInt = RandomInt(0, mChildNodes.size());
+            } while (randInt == mChildIdx);
             mChildIdx = randInt;
         } else {
             mChildIdx = 0;
@@ -91,31 +94,38 @@ bool FlowPickOne::Activate() {
     case kChoiceRandomJukeBox: {
         int numNodes = mChildNodes.size();
         if (numNodes > 1) {
-            if (!ValidIndex()) {
-                FlowNode *first = mJukeList.front();
+            bool valid = mChildIdx >= 0 && mChildIdx < mJukeList.size();
+            if (!valid) {
+                FlowNode *last = mJukeList.empty() ? nullptr : mJukeList.back();
+
                 mJukeList.clear();
                 std::vector<FlowNode *> nodes;
                 FOREACH (it, mChildNodes) {
                     nodes.push_back(*it);
                 }
                 std::random_shuffle(nodes.begin(), nodes.end());
-                FOREACH_REVERSE(it, nodes) { mJukeList.push_back(*it); }
+                while (nodes.size() > 0) {
+                    mJukeList.push_back(nodes.back());
+                    nodes.pop_back();
+                }
                 mChildIdx = 0;
-                if (first == mJukeList.front()) {
+                if (last == mJukeList[0]) {
                     mChildIdx = 1;
                 }
             }
-            ActivateChild(mChildNodes[0]);
+            ActivateChild(mJukeList[mChildIdx]);
             mChildIdx++;
-        }
-        if (numNodes == 1) {
+        } else if (numNodes == 1) {
             ActivateChild(mChildNodes[0]);
         }
         break;
     }
     case kChoiceUseIndex: {
         mChildIdx = mChildIdx % mChildNodes.size();
-        ActivateChild(*NextItr(mChildNodes.begin(), mChildIdx));
+        auto it = mChildNodes.begin();
+        for (int i = 0; i < mChildIdx; i++, ++it)
+            ;
+        ActivateChild(*it);
         break;
     }
     default: {
