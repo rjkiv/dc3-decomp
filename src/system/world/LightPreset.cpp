@@ -927,7 +927,7 @@ void LightPreset::SetSpotlight(Spotlight *s, int propogateFlags) {
     }
 }
 
-void LightPreset::SetFrameEx(float frame, float blend, bool b) {
+void LightPreset::SetFrameEx(float frame, float blend, bool same) {
     START_AUTO_TIMER("light");
     RndAnimatable::SetFrame(frame, blend);
     if (frame == 0 && TheLoadMgr.EditMode()) {
@@ -937,6 +937,7 @@ void LightPreset::SetFrameEx(float frame, float blend, bool b) {
         return;
     } else {
         Keyframe *kf7 = nullptr;
+        float a = 1;
         float f74 = 1.0f;
         Keyframe *kf5;
         if (mManual) {
@@ -945,9 +946,9 @@ void LightPreset::SetFrameEx(float frame, float blend, bool b) {
                 sManualEvents.pop_front();
             }
             if (!sManualEvents.empty()) {
-                float f1 = kf5->mFadeOutTime;
+                float f1 = kf5->mFadeOutTime / 480;
                 float sec = sManualEvents.front().second;
-                if (sec - f1 / 480.0f <= TheTaskMgr.Beat()) {
+                if (sec - f1 <= TheTaskMgr.Beat()) {
                     AdvanceManual(sManualEvents.front().first);
                     if (sec > TheTaskMgr.Beat()) {
                         mManualFadeTime = (sec - TheTaskMgr.Beat()) * 480.0f;
@@ -961,8 +962,9 @@ void LightPreset::SetFrameEx(float frame, float blend, bool b) {
 
             if (mLastManualFrame != -1) {
                 kf7 = &mKeyframes[mLastManualFrame];
+                float frameDiff = frame - mManualFrameStart;
                 if (mManualFadeTime > 0) {
-                    f74 = Min((frame - mManualFrameStart) / mManualFadeTime, 1.0f);
+                    f74 = Min(frameDiff / mManualFadeTime, 1.0f);
                     f74 = Max(0.0f, f74);
                 } else
                     f74 = 0;
@@ -970,17 +972,17 @@ void LightPreset::SetFrameEx(float frame, float blend, bool b) {
 
         } else {
             int i78, i7c;
-            GetKey(frame, i78, i7c, f74);
+            GetKey(frame, i78, i7c, a);
+            f74 = a;
             kf5 = &mKeyframes[i7c];
             if (i78 != -1) {
                 kf7 = &mKeyframes[i78];
             }
         }
 
-        bool b2 = false;
-        const Keyframe *last = mLastKeyframe;
-        if (kf5 == last && mLastBlend == f74)
-            b2 = true;
+        bool isNotLast = mLastKeyframe != kf5;
+        bool b2 = !isNotLast && mLastBlend == f74;
+
         if (!b2) {
             ApplyState(*kf5);
             if (kf7) {
@@ -989,16 +991,84 @@ void LightPreset::SetFrameEx(float frame, float blend, bool b) {
             mLastKeyframe = kf5;
             mLastBlend = f74;
         }
-        if (!b2 || !b) {
+        if (!b2 || !same) {
             Animate(blend);
         }
-        if (kf5 != last) {
+        if (isNotLast) {
             FOREACH (it, mLastKeyframe->mTriggers) {
                 (*it)->Trigger();
             }
         }
         static Message start("on_set_frame");
         Handle(start, false);
+    }
+}
+
+void LightPreset::GetKey(float frame, int &prev, int &next, float &alpha) const {
+    if (frame > 0 && mCachedDuration > 0) {
+        if (mLooping) {
+            frame = fmodf(frame, mCachedDuration);
+            if (frame >= mKeyframes.back().mFrame) {
+                if (mKeyframes.back().mFadeOutTime <= 0) {
+                    prev = -1;
+                    next = mKeyframes.size() - 1;
+                    alpha = 1;
+                } else {
+                    float dur = mKeyframes.back().mFrame + mKeyframes.back().mDuration;
+                    if (frame > dur) {
+                        MILO_ASSERT(mKeyframes.back().mFadeOutTime > 0, 0x2E8);
+                        prev = mKeyframes.size() - 1;
+                        next = 0;
+                        alpha = (frame - dur) / mKeyframes.back().mFadeOutTime;
+                    } else {
+                        prev = -1;
+                        next = mKeyframes.size() - 1;
+                        alpha = 1;
+                    }
+                }
+                return;
+            }
+        } else if (frame >= mKeyframes.back().mFrame) {
+            prev = -1;
+            next = mKeyframes.size() - 1;
+            alpha = 1;
+            return;
+        }
+
+        int before = 0;
+        int after = mKeyframes.size() - 1;
+
+        while (after > before + 1) {
+            int mid = (before + after) >> 1;
+            if (frame == mKeyframes[mid].mFrame) {
+                prev = -1;
+                next = mid;
+                alpha = 1;
+                return;
+            }
+            if (frame > mKeyframes[mid].mFrame) {
+                before = mid;
+            } else {
+                after = mid;
+            }
+        }
+
+        MILO_ASSERT(frame >= mKeyframes[before].mFrame && frame < mKeyframes[after].mFrame, 0x317);
+        float dur = mKeyframes[before].mFrame + mKeyframes[before].mDuration;
+        if (frame > dur) {
+            MILO_ASSERT(mKeyframes[before].mFadeOutTime > 0, 0x31C);
+            prev = before;
+            next = after;
+            alpha = (frame - dur) / mKeyframes[before].mFadeOutTime;
+        } else {
+            prev = -1;
+            next = before;
+            alpha = 1;
+        }
+    } else {
+        prev = -1;
+        next = 0;
+        alpha = 1;
     }
 }
 
