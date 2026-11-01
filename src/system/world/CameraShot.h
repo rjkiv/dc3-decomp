@@ -150,7 +150,7 @@ public:
     virtual void EndAnim();
     virtual void SetFrame(float, float);
     virtual float StartFrame() { return 0; }
-    virtual float EndFrame() { return mDuration; }
+    virtual float EndFrame() { return mCachedDuration; }
     virtual Hmx::Object *AnimTarget() { return sAnimTarget; }
     virtual void ListAnimChildren(std::list<RndAnimatable *> &) const;
     // CamShot
@@ -186,7 +186,7 @@ public:
     float Filter() const { return mFilter; }
     RndTransAnim *Path() const { return mPath; }
     float PathFrame() const { return mPathFrame; }
-    float Duration() const { return mDuration; }
+    float Duration() const { return mCachedDuration; }
     bool ShotStarted() const { return mFirstFrame; }
     float ClampHeight() const { return mClampHeight; }
     const CamShotFrame &FrameAt(int idx) const { return mKeyframes[idx]; }
@@ -241,7 +241,7 @@ protected:
     float mClampHeight; // 0xf8
     /** "Category for shot-picking" */
     Symbol mCategory; // 0xfc
-    int mWeight; // 0x100
+    float mWeight; // 0x100
     /** "animatables to be driven with the same frame" */
     ObjPtrList<RndAnimatable> mAnims; // 0x104
     /** "Optional camera path to use" */
@@ -286,7 +286,7 @@ protected:
     CamShotFrame *mLastNext; // 0x270
     CamShotFrame *mLastPrev; // 0x274
     /** "duration of the camshot" */
-    float mDuration; // 0x278
+    float mCachedDuration; // 0x278
     /** "disabled bits" */
     int mDisabled; // 0x27c
     bool mFirstFrame; // 0x280

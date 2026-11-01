@@ -554,11 +554,11 @@ void HamCamShot::EndAnim() {
 }
 
 float HamCamShot::GetTotalDuration() {
-    float f = mDuration;
+    float f = mCachedDuration;
     std::list<HamCamShot *> shots;
     ListNextShots(shots);
     FOREACH (it, shots) {
-        f += (*it)->mDuration;
+        f += (*it)->mCachedDuration;
     }
     return f;
 }
@@ -598,9 +598,9 @@ void HamCamShot::SetFrame(float frame, float blend) {
         SetPreFrame(frame, blend);
     }
     float f = frame;
-    bool b = frame < mDuration || mNextShots.empty();
+    bool b = frame < mCachedDuration || mNextShots.empty();
     if (!b) {
-        frame -= mNextTotalDur + mDuration;
+        frame -= mNextTotalDur + mCachedDuration;
     }
 
     if (CheckShotOver(f)) {
@@ -622,13 +622,13 @@ void HamCamShot::SetFrame(float frame, float blend) {
 
 void HamCamShot::SetPreFrame(float frame, float blend) {
     mSetPreFrameCalled = true;
-    bool b = frame < mDuration || mNextShots.empty();
+    bool b = frame < mCachedDuration || mNextShots.empty();
     if (b) {
         if (mCurrentShot != this) {
             ResetNextShot();
         }
     } else {
-        frame -= mDuration;
+        frame -= mCachedDuration;
         while (frame < mNextTotalDur && mNextIter != mNextShots.begin()) {
             --mNextIter;
             mNextDur = (*mNextIter)->GetTotalDuration();
@@ -818,8 +818,7 @@ void HamCamShot::UpdateTargetsFlipped() {
                         if (strstr(name, "player0") && mPlayerFlag == kHamPlayer0) {
                             buf[6] = '1';
                             transform = worldDir->Find<RndTransformable>(buf);
-                        } else if (strstr(name, "player1")
-                                   && mPlayerFlag == kHamPlayer1) {
+                        } else if (strstr(name, "player1") && mPlayerFlag == kHamPlayer1) {
                             buf[6] = '0';
                             transform = worldDir->Find<RndTransformable>(buf);
                         }
@@ -827,8 +826,7 @@ void HamCamShot::UpdateTargetsFlipped() {
                         if (strstr(name, "player0") && mPlayerFlag == kHamPlayer1) {
                             buf[6] = '1';
                             transform = worldDir->Find<RndTransformable>(buf);
-                        } else if (strstr(name, "player1")
-                                   && mPlayerFlag == kHamPlayer0) {
+                        } else if (strstr(name, "player1") && mPlayerFlag == kHamPlayer0) {
                             buf[6] = '0';
                             transform = worldDir->Find<RndTransformable>(buf);
                         }
