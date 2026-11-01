@@ -576,8 +576,9 @@ void Spotlight::DrawShowing() {
         RndEnvironTracker tracker(sEnviron, nullptr);
         FOREACH (it, mAdditionalObjects) {
             MILO_ASSERT(*it != this, 0x3E3);
-            if (*it != this)
+            if (*it != this) {
                 (*it)->DrawShowing();
+            }
         }
         if (mLensMat) {
             MILO_ASSERT(sDiskMesh, 0x3ED);
@@ -585,9 +586,9 @@ void Spotlight::DrawShowing() {
             sDiskMesh->SetMat(mLensMat);
             sDiskMesh->DrawShowing();
         }
-        RndMesh *beam = mBeam.mBeam;
-        if (beam && TheRnd.DrawMode() != Rnd::kDrawOcclusion) {
-            beam->DrawShowing();
+        auto &beam = mBeam;
+        if (beam.mBeam && TheRnd.DrawMode() != Rnd::kDrawOcclusion) {
+            beam.mBeam->DrawShowing();
         }
         if (mFlare && mFlare->GetMat()) {
             mFlare->Draw();
@@ -606,7 +607,6 @@ void Spotlight::DrawShowing() {
                 sDiskMesh->DrawShowing();
             }
         }
-        return;
     }
 }
 
@@ -651,10 +651,12 @@ void Spotlight::UpdateBounds() {
 }
 
 RndTransformable *Spotlight::ResolveTarget() {
-    if (!mTargetExists)
+    if (!mTargetExists) {
         return nullptr;
-    if (mTarget)
+    }
+    if (mTarget) {
         return mTarget;
+    }
     return nullptr;
 }
 
@@ -667,16 +669,18 @@ void Spotlight::Poll() {
     Hmx::Matrix3 m38;
     if (!mAnimatingFromPreset) {
         RndTransformable *target = ResolveTarget();
-        if (!target
+        if (!(int)target
             || (!TheLoadMgr.EditMode() && !mFirstFrame
                 && target->WorldXfm().v == mLastTargetPosition)) {
             if (!target && !mAnimateOrientFromPreset && !DoFloorSpot()) {
                 UpdateTransforms();
-                return;
+            } else {
+                CheckFloorSpotTransform();
+                mLastDirection = WorldXfm().m;
+                UpdateSlaves();
             }
-            CheckFloorSpotTransform();
-            mLastDirection = WorldXfm().m;
-            UpdateSlaves();
+            Normalize(LocalXfm().m, m38);
+            SetLocalRot(m38);
             return;
         }
         mLastTargetPosition = target->WorldXfm().v;
@@ -689,6 +693,7 @@ void Spotlight::Poll() {
     } else {
         MakeRotMatrix(mPresetOrient, m38);
     }
+    Normalize(m38, m38);
     SetLocalRot(m38);
     mLastDirection = m38;
     UpdateTransforms();
