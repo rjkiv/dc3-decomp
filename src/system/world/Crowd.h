@@ -95,10 +95,15 @@ public:
 
     void SetLod(int lod);
     void Set3DCharAll();
-    void SetFullness(float, float);
-    void Set3DCharList(const std::vector<std::pair<int, int> > &, Hmx::Object *);
-    void Set3DCharXfm(const std::list<CharData>::iterator &, int, const Transform &);
-    void Apply3DCharXfm(const std::list<CharData>::iterator &, int, RndCam *);
+    void SetFullness(float flat, float full);
+    void
+    Set3DCharList(const std::vector<std::pair<int, int> > &chars, Hmx::Object *setter);
+    void Set3DCharXfm(
+        const std::list<CharData>::iterator &charItr, int char3DIdx, const Transform &t
+    );
+    void Apply3DCharXfm(
+        const std::list<CharData>::iterator &charItr, int char3DIdx, RndCam *cam
+    );
     int GetModifyStamp() const { return mModifyStamp; }
     void SetRotate(CrowdRotate r) { mRotate = r; }
     bool IsForced3DCrowd() const { return mForce3DCrowd; }
@@ -109,15 +114,15 @@ public:
 protected:
     WorldCrowd();
 
-    void Force3DCrowd(bool);
+    void Force3DCrowd(bool force);
     void SetMatAndCameraLod();
-    void AssignRandomColors(bool);
+    void AssignRandomColors(bool force);
     void Delete3DCrowdHandles();
     void CreateMeshes();
     void Reset3DCrowd();
     bool Crowd3DExists();
     void Sort3DCharList();
-    RndMesh *BuildBillboard(Character *, float);
+    RndMesh *BuildBillboard(Character *target, float charHeight);
     void Draw3DChars();
 
     DataNode OnRebuild(DataArray *);

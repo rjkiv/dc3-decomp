@@ -424,7 +424,7 @@ void WorldCrowd::Mats(std::list<RndMat *> &mats, bool b2) {
         // b10100
         opts.value |= 0x20;
         // opts.billboard = 1;
-        int masks[2] = { 0xD, 0x13 };
+        int masks[2] = { kMultimeshBBShader, kStandardBBShader };
         for (int i = 0; i < 2; i++) {
             opts.shaderType = masks[i];
             for (int j = 0; j < 2; j++) {
@@ -778,37 +778,53 @@ void WorldCrowd::Apply3DCharXfm(
     }
 }
 
-void WorldCrowd::SetFullness(float f1, float f2) {
+void WorldCrowd::SetFullness(float flat, float full) {
     START_AUTO_TIMER("crowd_set");
-    mCharFullness = f2;
-    mFlatFullness = f1;
+    mCharFullness = full;
+    mFlatFullness = flat;
     Delete3DCrowdHandles();
     FOREACH (it, mCharacters) {
         if (it->mMMesh) {
-            int bigsize = (float)(it->mMMesh->Instances().size() + it->mBackup.size())
-                * mFlatFullness;
-            int instsize = it->mMMesh->Instances().size();
-            if (instsize < bigsize) {
+            int totalInsts = it->mMMesh->Instances().size() + it->mBackup.size();
+            int curInsts = it->mMMesh->Instances().size();
+            totalInsts = (float)totalInsts * mFlatFullness;
+            if (curInsts < totalInsts) {
                 auto backupIt = it->mBackup.begin();
-                for (; instsize < bigsize; instsize++) {
-                    ++backupIt;
+                for (int n = curInsts; n < totalInsts; n++) {
+                    backupIt++;
                 }
-                auto backupBegin = it->mBackup.begin();
-                auto instsBegin = it->mMMesh->Instances().begin();
-                if (backupBegin != backupIt && instsBegin != backupIt) {
-                    // something
+                it->mMMesh->Instances().splice(
+                    it->mMMesh->Instances().begin(),
+                    it->mBackup,
+                    it->mBackup.begin(),
+                    backupIt
+                );
+            } else if (totalInsts < curInsts) {
+                auto backupIt = it->mMMesh->Instances().begin();
+                for (int n = totalInsts; n < curInsts; n++) {
+                    backupIt++;
                 }
-            } else if (bigsize < instsize) {
-                auto backupIt = it->mBackup.begin();
-                for (; bigsize < instsize; instsize--) {
-                    ++backupIt;
-                }
-                auto backupBegin = it->mBackup.begin();
-                auto instsBegin = it->mMMesh->Instances().begin();
-                if (instsBegin != backupIt && backupBegin != backupIt) {
-                    // something
-                }
+                it->mBackup.splice(
+                    it->mBackup.begin(),
+                    it->mMMesh->Instances(),
+                    it->mMMesh->Instances().begin(),
+                    backupIt
+                );
                 it->mMMesh->InvalidateProxies();
+            }
+
+            int numChars3D = Min<int>(
+                it->m3DCharsCreated.size(), (float)it->m3DCharsCreated.size() * full
+            );
+            int numChars = it->m3DChars.size();
+            if (numChars < numChars3D) {
+                for (int n = numChars; n < numChars3D; n++) {
+                    it->m3DChars.push_back(it->m3DCharsCreated[it->m3DChars.size()]);
+                }
+            } else if (numChars3D < numChars) {
+                for (int n = numChars3D; n < numChars; n++) {
+                    it->m3DChars.pop_back();
+                }
             }
         }
     }
