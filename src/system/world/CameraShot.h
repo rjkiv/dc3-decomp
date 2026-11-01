@@ -27,20 +27,22 @@ public: // RB2 says it's all public
         /** "fast rate of change, then slow" */
         kBlendEaseOut = 2
     };
-    CamShotFrame(Hmx::Object *);
-    CamShotFrame(Hmx::Object *, const CamShotFrame &);
+    CamShotFrame(Hmx::Object *owner);
+    CamShotFrame(Hmx::Object *owner, const CamShotFrame &rhs);
 
-    void Save(BinStream &) const;
-    void Load(BinStreamRev &);
-    bool SameTargets(const CamShotFrame &) const;
-    void GetCurrentTargetPosition(Vector3 &) const;
-    void ApplyScreenOffset(Transform &, RndCam *) const;
+    void Save(BinStream &d) const;
+    void Load(BinStreamRev &d);
+    bool SameTargets(const CamShotFrame &other) const;
+    void GetCurrentTargetPosition(Vector3 &out) const;
+    void ApplyScreenOffset(Transform &trans, RndCam *camera) const;
     void UpdateTarget() const;
-    void BuildTransform(RndCam *, Transform &, bool) const;
-    void Interp(const CamShotFrame &, float, float, RndCam *);
+    void
+    BuildTransform(RndCam *camera, Transform &position, bool applyScreenOffset) const;
+    void Interp(const CamShotFrame &towards, float interp, float blend, RndCam *camera);
     bool
-    OnSyncTargets(ObjPtrList<RndTransformable> &, DataNode &, DataArray *, int, PropOp);
-    bool OnSyncParent(ObjPtr<RndTransformable> &, DataNode &, DataArray *, int, PropOp);
+    OnSyncTargets(ObjPtrList<RndTransformable> &_me, DataNode &, DataArray *, int, PropOp);
+    bool
+    OnSyncParent(ObjPtr<RndTransformable> &_me, DataNode &, DataArray *, int, PropOp);
     bool HasTargets() const;
 
     /** "Duration this keyframe holds steady" */
@@ -101,20 +103,21 @@ inline BinStream &operator<<(BinStream &bs, const CamShotFrame &f) {
 
 class CamShotCrowd {
 public:
-    CamShotCrowd(Hmx::Object *);
-    CamShotCrowd(Hmx::Object *, const CamShotCrowd &);
+    CamShotCrowd(Hmx::Object *owner);
+    CamShotCrowd(Hmx::Object *owner, const CamShotCrowd &rhs);
 
-    void Save(BinStream &) const;
-    void Load(BinStream &);
+    void Save(BinStream &d) const;
+    void Load(BinStream &d);
     void AddCrowdChars();
     void SetCrowdChars();
     void ClearCrowdChars();
     void GetSelectedCrowd(
-        std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > &
+        std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
+            &out
     );
     void AddCrowdChars(
         const std::list<
-            std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > *
+            std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > *chars
     );
 
     /** "The crowd to show for this shot" */
@@ -154,7 +157,7 @@ public:
     virtual Hmx::Object *AnimTarget() { return sAnimTarget; }
     virtual void ListAnimChildren(std::list<RndAnimatable *> &) const;
     // CamShot
-    virtual void SetPreFrame(float, float) {}
+    virtual void SetPreFrame(float frame, float blend) {}
     virtual CamShot *CurrentShot() { return nullptr; }
 
     static void Init();
@@ -164,25 +167,28 @@ public:
 
     float GetDurationSeconds() const;
     bool PlatformOk() const;
-    void StartAnims(ObjPtrList<RndAnimatable> &);
-    void EndAnims(ObjPtrList<RndAnimatable> &);
-    void SetFrames(ObjPtrList<RndAnimatable> &, float);
+    void StartAnims(ObjPtrList<RndAnimatable> &list);
+    void EndAnims(ObjPtrList<RndAnimatable> &list);
+    void SetFrames(ObjPtrList<RndAnimatable> &list, float frame);
+    void Disable(bool disable, int mask);
+    bool ShotOk(CamShot *prevShot);
+    bool SetPos(CamShotFrame &frame, RndCam *fromCam);
+    RndCam *GetCam();
+    class WorldDir *GetCrowdDir() const;
+    void AddAnim(RndAnimatable *anim);
+    void ClearCrowds();
+    bool AddCrowd(CamShotCrowd &crowd);
+
     Symbol Category() const { return mCategory; }
     int Flags() const { return mFlags; }
     int Disabled() const { return mDisabled; }
-    ObjPtrList<RndDrawable> &DrawOverrides() { return mDrawOverrides; }
-    ObjPtrList<RndDrawable> &PostProcOverrides() { return mPostProcOverrides; }
+    const ObjPtrList<RndDrawable> &DrawOverrides() const { return mDrawOverrides; }
+    const ObjPtrList<RndDrawable> &PostProcOverrides() const {
+        return mPostProcOverrides;
+    }
     Spotlight *GlowSpot() const { return mGlowSpot; }
-    void Disable(bool, int);
-    bool ShotOk(CamShot *);
-    bool SetPos(CamShotFrame &, RndCam *);
-    RndCam *GetCam();
     void SetParent(RndDir *d) { mWorldDir = d; }
     bool ShotOver() const { return mShotOver; }
-    class WorldDir *GetCrowdDir() const;
-    void AddAnim(RndAnimatable *);
-    void ClearCrowds();
-    bool AddCrowd(CamShotCrowd &);
     float Filter() const { return mFilter; }
     RndTransAnim *Path() const { return mPath; }
     float PathFrame() const { return mPathFrame; }
@@ -191,25 +197,38 @@ public:
     float ClampHeight() const { return mClampHeight; }
     const CamShotFrame &FrameAt(int idx) const { return mKeyframes[idx]; }
 
+    // public: void SetFlags(int32_t);
+    // public: float GetDurationSeconds() const;
+    // public: void AddAnim(RndAnimatable*);
+    // public: void SetWorldDir(RndDir*);
+    // public: void ClearCrowdLists();
+    // public: bool AddCrowd(CamShotCrowd&);
+    // public: void GenHideList(WorldDir*);
+    // public: void ClearHideList();
+    // public: void SetNear(float);
+    // public: void SetFar(float);
+    // public: bool PS3PerPixel();
+
 protected:
     CamShot();
 
     static Hmx::Object *sAnimTarget;
 
     virtual bool CheckShotStarted();
-    virtual bool CheckShotOver(float);
-    virtual void ApplyDynamicOffsetPreLookAt(Transform &, bool) {}
-    virtual void ApplyDynamicOffsetPostLookAt(Transform &) {}
-    virtual void ApplyFinalCamTransform(Transform &) {}
-
+    virtual bool CheckShotOver(float frame);
+    virtual void ApplyDynamicOffsetPreLookAt(Transform &trans, bool hasTargets) {}
+    virtual void ApplyDynamicOffsetPostLookAt(Transform &trans) {}
+    virtual void ApplyFinalCamTransform(Transform &trans) {}
     virtual float ZoomFovOffset() { return 0; }
 
     void CacheFrames();
     void UnHide();
     void DoHide();
     void SetShotOver();
-    void GetKey(float, CamShotFrame *&, CamShotFrame *&, float &);
-    void Shake(float, float, const Vector2 &, Vector3 &, Vector3 &);
+    void GetKey(float frame, CamShotFrame *&prev, CamShotFrame *&next, float &keyBlend);
+    void Shake(
+        float freq, float amp, const Vector2 &ang, Vector3 &output, Vector3 &eulerOutput
+    );
 
     DataNode OnHasTargets(DataArray *);
     DataNode OnSetPos(DataArray *);

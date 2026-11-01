@@ -340,25 +340,24 @@ bool CamShotFrame::HasTargets() const {
 void CamShotFrame::BuildTransform(
     RndCam *camera, Transform &position, bool applyScreenOffset
 ) const {
-    Vector3 va0;
-    GetCurrentTargetPosition(va0);
-    Vector2 v2;
-    camera->WorldToScreen(va0, v2);
-    v2.x -= (mScreenOffset.x + 1) / 2;
-    v2.y -= (1 - mScreenOffset.y) / 2;
-    float len = Min(1.0f, Length(v2));
-    float f9 = len * mCamShot->Filter();
+    Vector3 targetPos;
+    GetCurrentTargetPosition(targetPos);
+    Vector2 targetScreenPos;
+    camera->WorldToScreen(targetPos, targetScreenPos);
+    targetScreenPos.x -= (mScreenOffset.x + 1) / 2;
+    targetScreenPos.y -= (1 - mScreenOffset.y) / 2;
+    float f9 = Min(1.0f, Length(targetScreenPos)) * mCamShot->Filter();
     if (mLastTargetPos.x == kHugeFloat) {
         f9 = 0;
-    } else {
-        if (TheTaskMgr.DeltaSeconds() == 0) {
-            f9 = 1.0E-11f;
-        }
-        if (f9 != 0) {
-            ::Interp(mLastTargetPos, va0, f9, va0);
-        }
+    } else if (TheTaskMgr.DeltaSeconds() == 0) {
+        f9 = 1.0E-11f;
     }
-    const_cast<CamShotFrame *>(this)->mLastTargetPos = va0;
+    if (f9 == 0) {
+        const_cast<CamShotFrame *>(this)->mLastTargetPos = targetPos;
+    } else {
+        ::Interp(mLastTargetPos, targetPos, f9, targetPos);
+        const_cast<CamShotFrame *>(this)->mLastTargetPos = targetPos;
+    }
     MILO_ASSERT(mLastTargetPos.x != kHugeFloat, 0x7CE);
 
     if (mCamShot->Path()) {
