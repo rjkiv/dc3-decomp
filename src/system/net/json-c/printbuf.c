@@ -17,6 +17,7 @@
 
 #include "config.h"
 
+#include "net/JsonMemory.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,24 +32,22 @@
 #include "debug.h"
 #include "printbuf.h"
 
-struct printbuf *printbuf_new(void)
-{
+struct printbuf *printbuf_new(void) {
     struct printbuf *p;
 
-    p = (struct printbuf *)calloc(1, sizeof(struct printbuf));
+    p = (struct printbuf *)JsonCalloc(1, sizeof(struct printbuf));
     if (!p)
         return NULL;
     p->size = 32;
     p->bpos = 0;
-    if (!(p->buf = (char *)malloc(p->size))) {
+    if (!(p->buf = (char *)JsonMalloc(p->size))) {
         free(p);
         return NULL;
     }
     return p;
 }
 
-int printbuf_memappend(struct printbuf *p, const char *buf, int size)
-{
+int printbuf_memappend(struct printbuf *p, const char *buf, int size) {
     char *t;
     if (p->size - p->bpos <= size) {
         int new_size = json_max(p->size * 2, p->bpos + size + 8);
@@ -59,7 +58,8 @@ int printbuf_memappend(struct printbuf *p, const char *buf, int size)
             p->bpos,
             size,
             p->size,
-            new_size);
+            new_size
+        );
 #endif /* PRINTBUF_DEBUG */
         if (!(t = (char *)realloc(p->buf, new_size)))
             return -1;
@@ -80,8 +80,7 @@ int printbuf_memappend(struct printbuf *p, const char *buf, int size)
 
 #if !HAVE_VASPRINTF
 /* CAW: compliant version of vasprintf */
-static int vasprintf(char **buf, const char *fmt, va_list ap)
-{
+static int vasprintf(char **buf, const char *fmt, va_list ap) {
 #ifndef WIN32
     static char _T_emptybuffer = '\0';
 #endif /* !defined(WIN32) */
@@ -118,8 +117,7 @@ static int vasprintf(char **buf, const char *fmt, va_list ap)
 }
 #endif /* !HAVE_VASPRINTF */
 
-int sprintbuf(struct printbuf *p, const char *msg, ...)
-{
+int sprintbuf(struct printbuf *p, const char *msg, ...) {
     va_list ap;
     char *t;
     int size;
@@ -149,14 +147,12 @@ int sprintbuf(struct printbuf *p, const char *msg, ...)
     }
 }
 
-void printbuf_reset(struct printbuf *p)
-{
+void printbuf_reset(struct printbuf *p) {
     p->buf[0] = '\0';
     p->bpos = 0;
 }
 
-void printbuf_free(struct printbuf *p)
-{
+void printbuf_free(struct printbuf *p) {
     if (p) {
         free(p->buf);
         free(p);
