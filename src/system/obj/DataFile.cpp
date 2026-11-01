@@ -27,7 +27,7 @@ static bool gCachingFile = false;
 static bool gReadingFile = false;
 int gDataLine = 0;
 static CriticalSection gDataReadCrit;
-Symbol gFile;
+static Symbol gFile;
 static std::list<bool> gConditional;
 static std::map<String, DataNode> gReadFiles;
 // bool gCompressCached;
@@ -359,8 +359,7 @@ bool ParseNode() {
         return true;
     }
 
-    char bom[3] = { 0xEF, 0xBB, 0xBF };
-    if (gNode == 0 && strncmp(yytext, bom, DIM(bom)) == 0) {
+    if (gNode == 0 && strncmp(yytext, "\xEF\xBB\xBF", 3) == 0) {
         if (yyleng > 3) {
             MILO_FAIL(
                 "%s starts with a ByteOrderMark, put a line return at the top of its file",
@@ -443,11 +442,7 @@ bool ParseNode() {
             }
         }
         return true;
-    }
-
-    switch (token) {
-    case kDataTokenInclude:
-    case kDataTokenIncludeOptional: {
+    } else if (token == kDataTokenInclude || token == kDataTokenIncludeOptional) {
         bool required = token == kDataTokenInclude;
         if (yylex() != kDataTokenSymbol) {
             MILO_FAIL(
@@ -468,19 +463,16 @@ bool ParseNode() {
             }
         }
         return true;
-    }
-    case kDataTokenIfdef:
-    case kDataTokenIfndef: {
+    } else if (token == kDataTokenIfdef || token == kDataTokenIfndef) {
         bool positive = token == kDataTokenIfdef;
 
         int symToken = yylex();
-        bool isSymbol =
-            symToken == kDataTokenSymbol || symToken == kDataTokenQuotedSymbol;
-        if (!isSymbol) {
-            MILO_FAIL(
-                "DataReadFile: not macro symbol (file %s, line %d)", gFile, gDataLine
-            );
-        }
+        MILO_ASSERT_FMT(
+            symToken == kDataTokenSymbol || symToken == kDataTokenQuotedSymbol,
+            "DataReadFile: not macro symbol (file %s, line %d)",
+            gFile,
+            gDataLine
+        );
 
         char *text;
         if (symToken == kDataTokenQuotedSymbol) {
@@ -508,8 +500,7 @@ bool ParseNode() {
             }
         }
         return true;
-    }
-    case kDataTokenElse: {
+    } else if (token == kDataTokenElse) {
         if (gCachingFile) {
             PushBack(DataNode(kDataElse, 0));
         } else {
@@ -523,12 +514,7 @@ bool ParseNode() {
             gConditional.back() = !gConditional.back();
         }
         return true;
-    }
-    default:
-        break;
-    }
-    // if/else if chain here
-    if (token == kDataTokenEndif) {
+    } else if (token == kDataTokenEndif) {
         if (gCachingFile) {
             PushBack(DataNode(kDataEndif, 0));
         } else {
@@ -602,12 +588,10 @@ bool ParseNode() {
         }
 
         return true;
-    };
-
-    switch (token) {
-    case kDataTokenArrayOpen:
-    case kDataTokenPropertyOpen:
-    case kDataTokenCommandOpen: {
+    } else if (
+        token == kDataTokenArrayOpen || token == kDataTokenCommandOpen
+        || token == kDataTokenPropertyOpen
+    ) {
         int openArray = gOpenArray;
         gOpenArray = token;
         DataArray *array = ParseArray();
@@ -626,11 +610,7 @@ bool ParseNode() {
         array->Release();
 
         return true;
-    }
-    default:
-        break;
-    }
-    if (token == kDataTokenVar) {
+    } else if (token == kDataTokenVar) {
         PushBack(&DataVariable(yytext + 1));
         return true;
     } else if (token == kDataTokenUnhandled) {
@@ -666,11 +646,7 @@ bool ParseNode() {
     } else if (token == kDataTokenFloat) {
         PushBack((float)atof(yytext));
         return true;
-    }
-
-    switch (token) {
-    case kDataTokenSymbol:
-    case kDataTokenQuotedSymbol: {
+    } else if (token == kDataTokenSymbol || token == kDataTokenQuotedSymbol) {
         char *text;
         if (token == kDataTokenQuotedSymbol) {
             // Strip quotes from quoted symbol
@@ -682,7 +658,10 @@ bool ParseNode() {
 
         Symbol sym(text);
         DataArray *macro = DataGetMacro(sym);
-        bool b = macro && !gCachingFile;
+        bool b = false;
+        if (macro && !gCachingFile) {
+            b = true;
+        }
         if (b) {
             for (int i = 0; i < macro->Size(); i++) {
                 PushBack(macro->Node(i));
@@ -692,8 +671,7 @@ bool ParseNode() {
         }
 
         return true;
-    }
-    case kDataTokenString: {
+    } else if (token == kDataTokenString) {
         yytext[yyleng - 1] = '\0';
         char *text = yytext + 1;
 
@@ -705,6 +683,9 @@ bool ParseNode() {
                     escaped = true;
                 } else if (c[1] == 'q') {
                     *c = '\"';
+                    escaped = true;
+                } else if (c[1] == 't') {
+                    *c = '\t';
                     escaped = true;
                 }
             } else if (*c == '\n') {
@@ -723,9 +704,7 @@ bool ParseNode() {
 
         PushBack(text);
         return true;
-    }
-
-    default:
+    } else {
         MILO_FAIL(
             "DataReadFile: Unrecognized token %d (file %s, line %d)",
             token,
