@@ -16,6 +16,8 @@
 #define FORCEINLINE __forceinline
 #define NOINLINE __declspec(noinline)
 #define NORETURN __declspec(noreturn)
+#define NOALIAS __declspec(noalias)
+#define RESTRICT __declspec(restrict)
 #else
 #define CDECL
 #define STDCALL
@@ -30,6 +32,8 @@
 #define FORCEINLINE inline
 #define NOINLINE
 #define NORETURN [[noreturn]]
+#define NOALIAS
+#define RESTRICT
 #endif
 
 // #define ROTATE_LEFT(x, i) (((x) << (i)) | ((x) >> ((sizeof((x)) * 8) - (i))))
