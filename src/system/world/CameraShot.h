@@ -174,7 +174,6 @@ public:
     bool ShotOk(CamShot *prevShot);
     bool SetPos(CamShotFrame &frame, RndCam *fromCam);
     RndCam *GetCam();
-    class WorldDir *GetCrowdDir() const;
     void AddAnim(RndAnimatable *anim);
     void ClearCrowds();
     bool AddCrowd(CamShotCrowd &crowd);
@@ -229,6 +228,7 @@ protected:
     void Shake(
         float freq, float amp, const Vector2 &ang, Vector3 &output, Vector3 &eulerOutput
     );
+    class WorldDir *GetWorldDir();
 
     DataNode OnHasTargets(DataArray *);
     DataNode OnSetPos(DataArray *);

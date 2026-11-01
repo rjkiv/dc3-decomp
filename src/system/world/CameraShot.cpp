@@ -20,6 +20,7 @@
 #include "rndobj/Draw.h"
 #include "rndobj/MultiMesh.h"
 #include "rndobj/MultiMeshProxy.h"
+#include "rndobj/PostProc.h"
 #include "rndobj/Trans.h"
 #include "rndobj/TransProxy.h"
 #include "rndobj/Utl.h"
@@ -821,7 +822,7 @@ BEGIN_HANDLERS(CamShot)
     HANDLE(set_3d_crowd, OnSetCrowdChars)
     HANDLE(add_3d_crowd, OnAddCrowdChars)
     HANDLE(clear_3d_crowd, OnClearCrowdChars)
-    HANDLE_EXPR(get_crowd_dir, GetCrowdDir())
+    HANDLE_EXPR(get_crowd_dir, GetWorldDir())
     HANDLE_EXPR(gen_hide_list, 0)
     HANDLE_EXPR(clear_hide_list, 0)
     HANDLE(get_occluded, OnGetOccluded)
@@ -833,7 +834,7 @@ BEGIN_HANDLERS(CamShot)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
-WorldDir *CamShot::GetCrowdDir() const {
+WorldDir *CamShot::GetWorldDir() {
     ObjectDir *dir = mWorldDir.Ptr() ? mWorldDir.Ptr() : Dir();
     return dynamic_cast<WorldDir *>(dir);
 }
@@ -1230,7 +1231,7 @@ void CamShot::StartAnim() {
     START_AUTO_TIMER("cam_switch");
     static Message msg("start_shot");
     Export(msg, true);
-    WorldDir *crowdDir = GetCrowdDir();
+    WorldDir *crowdDir = GetWorldDir();
     if (crowdDir) {
         if (crowdDir->GetCameraManager()) {
             crowdDir->GetCameraManager()->SetCrowds(mCrowds);
@@ -1537,7 +1538,7 @@ void CamShot::UnHide() {
 
 RndCam *CamShot::GetCam() {
     RndCam *ret = nullptr;
-    WorldDir *crowdDir = GetCrowdDir();
+    WorldDir *crowdDir = GetWorldDir();
     if (crowdDir) {
         ret = crowdDir->Cam();
         if (!ret) {
