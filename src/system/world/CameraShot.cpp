@@ -1448,8 +1448,7 @@ bool CamShot::AddCrowd(CamShotCrowd &crowd) {
     return ret;
 }
 
-// why does ~AutoPrepTarget even inline this?
-NOINLINE bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
+bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
     RndCam *shotCam = cam ? cam : GetCam();
     if (!shotCam) {
         return false;
@@ -1465,14 +1464,15 @@ NOINLINE bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
             Vector3 vec;
             Subtract(ve0, frame.mWorldOffset.v, vec);
             Vector3 vf8(shotCam->WorldXfm().m.y);
-            vf8 *= Dot(vec, shotCam->WorldXfm().m.y);
+            vf8 *= Dot(shotCam->WorldXfm().m.y, vec);
             Vector3 v104;
             Add(shotCam->WorldXfm().v, vf8, v104);
             Vector3 v110;
             Subtract(ve0, v104, v110);
             Add(frame.mWorldOffset.v, v110, frame.mWorldOffset.v);
         } else {
-            frame.mScreenOffset.Zero();
+            frame.mScreenOffset.x = 0;
+            frame.mScreenOffset.y = 0;
         }
         frame.mFieldOfView = shotCam->YFov();
         RndTransformable *frameParent = frame.mParent;
