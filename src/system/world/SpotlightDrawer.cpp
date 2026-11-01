@@ -222,7 +222,12 @@ void SpotlightDrawer::DrawWorld() {
             SpotlightEntry *spotIter = sLights.begin();
             SpotlightEntry *const spotEnd = sLights.end();
             while (spotIter != spotEnd) {
-                Hmx::Color envColor = spotIter->mLight->IntensifiedColor();
+                Spotlight *sl = spotIter->mLight;
+                const Hmx::Color &c = sl->GetColor();
+                float intensity = sl->GetIntensity();
+                Hmx::Color envColor(
+                    c.red * intensity, c.green * intensity, c.blue * intensity, 1
+                );
                 SpotlightEntry *const colorBegin = spotIter;
                 SpotlightEntry *colorEnd = spotIter + 1;
                 for (; colorEnd != spotEnd
@@ -317,13 +322,11 @@ void SpotlightDrawer::DrawLenses(
     MILO_ASSERT(spotIter != spotEnd, 0x2B1);
     for (; spotIter != spotEnd; ++spotIter) {
         Spotlight *sl = spotIter->mLight;
-        // idk something weird is happening here
-        //  if (!Spotlight::GetDiskMesh()) {
-        //  MILO_ASSERT(sl->LensMesh(), 0x2B9);
-        // }
-        MILO_ASSERT(sl->LensMesh(), 0x2B9);
-        Spotlight::GetDiskMesh()->SetMat(sl->LensMesh());
-        Spotlight::GetDiskMesh()->Draw();
+        if (sl->LensMat()) {
+            MILO_ASSERT(sl->LensMesh(), 0x2B9);
+            sl->LensMesh()->SetMat(sl->LensMat());
+            sl->LensMesh()->Draw();
+        }
     }
 }
 

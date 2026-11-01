@@ -135,7 +135,7 @@ Spotlight::Spotlight()
       mFlareIsBillboard(true), mFlareOffset(0), mSpotScale(30), mSpotHeight(0.25),
       mColor(1, 1, 1), mIntensity(1), mColorOwner(this, this), mLensSize(0),
       mLensOffset(0), mLensMat(this), mBeam(this), mSlaves(this), mLightCanMesh(this),
-      mLightCanOffset(0), mTarget(this), mTargetExists(true), mSpotTarget(this),
+      mLightCanOffset(0), mTarget(this), mTargetExists(true), mFloorSpotTarget(this),
       mLastFloorSpotHeight(-1e33), mCastShadow(false), mLightCanSort(false),
       mFirstFrame(true), mDampingConstant(1), mAdditionalObjects(this),
       mAnimateColorFromPreset(true), mAnimateOrientFromPreset(true),
@@ -152,7 +152,7 @@ Spotlight::Spotlight()
 
 Spotlight::~Spotlight() {
     CloseSlaves();
-    RemoveFromLists(this);
+    SpotlightDrawer::RemoveFromLists(this);
     RELEASE(mFlare);
 }
 
@@ -208,12 +208,14 @@ BEGIN_PROPSYNCS(Spotlight)
     SYNC_PROP_SET(
         flare_visibility_test, !mFlareIsBillboard, SetFlareIsBillboard(!_val.Int())
     )
-    SYNC_PROP_MODIFY(spot_target, mSpotTarget, UpdateBounds())
+    SYNC_PROP_MODIFY(spot_target, mFloorSpotTarget, UpdateBounds())
     SYNC_PROP_MODIFY(spot_scale, mSpotScale, UpdateBounds())
     SYNC_PROP_MODIFY(spot_height, mSpotHeight, UpdateBounds())
     SYNC_PROP_MODIFY(spot_material, mDiscMat, UpdateBounds())
     SYNC_PROP_SET(color, GetColor().PackRgb(), SetColor(_val.Int()))
     SYNC_PROP_SET(intensity, GetIntensity(), {
+        // SetIntensity(_val.Float());
+
         float intensity = _val.Float();
         const Hmx::Color &color = GetColor();
         SetColorIntensity(color, intensity);
@@ -247,7 +249,7 @@ BEGIN_SAVES(Spotlight)
     mBeam.Save(bs);
     bs << mLightCanMesh;
     bs << mTarget;
-    bs << mSpotTarget;
+    bs << mFloorSpotTarget;
     bs << mLightCanOffset;
     bs << mLightCanSort;
     bs << mColor;
@@ -284,7 +286,7 @@ BEGIN_COPYS(Spotlight)
             COPY_MEMBER(mFlareOffset)
             COPY_MEMBER(mLightCanMesh)
             COPY_MEMBER(mTarget)
-            COPY_MEMBER(mSpotTarget)
+            COPY_MEMBER(mFloorSpotTarget)
             COPY_MEMBER(mSpotScale)
             COPY_MEMBER(mSpotHeight)
             const Hmx::Color &color = c->GetColor();
@@ -371,7 +373,7 @@ BEGIN_LOADS(Spotlight)
             mTargetExists = false;
         }
         if (d.rev > 0x1C) {
-            d >> mSpotTarget;
+            d >> mFloorSpotTarget;
         }
         d >> mLightCanOffset;
         if (d.rev > 0x1E) {
@@ -847,12 +849,12 @@ void Spotlight::PropogateToPresets(int i) {
 void Spotlight::Generate() {
     if (!mBeam.mBeam || TheLoadMgr.EditMode()) {
         RELEASE(mBeam.mBeam);
-        if (mBeam.HasLength()) {
+        if (HasBeam()) {
             if (SpotlightDrawer::DrawNGSpotlights()) {
                 BuildNGShaft(mBeam);
             } else {
                 BeamDef &beam = mBeam;
-                if (beam.IsCone()) {
+                if (beam.mIsCone) {
                     BuildCone(beam);
                 } else {
                     BuildBeam(beam);
@@ -877,16 +879,16 @@ void Spotlight::BuildCone(Spotlight::BeamDef &def) {
 
 void Spotlight::BuildNGShaft(Spotlight::BeamDef &def) {
     switch (def.mShape) {
-    case BeamDef::kBeamRect:
+    case BeamDef::kRect:
         BuildNGCone(def, 4);
         break;
-    case BeamDef::kBeamSheet:
+    case BeamDef::kSheet:
         BuildNGSheet(def);
         break;
-    case BeamDef::kBeamQuadXYZ:
+    case BeamDef::kQuadXYZ:
         BuildNGQuad(def, RndTransformable::kBillboardXYZ);
         break;
-    case BeamDef::kBeamQuadZ:
+    case BeamDef::kQuadZ:
         BuildNGQuad(def, RndTransformable::kBillboardZ);
         break;
     default:

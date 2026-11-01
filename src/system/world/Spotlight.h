@@ -21,11 +21,11 @@ class Spotlight : public RndDrawable, public RndTransformable, public RndPollabl
 public:
     struct BeamDef {
         enum Shape {
-            kBeamConic = 0,
-            kBeamRect = 1,
-            kBeamSheet = 2,
-            kBeamQuadXYZ = 3,
-            kBeamQuadZ = 4
+            kConic = 0,
+            kRect = 1,
+            kSheet = 2,
+            kQuadXYZ = 3,
+            kQuadZ = 4
         };
 
         BeamDef(Hmx::Object *);
@@ -35,8 +35,6 @@ public:
         Vector2 NGRadii() const;
         void Save(BinStream &) const;
         void Load(BinStreamRev &);
-        bool IsCone() const { return mIsCone; }
-        bool HasLength() const { return mLength > 0; }
 
         RndMesh *mBeam; // 0x0
         /** "Whether this is a beam or a cone" */
@@ -64,7 +62,7 @@ public:
         /** "expand or shrink the radii compared to og beams" */
         float mExpand; // 0x30
         /** "Shape of the beam" */
-        Shape mShape; // 0x34 - enum Shape
+        Shape mShape; // 0x34
         /** "Number of divisions along length" */
         int mNumSections; // 0x38
         /** "Number of divisions along width or around cone" */
@@ -108,48 +106,49 @@ public:
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(Spotlight)
 
-    const Hmx::Color &GetColor() const { return mColorOwner->mColor; }
-    float GetIntensity() const { return mColorOwner->mIntensity; }
-    BeamDef &GetBeam() { return mBeam; }
-    RndFlare *Flare() const { return mFlare; }
-    const ObjPtrList<RndDrawable> &AdditionalObjects() const {
-        return mAdditionalObjects;
-    }
     void SetFlareIsBillboard(bool);
-    void SetIntensity(float);
     void SetColorIntensity(const Hmx::Color &c, float f);
     bool DoFloorSpot() const;
     void CalculateDirection(RndTransformable *, Hmx::Matrix3 &);
-    RndTransformable *GetFloorSpotTarget() const {
-        return mSpotTarget ? mSpotTarget : mTarget;
-    }
-    RndTransformable *GetTarget() const { return mTarget; }
-    void SetTarget(RndTransformable *trans) { mTarget = trans; }
-    RndMat *LensMesh() { return mLensMat; }
-    bool GetCastShadow() const { return mCastShadow; }
-    bool FlareEnabled() const { return mFlareEnabled; }
-    void SetTargetExists(bool b) { mTargetExists = b; }
-    bool TargetExists() const { return mTargetExists; }
-    void SetAnimatingFromPreset(bool b) { mAnimatingFromPreset = b; }
-    RndTransformable *ResolveTarget();
-    void SetFlareEnabled(bool);
-    Hmx::Color IntensifiedColor() const {
-        const Hmx::Color &c = GetColor();
-        float intensity = GetIntensity();
-        return Hmx::Color(c.red * intensity, c.green * intensity, c.blue * intensity, 1);
-    }
+
+    float GetIntensity() const { return mColorOwner->mIntensity; }
+    const Hmx::Color &GetColor() const { return mColorOwner->mColor; }
     bool GetAnimateFromPreset() const {
         return mAnimateColorFromPreset || mAnimateOrientFromPreset;
     }
-    bool GetAnimateColorFromPreset() const { return mAnimateColorFromPreset; }
     bool GetAnimateOrientFromPreset() const { return mAnimateOrientFromPreset; }
+    bool GetAnimateColorFromPreset() const { return mAnimateColorFromPreset; }
+    RndTransformable *GetTarget() const { return mTarget; }
+    RndTransformable *GetFloorSpotTarget() const {
+        return mFloorSpotTarget ? mFloorSpotTarget : mTarget;
+    }
+    bool GetCastShadow() const { return mCastShadow; }
+    bool SortCan() const { return mLightCanSort; }
+    void SetBeam(const BeamDef &beam) { mBeam = beam; }
+    bool HasBeam() const { return mBeam.mLength > 0; }
+    BeamDef &GetBeam() { return mBeam; }
+    const BeamDef &GetBeam() const { return mBeam; }
+    // void CopyTarget(const Spotlight*);
+    ObjPtrList<RndDrawable> &AdditionalObjects() { return mAdditionalObjects; }
+    RndMesh *LensMesh() { return sDiskMesh; }
+    RndMat *LensMat() { return mLensMat; }
+    const Transform &LensXfm() const { return mLensXfm; }
+    RndFlare *Flare() { return mFlare; }
+    RndMat *DiscMat() { return mDiscMat; }
+    // RndMesh* FloorSpotMesh();
+    const Transform &FloorSpotXfm() const { return mFloorSpotXfm; }
+    RndMesh *LightCan() { return mLightCanMesh; }
+    const Transform &LightCanXfm() const { return mLightCanXfm; }
+    bool TargetExists() const { return mTargetExists; }
+    void SetFlareEnabled(bool);
+    bool FlareEnabled() const { return mFlareEnabled; }
+    //  public: void SetFlareIsBillboard(bool);
+    //  public: bool FlareIsBillboard() const;
+    void SetTargetExists(bool b) { mTargetExists = b; }
+    void SetTarget(RndTransformable *trans) { mTarget = trans; }
     const Hmx::Quat &PresetOrient() const { return mPresetOrient; }
     void SetPresetOrient(const Hmx::Quat &quat) { mPresetOrient = quat; }
-    static void RemoveFromLists(Spotlight *);
-    static RndMesh *GetDiskMesh() { return sDiskMesh; }
-    bool HasBeam() const { return 0 < mBeam.mLength; }
-    RndMesh *LightCan() { return mLightCanMesh; }
-    bool SortCan() const { return mLightCanSort; }
+    void SetAnimatingFromPreset(bool b) { mAnimatingFromPreset = b; }
 
 protected:
     Spotlight();
@@ -157,6 +156,7 @@ protected:
     void Generate();
     void UpdateTransforms();
     void UpdateFlare();
+    void SetIntensity(float);
     void SetColor(int);
     void CloseSlaves();
     void PropogateToPresets(int);
@@ -164,6 +164,7 @@ protected:
     void CheckFloorSpotTransform();
     void UpdateFloorSpotTransform(const Transform &);
     void ConvertGroupToMesh(RndGroup *);
+    RndTransformable *ResolveTarget();
 
     void BuildNGCone(BeamDef &, int);
     void BuildNGSheet(BeamDef &);
@@ -215,7 +216,7 @@ protected:
     ObjPtr<RndTransformable> mTarget; // 0x2dc
     bool mTargetExists;
     /** "Reference object for floor height, uses spot target if not set" */
-    ObjPtr<RndTransformable> mSpotTarget; // 0x2f4
+    ObjPtr<RndTransformable> mFloorSpotTarget; // 0x2f4
     float mLastFloorSpotHeight;
     /** "Whether the target should cast a shadow" */
     bool mCastShadow; // 0x30c
