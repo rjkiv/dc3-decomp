@@ -1,8 +1,10 @@
+#include "char/CharCollide.h"
 #include "char/Character.h"
 #include "math/Color.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Rand.h"
+#include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
@@ -27,6 +29,7 @@
 #include "world/ColorPalette.h"
 #include "world/Crowd.h"
 #include "world/Crowd3DCharHandle.h"
+#include <float.h>
 
 static RndTex *gImpostorTex[kNumLods] = { nullptr };
 static RndCam *gImpostorCamera = nullptr;
@@ -485,6 +488,149 @@ void WorldCrowd::DrawShowing() {
     std::vector<Hmx::Rect> rects;
     rects.reserve(12);
     FOREACH (it, mCharacters) {
+        Character *curChar = it->mDef.mChar;
+        RndMultiMesh *curMMesh = it->mMMesh;
+        if (curChar && curMMesh && !m3DOnly && TheRnd.DrawMode() != Rnd::kDrawOcclusion
+            && curMMesh->Instances().size() != 0) {
+            SetMatAndCameraLod();
+            RndCam *curCam = RndCam::Current();
+            Transform tf1a0;
+            tf1a0.m = RndCam::Current()->WorldXfm().m;
+            float f35 = it->mDef.mHeight / 2;
+            float f33 = f35 / 2;
+            Vector3 vdiff;
+            Subtract(curCam->WorldXfm().v, mPlacementMesh->WorldXfm().v, vdiff);
+            vdiff.z -= f35;
+            float diffLen = Length(vdiff);
+            float height = Max(diffLen, curCam->NearPlane() + f35);
+            Multiply(Vector3(0, -height, 0), tf1a0.m, tf1a0.v);
+            tf1a0.v.z += f35;
+            gImpostorCamera->SetLocalXfm(tf1a0);
+            float f21 = atanf(f35 / diffLen);
+            gImpostorCamera->SetFrustum(
+                curCam->NearPlane(), curCam->FarPlane(), f21 * 2, 1
+            );
+
+            Transform tf220;
+            if (mRotate == kCrowdRotateNone) {
+                tf220.m = mPlacementMesh->WorldXfm().m;
+            } else {
+                tf220.m.z = mPlacementMesh->WorldXfm().m.z;
+                if (mRotate == kCrowdRotateFace) {
+                    Cross(tf220.m.z, curCam->WorldXfm().m.y, tf220.m.x);
+                } else {
+                    Cross(curCam->WorldXfm().m.y, tf220.m.z, tf220.m.x);
+                }
+                Normalize(tf220.m.x, tf220.m.x);
+                Cross(tf220.m.z, tf220.m.x, tf220.m.y);
+            }
+            tf220.v.Set(0, 0, 0);
+            curChar->SetWorldXfm(tf220);
+
+            rects.clear();
+            static const char *boundingSpheres[] = {
+                "chest.coll",  "head.coll",   "l_arm.coll",  "l_foot.coll",
+                "l_hand.coll", "l_knee.coll", "pelvis.coll", "r_arm.coll",
+                "r_foot.coll", "r_hand.coll", "r_knee.coll", ""
+            };
+            for (int i = 0; *boundingSpheres[i] != '\0'; i++) {
+                CharCollide *curColl =
+                    curChar->Find<CharCollide>(boundingSpheres[i], false);
+                if (curColl) {
+                    Vector2 screen;
+                    gImpostorCamera->WorldToScreen(curColl->WorldXfm().v, screen);
+                    Sphere s(curColl->WorldXfm().v, curColl->Radius());
+                    float height = gImpostorCamera->CalcScreenHeight(s);
+                    if (height != kHugeFloat) {
+                        float w = height * 2;
+                        rects.push_back(
+                            Hmx::Rect(
+                                -(w / 2 - screen.x), -(height / 2 - screen.y), w, height
+                            )
+                        );
+                    }
+                } else {
+                    MILO_NOTIFY_ONCE(
+                        "crowd char %s doesn't have %s\n",
+                        PathName(curChar),
+                        boundingSpheres[i]
+                    );
+                }
+            }
+
+            float minX = FLT_MAX;
+            float maxX = -FLT_MAX;
+            float minY = FLT_MAX;
+            float maxY = -FLT_MAX;
+            for (int i = 0; i != rects.size(); i++) {
+                const Hmx::Rect &r = rects[i];
+                MinEq(minY, r.y);
+                MinEq(minX, r.x);
+                MaxEq(maxY, r.y + r.h);
+                MaxEq(maxX, r.x + r.w);
+            }
+            minX = Max(0.0f, minX);
+            maxX = Min(1.0f, maxX);
+            minY = Max(0.0f, minY);
+            maxY = Min(1.0f, maxY);
+
+            if (TheRnd.DrawMode() == Rnd::kDrawNormal) {
+                if (!mImposterEnviron) {
+                    MILO_NOTIFY_ONCE(
+                        "%s: Rendering 2D crowd character texture without an environment, set the environ property on the WorldCrowd object.",
+                        PathName(this)
+                    );
+                }
+
+                bool c19 = true;
+                if (mImposterEnviron) {
+                    c19 = mImposterEnviron->UsesApproxGlobal();
+                    mImposterEnviron->SetUseApproxGlobal(false);
+                }
+                RndEnvironTracker t(mImposterEnviron, &curChar->WorldXfm().v);
+                gImpostorCamera->Select();
+                curChar->SetShowing(true);
+                if (mCharForceLod != kLODPerFrame) {
+                    curChar->SetLodType((LODType)mCharForceLod);
+                }
+                curChar->DrawShowing();
+                if (mCharForceLod != kLODPerFrame) {
+                    curChar->SetLodType(kLODPerFrame);
+                }
+                if (mImposterEnviron) {
+                    mImposterEnviron->SetUseApproxGlobal(c19);
+                }
+                curCam->Select();
+            }
+
+            float fvar2 = -(minY * it->mDef.mHeight - f35);
+            float fvar38 = minX * f35 - f33;
+            float fvar6 = -(maxY * it->mDef.mHeight - f35);
+            float fvar1 = maxX * f35 - f33;
+
+            auto &verts = it->mMMesh->Mesh()->Verts();
+            verts[0].pos.Set(fvar38, 0, fvar2);
+            verts[1].pos.Set(fvar38, 0, fvar6);
+            verts[2].pos.Set(fvar1, 0, fvar2);
+            verts[3].pos.Set(fvar1, 0, fvar6);
+            verts[0].tex.Set(minX, minY);
+            verts[1].tex.Set(minX, maxY);
+            verts[2].tex.Set(maxX, minY);
+            verts[3].tex.Set(maxX, maxY);
+            it->mMMesh->Mesh()->Sync(RndMesh::kVerts);
+
+            RndEnviron *curEnv = RndEnviron::Current();
+            bool r20 = true;
+            if (curEnv) {
+                r20 = curEnv->UsesApproxGlobal();
+                curEnv->SetUseApproxGlobal(false);
+            }
+            RndEnvironTracker t(curEnv, nullptr);
+            curMMesh->DrawShowing();
+            if (curEnv) {
+                curEnv->SetUseApproxGlobal(r20);
+            }
+        }
     }
 }
 
