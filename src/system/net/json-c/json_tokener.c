@@ -1,5 +1,3 @@
-// clang-format disable: third-party code
-
 /*
  * $Id: json_tokener.c,v 1.20 2006/07/25 03:24:50 mclark Exp $
  *
@@ -164,7 +162,7 @@ char *strndup(const char *str, size_t n) {
  *   For convenience of existing conditionals, returns the old value of c (0 on eof)
  *   Implicit inputs:  c var
  */
-#define ADVANCE_CHAR(str, tok, c) (++(str), ((tok)->char_offset)++, c)
+#define ADVANCE_CHAR(str, tok) (++(str), ((tok)->char_offset)++, c)
 
 /* End optimization macro defs */
 
@@ -179,11 +177,10 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
     while (POP_CHAR(c, tok)) {
     redo_char:
         switch (state) {
-            char c2;
         case json_tokener_state_eatws:
             /* Advance until we change state */
-            while (c2 = c, isspace(c)) {
-                if ((!ADVANCE_CHAR(str, tok, c2)) || (!POP_CHAR(c, tok)))
+            while (isspace(c)) {
+                if ((!ADVANCE_CHAR(str, tok)) || (!POP_CHAR(c, tok)))
                     goto out;
             }
             if (c == '/') {
@@ -298,7 +295,7 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
             /* Advance until we change state */
             const char *case_start = str;
             while (c != '*') {
-                if (!ADVANCE_CHAR(str, tok, c) || !POP_CHAR(c, tok)) {
+                if (!ADVANCE_CHAR(str, tok) || !POP_CHAR(c, tok)) {
                     printbuf_memappend_fast(tok->pb, case_start, str - case_start);
                     goto out;
                 }
@@ -311,7 +308,7 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
             /* Advance until we change state */
             const char *case_start = str;
             while (c != '\n') {
-                if (!ADVANCE_CHAR(str, tok, c) || !POP_CHAR(c, tok)) {
+                if (!ADVANCE_CHAR(str, tok) || !POP_CHAR(c, tok)) {
                     printbuf_memappend_fast(tok->pb, case_start, str - case_start);
                     goto out;
                 }
@@ -347,7 +344,7 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
                     state = json_tokener_state_string_escape;
                     break;
                 }
-                if (!ADVANCE_CHAR(str, tok, c) || !POP_CHAR(c, tok)) {
+                if (!ADVANCE_CHAR(str, tok) || !POP_CHAR(c, tok)) {
                     printbuf_memappend_fast(tok->pb, case_start, str - case_start);
                     goto out;
                 }
@@ -421,7 +418,7 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
                         tok->err = json_tokener_error_parse_string;
                         goto out;
                     }
-                    if (!ADVANCE_CHAR(str, tok, c) || !POP_CHAR(c, tok))
+                    if (!ADVANCE_CHAR(str, tok) || !POP_CHAR(c, tok))
                         goto out;
                 }
             }
@@ -441,12 +438,14 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
                     state = json_tokener_state_eatws;
                     goto redo_char;
                 }
-            } else if (strncasecmp(
-                           json_false_str,
-                           tok->pb->buf,
-                           json_min(tok->st_pos + 1, strlen(json_false_str))
-                       )
-                       == 0) {
+            } else if (
+                strncasecmp(
+                    json_false_str,
+                    tok->pb->buf,
+                    json_min(tok->st_pos + 1, strlen(json_false_str))
+                )
+                == 0
+            ) {
                 if (tok->st_pos == strlen(json_false_str)) {
                     current = json_object_new_boolean(0);
                     saved_state = json_tokener_state_finish;
@@ -468,7 +467,7 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
                 ++case_len;
                 if (c == '.' || c == 'e')
                     tok->is_double = 1;
-                if (!ADVANCE_CHAR(str, tok, c) || !POP_CHAR(c, tok)) {
+                if (!ADVANCE_CHAR(str, tok) || !POP_CHAR(c, tok)) {
                     printbuf_memappend_fast(tok->pb, case_start, case_len);
                     goto out;
                 }
@@ -558,7 +557,7 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
                     state = json_tokener_state_string_escape;
                     break;
                 }
-                if (!ADVANCE_CHAR(str, tok, c) || !POP_CHAR(c, tok)) {
+                if (!ADVANCE_CHAR(str, tok) || !POP_CHAR(c, tok)) {
                     printbuf_memappend_fast(tok->pb, case_start, str - case_start);
                     goto out;
                 }
@@ -606,7 +605,7 @@ json_tokener_parse_ex(struct json_tokener *tok, const char *str, int len) {
             }
             break;
         }
-        if (!ADVANCE_CHAR(str, tok, c))
+        if (!ADVANCE_CHAR(str, tok))
             goto out;
     } /* while(POP_CHAR) */
 
@@ -626,5 +625,3 @@ out:
     );
     return NULL;
 }
-
-// clang-format enable
