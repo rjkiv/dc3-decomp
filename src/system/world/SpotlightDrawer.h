@@ -71,6 +71,7 @@ public:
     NEW_OBJ(SpotlightDrawer)
 
     static void Init();
+    REGISTER_OBJ(SpotlightDrawer);
 
     void Select();
     void DeSelect();

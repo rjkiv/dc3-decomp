@@ -203,7 +203,13 @@ void DrawAccessories(
     SpotlightDrawer::SpotlightEntry *const &spotEnd
 );
 
-class LensExtract {};
+class LensExtract {
+public:
+    static bool Has(SpotlightDrawer::SpotlightEntry *&);
+    static RndMesh *Mesh(SpotlightDrawer::SpotlightEntry *&);
+    static const Transform &Xfm(SpotlightDrawer::SpotlightEntry *&);
+    static RndMat *Mat(SpotlightDrawer::SpotlightEntry *&);
+};
 
 void SpotlightDrawer::DrawWorld() {
     TheNgStats->mSpotlights = Max<int>(sLights.size(), TheNgStats->mSpotlights);
@@ -279,7 +285,7 @@ void SpotlightDrawer::DrawMeshVec(std::vector<SpotMeshEntry> &entries) {
         RndEnviron *currEnv = meshIter->mEnv;
         currEnv->Select(nullptr);
         SpotMeshEntry *const meshEnd = entries.end();
-        for (; meshIter != meshEnd; ++meshIter) {
+        for (++meshIter; meshIter != meshEnd; ++meshIter) {
             bool changeEnv = meshIter->mEnv != currEnv;
             bool changeMesh = meshIter->mMesh != currMesh;
             if (changeEnv || changeMesh) {
@@ -366,10 +372,11 @@ void SpotlightDrawer::ClearPostDraw() {
 void SpotlightDrawer::Init() {
     sEnviron = Hmx::Object::New<RndEnviron>();
     sEnviron->SetUseApproxes(false);
-    REGISTER_OBJ_FACTORY(SpotlightDrawer)
-    sDefault = Hmx::Object::New<SpotlightDrawer>();
-    sDefault->mParams.mLightingInfluence = 0.0f;
-    sDefault->Select();
+    SpotlightDrawer::Register();
+    SpotlightDrawer *sd = Hmx::Object::New<SpotlightDrawer>();
+    sDefault = sd;
+    sd->mParams.mLightingInfluence = 0;
+    sd->Select();
 }
 
 void SpotlightDrawer::Select() {
