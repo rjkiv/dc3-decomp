@@ -197,11 +197,12 @@ DataArray *DataReadStream(BinStream *bs) {
 
 DataArray *LoadDtz(const char *c, int charIdx) {
     int decompSize = 0;
+    const char *cIdx = &c[charIdx - 4];
     char *decompChars = (char *)&decompSize;
-    decompChars[0] = c[charIdx - 1];
-    decompChars[1] = c[charIdx - 2];
-    decompChars[2] = c[charIdx - 3];
-    decompChars[3] = c[charIdx - 4];
+    decompChars[0] = cIdx[3];
+    decompChars[1] = cIdx[2];
+    decompChars[2] = cIdx[1];
+    decompChars[3] = cIdx[0];
     MILO_ASSERT(decompSize > 0, 0x456);
     void *pDecompBuf = MemAlloc(decompSize, __FILE__, 0x459, "LoadDtz", 0);
     MILO_ASSERT(pDecompBuf, 0x45b);
