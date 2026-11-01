@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-void *malloc(size_t size);
-void *calloc(size_t nitems, size_t size);
-void *realloc(void *ptr, size_t size);
-void free(void *);
+NOALIAS RESTRICT void *malloc(size_t size);
+NOALIAS RESTRICT void *calloc(size_t nitems, size_t size);
+NOALIAS RESTRICT void *realloc(void *ptr, size_t size);
+NOALIAS void free(void *);
 
 void *_alloca(size_t size);
 
