@@ -261,8 +261,8 @@ Symbol RhythmBattle::GetLeader() const {
     static Symbol right("right");
     bool goofy = GetGoofy();
     Symbol ret = both;
-    int p1 = mPlayer0 ? mPlayer0->GetScore() : 0;
-    int p2 = mPlayer1 ? mPlayer1->GetScore() : 0;
+    int p1 = mPlayer0 ? mPlayer0->Score() : 0;
+    int p2 = mPlayer1 ? mPlayer1->Score() : 0;
     if (p1 != p2) {
         bool u4 = p2 < p1;
         if (goofy) {
@@ -489,7 +489,7 @@ void RhythmBattle::UpdateMindControl() {
                 TheHamDirector->SetProperty("shot", CAMP_MINDCONTROL_DANCE);
             }
         }
-    } else if (mPlayer0->GetGrooveState() || mPlayer1->GetGrooveState()) {
+    } else if (mPlayer0->GrooveState() || mPlayer1->GrooveState()) {
         mMindControlProgress += TheTaskMgr.DeltaBeat() / 10.0f;
     }
     for (int i = 0; i < 2; i++) {
@@ -908,25 +908,25 @@ void RhythmBattle::OnBeat() {
         p1Update = mPlayer0->UpdateState();
         p2Update = mPlayer1->UpdateState();
     }
-    int i16 = p1Update ? mPlayer0->GetGrooveState() : -1;
-    int i19 = p2Update ? mPlayer1->GetGrooveState() : -1;
+    int i16 = p1Update ? mPlayer0->GrooveState() : -1;
+    int i19 = p2Update ? mPlayer1->GrooveState() : -1;
     int i6b4;
     if (i19 < i16) {
         if (p1Update) {
-            i6b4 = mPlayer0->GetGrooveState();
+            i6b4 = mPlayer0->GrooveState();
         } else {
             i6b4 = -1;
         }
     } else {
         if (p2Update) {
-            i6b4 = mPlayer1->GetGrooveState();
+            i6b4 = mPlayer1->GrooveState();
         } else {
             i6b4 = -1;
         }
     }
-    int i28 = Max(mPlayer0->GetGrooveState(), mPlayer1->GetGrooveState());
-    bool i35 = i6b4 == mPlayer0->GetGrooveState();
-    bool i27 = i6b4 == mPlayer1->GetGrooveState();
+    int i28 = Max(mPlayer0->GrooveState(), mPlayer1->GrooveState());
+    bool i35 = i6b4 == mPlayer0->GrooveState();
+    bool i27 = i6b4 == mPlayer1->GrooveState();
     bool b6f0 = i35;
     if (goofy) {
         b6f0 = i27;
@@ -944,8 +944,7 @@ void RhythmBattle::OnBeat() {
                 RhythmBattlePlayer *first = mPlayer0;
                 RhythmBattlePlayer *second = mPlayer1;
                 if (mPlayer0->InTheZone() && !mPlayer1->InTheZone()
-                    || (mPlayer1->InTheZone()
-                        && mPlayer1->GetScore() < mPlayer0->GetScore())) {
+                    || (mPlayer1->InTheZone() && mPlayer1->Score() < mPlayer0->Score())) {
                     b36 = false;
                     first = mPlayer1;
                     second = mPlayer0;
@@ -975,8 +974,7 @@ void RhythmBattle::OnBeat() {
         remainingValue = -1;
     }
     play_vo[0] = none;
-    if (i27 || i35 || (mPlayer0->ZoneValue() != 0 && mPlayer0->GetLastInTheZone() == 0)
-        || (mPlayer1->ZoneValue() != 0 && mPlayer1->GetLastInTheZone() == 0)) {
+    if (i27 || i35 || mPlayer0->InTheZoneStart() || mPlayer1->InTheZoneStart()) {
         static Symbol rhythmbattle_off_beat_p1p2("rhythmbattle_off_beat_p1p2");
         static Symbol rhythmbattle_off_beat_p1("rhythmbattle_off_beat_p1");
         static Symbol rhythmbattle_off_beat_p2("rhythmbattle_off_beat_p2");
@@ -1156,8 +1154,8 @@ void RhythmBattle::OnBeat() {
         if (play_vo[0].Sym() != intro && remainingValue > 0) {
             static Symbol inzone("inzone");
             static Symbol inzone_warning("inzone_warning");
-            if ((mPlayer0->ZoneValue() && !mPlayer0->GetLastInTheZone())
-                || (mPlayer1->ZoneValue() && !mPlayer1->GetLastInTheZone())) {
+
+            if (mPlayer0->InTheZoneStart() || mPlayer1->InTheZoneStart()) {
                 bool b43 = false;
                 bool b42 = false;
                 if (mPlayer0->InTheZone() || mPlayer1->InTheZone()) {
@@ -1248,7 +1246,7 @@ void RhythmBattle::OnBeat() {
     if (mOutroBegun) {
         End();
     }
-    float min84 = Min(mPlayer0->GetInTheZoneProgress(), mPlayer1->GetInTheZoneProgress());
+    float min84 = Min(mPlayer0->InTheZoneProgress(), mPlayer1->InTheZoneProgress());
     static UIPanel *sLoadingPanel =
         ObjectDir::Main()->Find<UIPanel>("loading_panel", false);
     if (sLoadingPanel && sLoadingPanel->LoadedDir()) {

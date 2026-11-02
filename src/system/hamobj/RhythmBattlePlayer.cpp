@@ -30,7 +30,7 @@ namespace {
     bool gDebugFresh;
 }
 
-static const float sThreshold = 0.6f;
+static const float kFreshThresh = 0.6f;
 
 RhythmBattlePlayer::RhythmBattlePlayer()
     : mComboPositionAnim(this), mComboColorAnim(this), mOneXComboEventAnim(this),
@@ -39,9 +39,9 @@ RhythmBattlePlayer::RhythmBattlePlayer()
       mInAnim2(this), mOutAnim(this), mBoxyDir(this), mComboLabel(this),
       mScoreLabel(this), mInTheZoneFlow(this), mOutTheZoneOkFlow(this),
       mOutTheZoneBadFlow(this), mSwagJackedFlow(this), mPhraseMeter(this),
-      mTransConstraint(this), mBoxyWaistTrans(this), mBoxyman1(this), mBoxyman2(this),
+      mPhraseMeterConstraint(this), mBoxyWaist(this), mBoxyman1(this), mBoxyman2(this),
       mTextFeedback(this), mMoveFeedback(this), mStealPartSys(this), mStealAnim(this),
-      mPlayer(0), mRhythmBattle(0), mGroove(0), mFreshness(0), mBeatGrooveAccum(0),
+      mPlayer(0), mParent(0), mGroove(0), mFreshness(0), mBeatGrooveAccum(0),
       mBeatFreshAccum(0), mAccumBeat(0), mLastPollBeat(0), mGrooveState(kNoGroove),
       mInTheZone(-2), mMeasureGroove(0), mMeasureFresh(0), mScore(0),
       mInTheZoneProgress(0), mGoofySwap(false), mDebugInt(-1), mToken("none"),
@@ -132,11 +132,11 @@ void RhythmBattlePlayer::Poll() {
         ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
     if (!TheLoadMgr.EditMode() && sRhythmDetectorPanel) {
         float f12 = TheTaskMgr.Beat();
-        if (mRhythmBattle && mRhythmBattle->InFullKTB()) {
+        if (mParent && mParent->FullonKtB()) {
             HamPlayerData *hpd = TheGameData->Player(mPlayer);
             hpd->Provider()->Export(Message("hide_hud", 0), true);
         }
-        if (mActive && mRhythmBattle && !mRhythmBattle->IsPaused()) {
+        if (mActive && mParent && !mParent->Paused()) {
             int skelIdx = TheGestureMgr->GetSkeletonIndexByTrackingID(
                 TheGameData->Player(mPlayer)->GetSkeletonTrackingID()
             );
@@ -197,7 +197,7 @@ void RhythmBattlePlayer::Poll() {
             if (mPhraseMeter) {
                 mPhraseMeter->SetRatingFrac(frac, Max(f16, 0.0f));
             }
-            if (mInTheZone == 1 && mRhythmBattle && mRhythmBattle->InFullKTB()) {
+            if (mInTheZone == 1 && mParent && mParent->FullonKtB()) {
                 mInTheZoneProgress -= f17 * 1.125f;
                 if (mInTheZoneProgress < 0) {
                     mInTheZoneProgress = 0;
@@ -259,7 +259,7 @@ void RhythmBattlePlayer::Enter() {
     }
     mActive = false;
     mLoopingMultAnim = nullptr;
-    mTransConstraint = nullptr;
+    mPhraseMeterConstraint = nullptr;
     if (!mBoxyDir && TheHamDirector) {
         WorldDir *wdir = TheHamDirector->GetVenueWorld();
         if (wdir) {
@@ -267,7 +267,7 @@ void RhythmBattlePlayer::Enter() {
         }
     }
     if (mBoxyDir) {
-        mTransConstraint = mBoxyDir->Find<TransConstraint>(
+        mPhraseMeterConstraint = mBoxyDir->Find<TransConstraint>(
             mPlayer != 0 ? "TransConstraint1.tc" : "TransConstraint.tc", false
         );
         mPhraseMeter = mBoxyDir->Find<HamPhraseMeter>(
@@ -282,7 +282,7 @@ void RhythmBattlePlayer::Enter() {
         mInTheZoneAnim = mBoxyDir->Find<RndAnimatable>(
             mPlayer != 0 ? "rhythmbattle_p2.anim" : "rhythmbattle_p1.anim", false
         );
-        mBoxyWaistTrans = mBoxyDir->Find<RndTransformable>(
+        mBoxyWaist = mBoxyDir->Find<RndTransformable>(
             mPlayer != 0 ? "boxywaist_p2.trans" : "boxywaist_p1.trans", false
         );
         mStealPartSys = mBoxyDir->Find<RndParticleSys>(
@@ -302,7 +302,7 @@ void RhythmBattlePlayer::Enter() {
         }
         if (mBoxyman1) {
             DepthBuffer3DAttachment attachment;
-            attachment.obj = mBoxyWaistTrans;
+            attachment.obj = mBoxyWaist;
             attachment.player = mPlayer;
             attachment.bone = kJointHipCenter;
             attachment.offset = Vector3::GetZero();
@@ -342,18 +342,18 @@ void RhythmBattlePlayer::SetWindow(float f1, float f2) {
     mMeasureEndBeat = f2;
 }
 
-void RhythmBattlePlayer::SetInTheZone(int i, bool b1, bool b2) {
+void RhythmBattlePlayer::SetInTheZone(int zoned, bool transition, bool bad) {
     if (!mActive) {
-        i = -1;
+        zoned = -1;
     }
-    if (mInTheZone != i) {
-        AnimateBoxyState(i, b1, b2);
+    if (mInTheZone != zoned) {
+        AnimateBoxyState(zoned, transition, bad);
     }
 }
 
 void RhythmBattlePlayer::SetActive(bool b1) {
     mActive = b1;
-    if (!mActive && mRhythmBattle && mRhythmBattle->InFullKTB() && mInTheZone != -1) {
+    if (!mActive && mParent && mParent->FullonKtB() && mInTheZone != -1) {
         AnimateBoxyState(-1, true, false);
     }
 }
@@ -365,7 +365,7 @@ bool RhythmBattlePlayer::UpdateState() {
     mLastGrooveState = mGrooveState;
     if (mMeasureGroove < 0.5f) {
         mGrooveState = kNoGroove;
-    } else if (mMeasureFresh >= sThreshold) {
+    } else if (mMeasureFresh >= kFreshThresh) {
         mGrooveState = kFreshMoves;
     } else if (mGrooveState <= 1) {
         mGrooveState = kSwitchUp;
@@ -450,7 +450,7 @@ void RhythmBattlePlayer::UpdateScore(int i1) {
 void RhythmBattlePlayer::OnReset(RhythmBattle *rb) {
     static Symbol none("none");
     mMeasureTrick = none;
-    mRhythmBattle = rb;
+    mParent = rb;
     mSwitchUpCooldown = 0;
     mGrooveState = kNoGroove;
     mMeasureMove = 0;
@@ -670,7 +670,7 @@ void RhythmBattlePlayer::UpdateScore(Hmx::Object *handler) {
     mMeasureTrick = none;
     mMeasureMove = mBeatMoveAccum / mAccumBeat;
     static Symbol autotrick(OptionStr("autotrick", "none"));
-    if ((mMeasureMove < 0.5f || autotrick == pose) && mRhythmBattle->CanTrick(pose)) {
+    if ((mMeasureMove < 0.5f || autotrick == pose) && mParent->CanTrick(pose)) {
         mMeasureTrick = rhythmbattle_trickpose;
     }
     skelIdx = TheGestureMgr->GetSkeletonIndexByTrackingID(
@@ -682,8 +682,7 @@ void RhythmBattlePlayer::UpdateScore(Hmx::Object *handler) {
         float yRight = skeleton.TrackedJoints()[kJointFootRight].mPos[0].y;
         float yMin = yLeft < yRight ? yLeft : yRight;
         float yMax = yLeft > yRight ? yLeft : yRight;
-        if (mLastFeets != -1 && (yMin - mLastFeets > 0.1f)
-            && mRhythmBattle->CanTrick(jump)) {
+        if (mLastFeets != -1 && (yMin - mLastFeets > 0.1f) && mParent->CanTrick(jump)) {
             mMeasureTrick = rhythmbattle_trickjump;
         }
         mLastFeets = yMax;
@@ -720,7 +719,7 @@ void RhythmBattlePlayer::AnimateOut() {}
 
 void RhythmBattlePlayer::UpdateComboProgress() {
     float f;
-    if (!mRhythmBattle || !mRhythmBattle->InFullKTB()) {
+    if (!mParent || !mParent->FullonKtB()) {
         f = 8.0f;
     } else {
         f = 4.0f;
@@ -753,39 +752,39 @@ void RhythmBattlePlayer::UpdateComboProgress() {
     }
 }
 
-void RhythmBattlePlayer::AnimateBoxyState(int i1, bool b2, bool b3) {
-    b3 = mInTheZone != -1 ? b3 : false;
+void RhythmBattlePlayer::AnimateBoxyState(int zoned, bool transition, bool bad) {
+    bad = mInTheZone != -1 ? bad : false;
     if (mInTheZoneAnim) {
         float f30 = 0;
         static Symbol none("none");
-        Symbol lmao = none;
+        Symbol noneSym = none;
         RndAnimatable::Rate rate = mInTheZoneAnim->GetRate();
-        if (i1 > 0) {
-            if (b2) {
-                mInTheZoneAnim->Animate(0, false, 0, rate, 8, 12, 0, 1, lmao);
+        if (zoned > 0) {
+            if (transition) {
+                mInTheZoneAnim->Animate(0, false, 0, rate, 8, 12, 0, 1, noneSym);
                 f30 = 4;
             }
             static Symbol loop("loop");
             mInTheZoneAnim->Animate(0, false, f30, rate, 12, 20, 0, 1, Symbol(loop));
-        } else if (i1 == 0) {
-            if (b2) {
+        } else if (zoned == 0) {
+            if (transition) {
                 if (mInTheZone == -1) {
-                    mInTheZoneAnim->Animate(0, false, 0, rate, 36, 40, 0, 1, lmao);
+                    mInTheZoneAnim->Animate(0, false, 0, rate, 36, 40, 0, 1, noneSym);
                     f30 = 4;
                 } else if (mInTheZone == 1) {
-                    mInTheZoneAnim->Animate(0, false, 0, rate, 20, 24, 0, 1, lmao);
+                    mInTheZoneAnim->Animate(0, false, 0, rate, 20, 24, 0, 1, noneSym);
                     f30 = 4;
                 }
             }
             static Symbol loop("loop");
             mInTheZoneAnim->Animate(0, false, f30, rate, 0, 8, 0, 1, Symbol(loop));
-        } else if (i1 < 0) {
-            if (b2) {
+        } else if (zoned < 0) {
+            if (transition) {
                 if (mInTheZone == 0) {
-                    mInTheZoneAnim->Animate(0, false, 0, rate, 24, 28, 0, 1, lmao);
+                    mInTheZoneAnim->Animate(0, false, 0, rate, 24, 28, 0, 1, noneSym);
                     f30 = 4;
                 } else if (mInTheZone == 1) {
-                    mInTheZoneAnim->Animate(0, false, 0, rate, 20, 28, 0, 2, lmao);
+                    mInTheZoneAnim->Animate(0, false, 0, rate, 20, 28, 0, 2, noneSym);
                     f30 = 4;
                 }
             }
@@ -794,21 +793,21 @@ void RhythmBattlePlayer::AnimateBoxyState(int i1, bool b2, bool b3) {
         }
     }
 
-    mInTheZone = i1;
+    mInTheZone = zoned;
     static Symbol swag_jacked("swag_jacked");
     HamPlayerData *hpd = TheGameData->Player(mPlayer);
     static Symbol rhythmbattle_inthezone("rhythmbattle_inthezone");
     static Symbol rhythmbattle_outthezone("rhythmbattle_outthezone");
-    if (i1 != -1) {
-        if (i1 != 0) {
+    if (zoned != -1) {
+        if (zoned != 0) {
             if (mInTheZoneFlow) {
                 mInTheZoneFlow->Activate();
             }
             hpd->Provider()->Export(Message(rhythmbattle_inthezone), true);
         } else {
-            if (b3 && mOutTheZoneBadFlow && !mForceFail) {
+            if (bad && mOutTheZoneBadFlow && !mForceFail) {
                 mOutTheZoneBadFlow->Activate();
-            } else if (!b3 && mOutTheZoneOkFlow) {
+            } else if (!bad && mOutTheZoneOkFlow) {
                 mOutTheZoneOkFlow->Activate();
             }
             hpd->Provider()->Export(Message(rhythmbattle_outthezone), true);

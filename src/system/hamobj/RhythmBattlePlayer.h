@@ -51,38 +51,44 @@ public:
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(RhythmBattlePlayer)
 
-    int InTheZone() const;
-    void SetInTheZone(int, bool, bool);
+    void SetInTheZone(int zoned, bool transition, bool bad);
     float InAnimBeatLength() const;
-    void SetWindow(float, float);
+    void SetWindow(float startBeat, float endBeat);
     bool UpdateState();
     void HackPlayerQuit();
-    int SwagJacked(Hmx::Object *, RhythmBattleJackState);
-    void SwagJackedBonus(Hmx::Object *, RhythmBattleJackState, int);
+    int SwagJacked(Hmx::Object *handler, RhythmBattleJackState newState);
+    void SwagJackedBonus(Hmx::Object *handler, RhythmBattleJackState newState, int bonus);
     void AnimateIn();
-    void SwapObjs(RhythmBattlePlayer *);
-    void OnReset(class RhythmBattle *);
-    void UpdateScore(Hmx::Object *);
+    void SwapObjs(RhythmBattlePlayer *rhs);
+    void OnReset(class RhythmBattle *parent);
+    void UpdateScore(Hmx::Object *handler);
     void UpdateComboProgress();
-    void UpdateAnimations(Hmx::Object *);
+    void UpdateAnimations(Hmx::Object *handler);
     void ResetCombo();
-    void SetActive(bool);
+    void SetActive(bool active);
     void AnimateOut();
-    bool Unk2a8Check() const { return unk2a5 && unk2a8 > 12; }
-    int GetScore() const { return mScore; }
-    int GetGrooveState() const { return mGrooveState; }
-    int GetLastInTheZone() const { return mLastInTheZone; }
-    float GetInTheZoneProgress() const { return mInTheZoneProgress; }
+
+    RhythmBattleScoreState GrooveState() const { return mGrooveState; }
+    float Groove() const { return mGroove; }
+    int InTheZone() const;
+    int InTheZoneStart() const { return mInTheZone != 0 && mLastInTheZone == 0; }
+    float InTheZoneProgress() const { return mInTheZoneProgress; }
+    int Score() const { return mScore; }
+    // public: void SwagBonus(Hmx::Object*, RhythmBattleJackState);
+    // public: void HackPlayerQuit();
+    // public: void SetDebugInt(int32_t);
+    // public: void SetToken(Symbol);
+    // public: bool InTheZoneBlocked() const;
     void SetForceFail(bool b) { mForceFail = b; }
     void SetUnk2a5(bool b) { unk2a5 = b; }
-    int ZoneValue() const { return mInTheZone; }
+    bool Unk2a8Check() const { return unk2a5 && unk2a8 > 12; }
 
 protected:
     RhythmBattlePlayer();
 
 private:
     void AnimateBoxyState(int, bool, bool);
-    void UpdateScore(int);
+    void UpdateScore(int result);
 
     /** "instruction display" */
     ObjPtr<RndAnimatable> mComboPositionAnim; // 0x8
@@ -112,8 +118,8 @@ private:
     ObjPtr<Flow> mOutTheZoneBadFlow; // 0x15c
     ObjPtr<Flow> mSwagJackedFlow; // 0x170
     ObjPtr<HamPhraseMeter> mPhraseMeter; // 0x184
-    ObjPtr<TransConstraint> mTransConstraint; // 0x198
-    ObjPtr<RndTransformable> mBoxyWaistTrans; // 0x1ac
+    ObjPtr<TransConstraint> mPhraseMeterConstraint; // 0x198
+    ObjPtr<RndTransformable> mBoxyWaist; // 0x1ac
     ObjPtr<DepthBuffer3D> mBoxyman1; // 0x1c0
     ObjPtr<DepthBuffer3D> mBoxyman2; // 0x1d4
     ObjPtr<ObjectDir> mTextFeedback; // 0x1e8
@@ -122,8 +128,8 @@ private:
     ObjPtr<RndAnimatable> mStealAnim; // 0x224
     /** "which player is this" */
     int mPlayer; // 0x238
-    RhythmBattle *mRhythmBattle; // 0x23c
-    bool mActive; // 0x240 - active?
+    RhythmBattle *mParent; // 0x23c
+    bool mActive; // 0x240
     float mGroove; // 0x244
     float mFreshness; // 0x248
     float mBeatGrooveAccum; // 0x24c
@@ -150,5 +156,5 @@ private:
     float mLastFeets; // 0x2a0
     bool mForceFail; // 0x2a4
     bool unk2a5; // 0x2a5
-    int unk2a8; // 0x2a8
+    int unk2a8; // 0x2a8 - current combo?
 };
