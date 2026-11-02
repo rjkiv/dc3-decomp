@@ -563,7 +563,7 @@ void RhythmBattle::PlayTanClip(int clipIndex, bool blend) {
 void RhythmBattle::Begin() {
     if (!mActive) {
         mActive = true;
-        if (mFullOnKtB) {
+        if (FullonKtB()) {
             PropKeys *keys = TheHamDirector->GetPropKeys(kDifficultyExpert, "move");
             if (keys) {
                 Keys<Symbol, Symbol> *symKeys = keys->AsSymbolKeys();
@@ -668,7 +668,7 @@ void RhythmBattle::Begin() {
         mInAnim = nullptr;
         mOutAnim = nullptr;
         mTugAnim = nullptr;
-        if (mFullOnKtB && !mFinale) {
+        if (FullonKtB() && !mFinale) {
             mRecorder = new FreestyleMoveRecorder();
         }
         static UIPanel *sRhythmDetectorPanel =
