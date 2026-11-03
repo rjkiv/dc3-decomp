@@ -75,6 +75,8 @@ public:
     RndTex *GetOutputTex() const { return mOutputTex; }
     int GetDancerTakeFrameCount() const { return mDancerTakeFrameCount; }
 
+    int GetFrameCount() { return mFreestyleMove[mCurrentMove].mFrameCount; }
+
     void SetFreestyleMove(int index) {
         MILO_ASSERT(index >= 0 && index < MAX_FREESTYLE_MOVES, 0x50);
         mCurrentMove = index;

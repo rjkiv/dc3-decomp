@@ -98,8 +98,8 @@ private:
     RhythmBattleJackState mJackState; // 0x124
     int mWarnJackCounter; // 0x128
     Symbol mLastLeader; // 0x12c
-    FreestyleMoveRecorder *mRecorder;
-    std::vector<ArchiveSkeleton> mRecorderPair;
+    FreestyleMoveRecorder *mRecorder; // 0x130
+    std::vector<ArchiveSkeleton> mRecorderPair; // 0x134
     int mStealCooldown; // 0x140
     int mLastBeat; // 0x144
     int mBeatsToNextScriptedStage; // 0x148
