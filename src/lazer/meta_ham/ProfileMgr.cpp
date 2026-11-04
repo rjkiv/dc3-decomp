@@ -1112,7 +1112,14 @@ float ProfileMgr::GetPadExtraLag(int pad, LagContext ctx) const {
         }
     case 0x10:
     case 0x17:
-        return 10;
+        switch (ctx) {
+        case 1:
+            return 10;
+        case 2:
+            return 10;
+        default:
+            return 10;
+        }
     case 0xc:
     case 0x19:
         if (ctx == 1) {
