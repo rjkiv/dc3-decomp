@@ -64,39 +64,39 @@ GameEndedDataPointJob::GameEndedDataPointJob(
     pt.AddPair(reason, (int)result);
     pt.AddPair(song_position, f29);
 
-    if (lastPlayed == showdown || lastPlayed == playlist_perform || lastPlayed == perform
-        || lastPlayed == dance_battle || lastPlayed == perform_legacy
-        || lastPlayed == challenge) {
+    if (lastPlayed != showdown && lastPlayed != playlist_perform && lastPlayed != perform
+        && lastPlayed != dance_battle && lastPlayed != perform_legacy
+        && lastPlayed != challenge) {
+        const std::vector<HamMoveScore> &scores =
+            MetaPerformer::Current()->GetMoveScores(0);
+        if (scores.size() != 0) {
+            MoveDir *moves = TheHamDirector->GetWorld()->Find<MoveDir>("moves");
+            MILO_ASSERT(moves, 0x5A);
+            PracticeSection *section = nullptr;
+            for (ObjDirItr<PracticeSection> it(moves, true); it != nullptr; ++it) {
+                if (it->GetDifficulty() == TheGameData->Player(0)->GetDifficulty()) {
+                    section = it;
+                    break;
+                }
+            }
+            MILO_ASSERT(section, 0x64);
+            int numSteps = section->Steps().size();
+            if (scores.size() > numSteps) {
+                String str = MakeString("(%d/%d)", scores.size(), numSteps);
+                pt.AddPair(custom_session, str);
+            }
+        }
+    } else {
         int numStars = 0;
         const DataNode *prop = TheGamePanel->Property(num_stars, false);
         if (prop) {
             numStars = prop->Float();
         }
         pt.AddPair(perf_current_stars, numStars);
-        pt.AddPair(
-            perf_no_flashcard, MetaPerformer::Current()->CompletedSongWithNoFlashcards()
-        );
-    } else {
         MetaPerformer *p = MetaPerformer::Current();
-        if (p->GetMoveScores(0).size() != 0) {
-            MoveDir *moves = TheHamDirector->GetWorld()->Find<MoveDir>("moves");
-            MILO_ASSERT(moves, 0x5A);
-            PracticeSection *section = nullptr;
-            for (ObjDirItr<PracticeSection> it(moves, true); it != nullptr; ++it) {
-                section = &*it;
-                if (it->GetDifficulty() == TheGameData->Player(0)->GetDifficulty()) {
-                    break;
-                }
-            }
-            MILO_ASSERT(section, 0x64);
-            int numSteps = section->Steps().size();
-            int numMoveScores = p->GetMoveScores(0).size();
-            if (numMoveScores > numSteps) {
-                String str = MakeString("(%d/%d)", numMoveScores, numSteps);
-                pt.AddPair(custom_session, str);
-            }
-        }
+        pt.AddPair(perf_no_flashcard, p->CompletedSongWithNoFlashcards());
     }
+
     Symbol playerCrew = gNullStr;
     Symbol playerChar = gNullStr;
     for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
@@ -133,10 +133,9 @@ GameEndedDataPointJob::GameEndedDataPointJob(
         static Symbol score("score");
         pt.AddPair(crewStr.c_str(), playerCrew);
         pt.AddPair(charStr.c_str(), playerChar);
-        HamPlayerData *curPlayer = TheGameData->Player(i);
-        pt.AddPair(diffStr.c_str(), curPlayer->GetDifficulty());
-        pt.AddPair(scoreStr.c_str(), curPlayer->Provider()->Property(score)->Int());
-        int padnum = curPlayer->PadNum();
+        pt.AddPair(diffStr.c_str(), TheGameData->Player(i)->GetDifficulty());
+        pt.AddPair(scoreStr.c_str(), hpd->Provider()->Property(score)->Int());
+        int padnum = hpd->PadNum();
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(padnum);
         if (profile && profile->HasValidSaveData()) {
             if (profile->HasOnlineID()) {
@@ -152,7 +151,7 @@ GameEndedDataPointJob::GameEndedDataPointJob(
             const AccomplishmentProgress &prog = profile->GetAccomplishmentProgress();
             const std::list<std::pair<Symbol, Symbol> > &awards = prog.GetNewAwards();
             FOREACH (it, awards) {
-                if (it != awards.end()) {
+                if (it != awards.begin()) {
                     str1e8 += ",";
                 }
                 str1e8 += it->first.Str();
@@ -163,9 +162,8 @@ GameEndedDataPointJob::GameEndedDataPointJob(
                 pt.AddPair(str148.c_str(), str1e8);
             }
             const char *rankTitleStr = gNullStr;
-            MetagameRank *mr = profile->GetRank();
-            if (mr->HasNewRank()) {
-                rankTitleStr = mr->GetRankTitle().Str();
+            if (profile->GetRank()->HasNewRank()) {
+                rankTitleStr = profile->GetRank()->GetRankTitle().Str();
             }
             if (rankTitleStr != gNullStr) {
                 String rankStr("new_rank");

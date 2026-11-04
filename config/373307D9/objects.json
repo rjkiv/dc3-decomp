@@ -159,7 +159,7 @@
             "lazer/meta_ham/VoiceInputPanel.cpp": "NonMatching",
             "lazer/meta_ham/WeightInput.cpp": "Matching",
             "lazer/net_ham/ChallengeSystemJobs.cpp": "NonMatching",
-            "lazer/net_ham/DataMinerJobs.cpp": "NonMatching",
+            "lazer/net_ham/DataMinerJobs.cpp": "Matching",
             "lazer/net_ham/FitnessGoalJobs.cpp": "Matching",
             "lazer/net_ham/FriendsListJobs.cpp": "NonMatching",
             "lazer/net_ham/HamStoreCartJobs.cpp": "Matching",
