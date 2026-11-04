@@ -316,12 +316,14 @@ void GetRows(
         std::sort(it->second.begin(), it->second.end(), TimeStampCmp);
         if (!hasNewChallenges) {
             auto rowIt = rows.find(it->first);
-            if (rowIt != rows.end()) {
-                std::vector<ChallengeRow> &itRows = it->second;
+            if (rowIt == rows.end()) {
+                hasNewChallenges = true;
+            } else {
                 std::vector<ChallengeRow> &rowItRows = rowIt->second;
-                if (rowItRows.size() == itRows.size()) {
-                    for (int i = 0; i < it->second.size(); i++) {
-                        if (itRows[i] != rowItRows[i]) {
+                std::vector<ChallengeRow> &itRows = it->second;
+                if (rowItRows.size() == it->second.size()) {
+                    for (int i = 0; i < itRows.size(); i++) {
+                        if (rowItRows[i] != itRows[i]) {
                             hasNewChallenges = true;
                             break;
                         }
@@ -329,8 +331,6 @@ void GetRows(
                 } else {
                     hasNewChallenges = true;
                 }
-            } else {
-                hasNewChallenges = true;
             }
         }
     }
