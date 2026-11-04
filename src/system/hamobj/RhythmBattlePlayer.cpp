@@ -367,7 +367,7 @@ bool RhythmBattlePlayer::UpdateState() {
         mGrooveState = kNoGroove;
     } else if (mMeasureFresh >= kFreshThresh) {
         mGrooveState = kFreshMoves;
-    } else if (mGrooveState <= 1) {
+    } else if (mGrooveState <= kFreshMoves) {
         mGrooveState = kSwitchUp;
     }
     return mLastGrooveState != mGrooveState;

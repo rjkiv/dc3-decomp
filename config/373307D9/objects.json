@@ -383,7 +383,7 @@
             "system/hamobj/PoseFatalities.cpp": "NonMatching",
             "system/hamobj/PracticeOptionsProvider.cpp": "Matching",
             "system/hamobj/PracticeSection.cpp": "Matching",
-            "system/hamobj/RhythmBattle.cpp": "NonMatching",
+            "system/hamobj/RhythmBattle.cpp": "Matching",
             "system/hamobj/RhythmBattlePlayer.cpp": "Matching",
             "system/hamobj/RhythmDetector.cpp": "NonMatching",
             "system/hamobj/RhythmDetectorGroup.cpp": "Matching",
