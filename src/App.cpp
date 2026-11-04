@@ -82,30 +82,28 @@ bool EndsWith(const char *c1, const char *c2) {
     return strstr(c1, c2) == c1 + len1 - len2;
 }
 
-void DebugModal(Debug::ModalType &ty, FixedString &str, bool b3) {
-    if (ty == Debug::kModalFail) {
-        gRealCallback(ty, str, b3);
+void DebugModal(Debug::ModalType &mt, FixedString &msg, bool wait) {
+    if (mt == Debug::kModalFail) {
+        gRealCallback(mt, msg, wait);
     } else {
-        if (ty != Debug::kModalWarn) {
+        if (mt != Debug::kModalWarn) {
             static DataNode &n = DataVariable("notify_level");
-            switch (n.Int()) {
-            case 2: {
-                gRealCallback(ty, str, b3);
+            int notify_level = n.Int();
+            if (notify_level == 2) {
+                gRealCallback(mt, msg, wait);
                 return;
-            }
-            case 1: {
+            } else if (notify_level == 1) {
                 Hmx::Object *cheatDisplay =
                     ObjectDir::Main()->Find<Hmx::Object>("cheat_display", false);
                 if (cheatDisplay) {
                     static Message show("show", 0);
-                    show[0] = str.c_str();
+                    show[0] = msg.c_str();
                     cheatDisplay->Handle(show, false);
+                    return;
                 }
-                return;
-            }
             }
         }
-        MILO_LOG("%s\n", str.c_str());
+        MILO_LOG("%s\n", msg.c_str());
     }
 }
 
@@ -268,9 +266,9 @@ DWORD KinectGuideThread(LPVOID) {
     );
     HANDLE kinect_listener = XNotifyCreateListener(1);
     MILO_ASSERT(kinect_listener, 0xA2);
+    DWORD dwId;
+    ULONG param;
     while (gListenForKinectGuide) {
-        DWORD dwId;
-        ULONG param;
         while (XNotifyGetNext(kinect_listener, 0, &dwId, &param)) {
             if (dwId == 0x6001A) {
                 XShowNuiGuideUI(param);
@@ -564,11 +562,6 @@ void App::RunWithoutDebugging() {
             TheUI->TransitionScreen() ? TheUI->TransitionScreen()->Name() : "none";
 
         switch (TheUI->GetTransitionState()) {
-        case UIManager::kTransitionNone: {
-            glitchStr =
-                MakeString("GLITCH: %g ms, ACTIVE %s", glitchTime, currentScreenName);
-            break;
-        }
         case UIManager::kTransitionTo: {
             glitchStr = MakeString(
                 "GLITCH: %g ms, %s TRANS TO %s",
@@ -590,6 +583,11 @@ void App::RunWithoutDebugging() {
         case UIManager::kTransitionPop: {
             glitchStr =
                 MakeString("GLITCH: %g ms, POPPING %s", glitchTime, transitionScreenName);
+            break;
+        }
+        case UIManager::kTransitionNone: {
+            glitchStr =
+                MakeString("GLITCH: %g ms, ACTIVE %s", glitchTime, currentScreenName);
             break;
         }
         }
