@@ -48,6 +48,7 @@
 
 namespace {
     bool gShortenSong;
+    bool gDebugSynchronized;
 }
 
 void SetJump(int x, int y) {
