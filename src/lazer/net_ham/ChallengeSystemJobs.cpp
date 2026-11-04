@@ -285,50 +285,52 @@ void GetChallengeBadgeCountsJob::GetBadgeInfo(
 bool TimeStampCmp(ChallengeRow r1, ChallengeRow r2) { return r1.dateTime < r2.dateTime; }
 
 void GetRows(
-    JsonConverter &c,
-    const JsonObject *o,
+    JsonConverter &json,
+    const JsonObject *response,
     std::map<String, std::vector<ChallengeRow> > &rows,
-    bool &bref
+    bool &hasNewChallenges
 ) {
     std::map<String, std::vector<ChallengeRow> > calcedRows;
-    JsonArray *a = const_cast<JsonArray *>(static_cast<const JsonArray *>(o));
+    JsonArray *a = const_cast<JsonArray *>(static_cast<const JsonArray *>(response));
     unsigned int aSize = a->GetSize();
     for (int i = 0; i < aSize; i++) {
-        JsonArray *cur = static_cast<JsonArray *>(c.GetValue(a, i));
+        JsonArray *cur = static_cast<JsonArray *>(json.GetValue(a, i));
         ChallengeRow curRow;
-        curRow.id = c.GetValue(cur, 0)->Int();
-        curRow.challengerUsername = c.GetValue(cur, 1)->Str();
-        curRow.songId = c.GetValue(cur, 2)->Int();
-        curRow.artistName = c.GetValue(cur, 3)->Str();
-        curRow.songName = c.GetValue(cur, 4)->Str();
-        curRow.score = c.GetValue(cur, 5)->Int();
-        curRow.diff = c.GetValue(cur, 6)->Int();
+        curRow.id = json.GetValue(cur, 0)->Int();
+        curRow.challengerUsername = json.GetValue(cur, 1)->Str();
+        curRow.songId = json.GetValue(cur, 2)->Int();
+        curRow.artistName = json.GetValue(cur, 3)->Str();
+        curRow.songName = json.GetValue(cur, 4)->Str();
+        curRow.score = json.GetValue(cur, 5)->Int();
+        curRow.diff = json.GetValue(cur, 6)->Int();
         curRow.type = ChallengeRow::kNumChallengeTypes;
-        curRow.challengeeUsername = c.GetValue(cur, 7)->Str();
+        curRow.challengeeUsername = json.GetValue(cur, 7)->Str();
         DateTime dt;
-        dt.ParseDate(c.GetValue(cur, 8)->Str());
+        dt.ParseDate(json.GetValue(cur, 8)->Str());
         curRow.dateTime = dt.ToCode();
-        curRow.xp = c.GetValue(cur, 9)->Int();
+        curRow.xp = json.GetValue(cur, 9)->Int();
         calcedRows[curRow.challengeeUsername].push_back(curRow);
     }
-    bref = false;
+    hasNewChallenges = false;
     FOREACH (it, calcedRows) {
         std::sort(it->second.begin(), it->second.end(), TimeStampCmp);
-        if (!bref) {
+        if (!hasNewChallenges) {
             auto rowIt = rows.find(it->first);
             if (rowIt != rows.end()) {
-                std::vector<ChallengeRow> &rowItRows = rowIt->second;
                 std::vector<ChallengeRow> &itRows = it->second;
+                std::vector<ChallengeRow> &rowItRows = rowIt->second;
                 if (rowItRows.size() == itRows.size()) {
                     for (int i = 0; i < it->second.size(); i++) {
-                        if (rowItRows[i] != itRows[i]) {
-                            bref = true;
+                        if (itRows[i] != rowItRows[i]) {
+                            hasNewChallenges = true;
                             break;
                         }
                     }
+                } else {
+                    hasNewChallenges = true;
                 }
             } else {
-                bref = true;
+                hasNewChallenges = true;
             }
         }
     }
