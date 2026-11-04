@@ -81,7 +81,8 @@ DataNode UpdateFriendsListJob::OnMsg(PlatformMgrOpCompleteMsg const &msg) {
         for (int i = 0; i < friendSize - 1; i++) {
             friendName = mFriends[i]->GetName();
             XUID xuid = mFriends[i]->GetXUID();
-            friendInfo += MakeString("%llu,", xuid);
+            XUID friendXuid = xuid;
+            friendInfo += MakeString("%llu,", friendXuid);
             Hx_snprintf(namebuf, 8, "name%03d", i);
             dataP.AddPair(namebuf, friendName);
             Hx_snprintf(namebuf, 8, "guid%03d", i);
