@@ -684,8 +684,6 @@ void RhythmBattle::Begin() {
     }
 }
 
-// pls help
-// https://decomp.me/scratch/vl5B7
 void RhythmBattle::OnBeat() {
     MILO_ASSERT(mActive, 0x290);
     static Symbol playing("playing");
