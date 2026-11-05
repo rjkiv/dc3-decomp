@@ -84,7 +84,7 @@ private:
     int mRecordingPlayer; // 0x64
     int mStartOffset; // 0x68
     int mSuccesses; // 0x6c
-    BAMState mQueueState; // 0x70 - BAMState
+    BAMState mQueueState; // 0x70
     HamLabel *mStatus; // 0x74
     HamLabel *mMovePrompt; // 0x78
     bool mBustedMoveSuccessfully; // 0x7c
