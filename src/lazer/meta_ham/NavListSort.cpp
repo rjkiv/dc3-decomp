@@ -96,59 +96,67 @@ bool NavListSort::SetHighlightID(DataArray *a) {
     mHighlightNode = nullptr;
     mPrevHighlightNode = tmp;
     int aSize = a->Size();
+
     if (aSize == 0) {
         return false;
     }
+
     if (aSize == 1) {
         Symbol token = a->Sym(0);
         auto it = std::find_if(mFunctions.begin(), mFunctions.end(), NodeFind(token));
-        if (it == mFunctions.end())
-            return false;
-        else {
+        if (it != mFunctions.end()) {
             mHighlightNode = *it;
             return true;
         }
-    } else {
-        Symbol token = a->Sym(0);
-        auto si = std::find_if(mTree.begin(), mTree.end(), NodeFind(token));
-        if (si == mTree.end()) {
-            return false;
-        }
-        MILO_ASSERT(kNodeShortcut == (*si)->GetType(), 0x44);
-        std::list<NavListSortNode *> &children = (*si)->GetChildren();
-        Symbol token1 = a->Sym(1);
-        auto it = std::find_if(children.begin(), children.end(), NodeFind(token1));
-        if (it == children.end()) {
-            return false;
-        }
-        MILO_ASSERT(kNodeHeader == (*it)->GetType(), 0x4E);
-        if (aSize == 2) {
-            mHighlightNode = *it;
-            return true;
-        }
-        std::list<NavListSortNode *> &grandChildren = (*it)->GetChildren();
-        Symbol token2 = a->Sym(2);
-        auto gIt =
-            std::find_if(grandChildren.begin(), grandChildren.end(), NodeFind(token2));
-        if (gIt == grandChildren.end()) {
-            return false;
-        }
-        if (aSize == 3) {
-            mHighlightNode = *gIt;
-            return true;
-        }
-        std::list<NavListSortNode *> &greatGrandChildren = (*gIt)->GetChildren();
-        Symbol token3 = a->Sym(3);
-        auto ggIt = std::find_if(
-            greatGrandChildren.begin(), greatGrandChildren.end(), NodeFind(token3)
-        );
-        if (ggIt == greatGrandChildren.end()) {
-            return false;
-        } else {
-            mHighlightNode = *gIt;
-            return true;
-        }
+        return false;
     }
+
+    Symbol token = a->Sym(0);
+    auto si = std::find_if(mTree.begin(), mTree.end(), NodeFind(token));
+
+    if (si == mTree.end()) {
+        return false;
+    }
+
+    MILO_ASSERT(kNodeShortcut == (*si)->GetType(), 0x44);
+    std::list<NavListSortNode *> &children = (*si)->GetChildren();
+    Symbol token1 = a->Sym(1);
+    auto it = std::find_if(children.begin(), children.end(), NodeFind(token1));
+
+    if (it == children.end()) {
+        return false;
+    }
+
+    MILO_ASSERT(kNodeHeader == (*it)->GetType(), 0x4E);
+    if (aSize == 2) {
+        mHighlightNode = *it;
+        return true;
+    }
+
+    std::list<NavListSortNode *> &grandChildren = (*it)->GetChildren();
+    token1 = a->Sym(2);
+    auto gIt = std::find_if(grandChildren.begin(), grandChildren.end(), NodeFind(token1));
+
+    if (gIt == grandChildren.end()) {
+        return false;
+    }
+
+    if (aSize == 3) {
+        mHighlightNode = *gIt;
+        return true;
+    }
+
+    std::list<NavListSortNode *> &greatGrandChildren = (*gIt)->GetChildren();
+    token1 = a->Sym(3);
+    auto ggIt = std::find_if(
+        greatGrandChildren.begin(), greatGrandChildren.end(), NodeFind(token1)
+    );
+
+    if (ggIt == greatGrandChildren.end())
+        return false;
+
+    mHighlightNode = *ggIt;
+    return true;
 }
 
 int NavListSort::GetCurrentShortcut() {
