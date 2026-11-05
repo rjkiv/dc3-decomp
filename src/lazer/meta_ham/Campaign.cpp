@@ -367,7 +367,7 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
     MILO_ASSERT(pOutroArray, 0xAB);
     pOutroArray->FindData(venue, m_OutroVenue, false);
     pOutroArray->FindData(crew, m_OutroCrew, false);
-    pSongArray = pIntroArray->FindArray(songs);
+    pSongArray = pOutroArray->FindArray(songs);
     MILO_ASSERT(pSongArray, 0xB0);
     MILO_ASSERT(pSongArray->Size() > 1, 0xB1);
     numSongs = pSongArray->Size() - 1;
@@ -405,7 +405,7 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
             new CampaignEra(pEraArray->Array(i), pLookupEraArray->Array(i));
         MILO_ASSERT(pCampaignEra, 0xd8);
         Symbol name = pCampaignEra->GetName();
-        if (GetCampaignEra(name)) {
+        if (GetCampaignEra(Symbol(name))) {
             MILO_NOTIFY("%s campaign era already exists, skipping", name.Str());
             RELEASE(pCampaignEra);
         } else {

@@ -22,25 +22,29 @@ SongSort::SongSort() {};
 void SongSort::BuildTree() {
     NavListSort::DeleteTree();
     Init();
-    std::vector<NavListItemNode *> nodes;
+    std::vector<NavListItemNode *> presorted;
 
     auto &map = TheSongSortMgr->GetSongRecords();
     FOREACH (it, map) {
         SongRecord *record = &it->second;
         NavListItemNode *node = NewItemNode(record);
-        auto bound = std::lower_bound(nodes.begin(), nodes.end(), node, CompareHeaders());
-        nodes.insert(bound, node);
+        auto bound =
+            std::lower_bound(presorted.begin(), presorted.end(), node, CompareHeaders());
+        presorted.insert(bound, node);
     }
-    bool b = false;
-    int count = 0;
-    auto begin = nodes.begin();
-    auto rangeStart = nodes.begin();
 
-    while (begin != nodes.end()) {
-        auto range =
-            std::equal_range(nodes.begin(), nodes.end(), *rangeStart, CompareHeaders());
+    int count = 0;
+    bool b = false;
+    auto begin = presorted.begin();
+    auto unkIt = presorted.begin();
+    auto rangeStart = presorted.begin();
+
+    while (begin != presorted.end()) {
+        auto range = std::equal_range(
+            presorted.begin(), presorted.end(), *rangeStart, CompareHeaders()
+        );
         int rangeSize = range.second - range.first;
-        int remaining = nodes.end() - rangeStart;
+        int remaining = presorted.end() - rangeStart;
         count += rangeSize;
         int leftover = remaining - rangeSize;
 
@@ -49,22 +53,22 @@ void SongSort::BuildTree() {
         if (leftover <= 0 || count >= 4
             || (mSortName != by_song
                 && (mSortName != by_artist || TheSongSortMgr->IsInHeaderMode()))) {
-            auto it = rangeStart;
             if ((b && count <= 12) || !b) {
-                it = range.second;
+                unkIt = range.second;
             }
 
             NavListShortcutNode *shortcut = NewShortcutNode(*begin);
             mTree.push_back(shortcut);
-            shortcut->InsertHeaderRange(begin, it, this);
+            shortcut->InsertHeaderRange(begin, unkIt, this);
 
+            begin = unkIt;
+            rangeStart = unkIt;
             count = 0;
             b = false;
-            begin = it;
-            rangeStart = it;
         } else {
-            b = true;
             rangeStart = range.second;
+            unkIt = range.second;
+            b = true;
         }
     }
 

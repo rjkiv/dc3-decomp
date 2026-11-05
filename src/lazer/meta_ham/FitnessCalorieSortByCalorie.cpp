@@ -13,20 +13,26 @@ int FitnessCalorieSortCmp::Compare(
 
 NavListShortcutNode *
 FitnessCalorieSortByCalorie::NewShortcutNode(NavListItemNode *node) const {
-    Symbol s = MakeString(
-        "calorie_shortcut_%i", ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
-    );
-    Symbol sym = s;
+    Symbol sym;
+    {
+        Symbol s = MakeString(
+            "calorie_shortcut_%i", ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
+        );
+        sym = s;
+    }
     FitnessCalorieSortCmp *cmp = new FitnessCalorieSortCmp();
     return new NavListShortcutNode(cmp, sym, true);
 }
 
 NavListHeaderNode *
 FitnessCalorieSortByCalorie::NewHeaderNode(NavListItemNode *node) const {
-    Symbol s = MakeString(
-        "calorie_header_%i", ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
-    );
-    Symbol sym = s;
+    Symbol sym;
+    {
+        Symbol s = MakeString(
+            "calorie_header_%i", ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
+        );
+        sym = s;
+    }
     FitnessCalorieSortCmp *cmp = new FitnessCalorieSortCmp();
     return new FitnessCalorieHeaderNode(cmp, sym, true);
 }
