@@ -199,7 +199,7 @@ int SongSortMgr::FirstArtistSongIndex(Symbol sym) {
     for (int i = 0; i < dataCount; i++) {
         SongSortNode *ssNode =
             dynamic_cast<SongSortNode *>(mSorts[mSortIndex]->GetListFromIdx(i));
-        if (ssNode && streq(ssNode->GetArtist(), sym.Str())) {
+        if (ssNode && !strcmp(sym.Str(), ssNode->GetArtist())) {
             retval = GetHeaderIndexFromChildListIndex(i);
             break;
         }
