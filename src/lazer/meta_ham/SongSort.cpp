@@ -28,10 +28,8 @@ void SongSort::BuildTree() {
     FOREACH (it, map) {
         SongRecord *record = &it->second;
         NavListItemNode *node = NewItemNode(record);
-        auto bound = std::lower_bound(presorted.begin(),
-                                      presorted.end(),
-                                      node,
-                                      CompareHeaders());
+        auto bound =
+            std::lower_bound(presorted.begin(), presorted.end(), node, CompareHeaders());
         presorted.insert(bound, node);
     }
 
@@ -42,11 +40,9 @@ void SongSort::BuildTree() {
     auto rangeStart = presorted.begin();
 
     while (begin != presorted.end()) {
-        auto range =
-            std::equal_range(presorted.begin(),
-                             presorted.end(),
-                             *rangeStart,
-                             CompareHeaders());
+        auto range = std::equal_range(
+            presorted.begin(), presorted.end(), *rangeStart, CompareHeaders()
+        );
         int rangeSize = range.second - range.first;
         int remaining = presorted.end() - rangeStart;
         count += rangeSize;

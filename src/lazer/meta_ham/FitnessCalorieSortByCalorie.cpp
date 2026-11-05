@@ -16,8 +16,7 @@ FitnessCalorieSortByCalorie::NewShortcutNode(NavListItemNode *node) const {
     Symbol sym;
     {
         Symbol s = MakeString(
-            "calorie_shortcut_%i",
-            ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
+            "calorie_shortcut_%i", ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
         );
         sym = s;
     }
@@ -30,8 +29,7 @@ FitnessCalorieSortByCalorie::NewHeaderNode(NavListItemNode *node) const {
     Symbol sym;
     {
         Symbol s = MakeString(
-            "calorie_header_%i",
-            ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
+            "calorie_header_%i", ((FitnessCalorieSortNode *)node)->GetCalorieNodeIndex()
         );
         sym = s;
     }
