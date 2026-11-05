@@ -1,5 +1,5 @@
 #include "net/JsonUtils.h"
-#include "json-c/json_object_private.h"
+#include "net/json-c/bits.h"
 #include "net/json-c/json_object.h"
 #include "net/json-c/json_tokener.h"
 #include "net/json-c/linkhash.h"
@@ -64,15 +64,14 @@ JsonObject *JsonConverter::LoadFromString(const String &str) {
     } else {
         printbuf_memappend(buf, str.c_str(), str.length());
         json_object *obj = json_tokener_parse(buf->buf);
-        if ((int)obj > 0xfffff060) { // ???
+        if (is_error(obj)) {
             printbuf_free(buf);
             return nullptr;
         } else {
             JsonObject *jObj = new JsonObject();
             jObj->Set(obj);
             printbuf_free(buf);
-            jObj->AddRef();
-            m_Objects.push_back(jObj);
+            PushObject(jObj);
             return jObj;
         }
     }
@@ -95,7 +94,9 @@ JsonObject *JsonConverter::GetByName(JsonObject *j, const char *cc) {
     } else {
         lh_table *lh = j->Get();
         const void *v = lh_table_lookup(lh, cc);
-        if (v) {
+        if (v == nullptr) {
+            return nullptr;
+        } else {
             json_object *obj = (json_object *)v;
             json_object_get(obj);
             JsonObject *jObj = new JsonObject();
@@ -103,8 +104,6 @@ JsonObject *JsonConverter::GetByName(JsonObject *j, const char *cc) {
             jObj->AddRef();
             m_Objects.push_back(jObj);
             return jObj;
-        } else {
-            return nullptr;
         }
     }
 }
