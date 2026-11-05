@@ -221,7 +221,7 @@ void CampaignPerformer::OnMovePassed(int player, HamMove *move, int i3, float f4
                 MILO_ASSERT(pEra, 0x2F6);
                 bool found = false;
                 for (int i = 0; i < pEra->GetNumSongs(); i++) {
-                    Symbol songname = pEra->GetSongName(i);
+                    const Symbol &songname = pEra->GetSongName(i);
                     if (GetSong() == songname) {
                         found = true;
                         break;
