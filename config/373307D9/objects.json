@@ -104,7 +104,7 @@
       "lazer/meta_ham/LockedContentPanel.cpp": "Matching",
       "lazer/meta_ham/MQSongSort.cpp": "Matching",
       "lazer/meta_ham/MQSongSortByCharacter.cpp": "Matching",
-      "lazer/meta_ham/MQSongSortMgr.cpp": "NonMatching",
+      "lazer/meta_ham/MQSongSortMgr.cpp": "Matching",
       "lazer/meta_ham/MQSongSortNode.cpp": "Matching",
       "lazer/meta_ham/MainMenuPanel.cpp": "Matching",
       "lazer/meta_ham/MainMenuProvider.cpp": "Matching",
