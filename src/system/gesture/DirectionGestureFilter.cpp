@@ -82,13 +82,8 @@ void DirectionGestureFilterSingleUser::Draw(const Skeleton &skeleton, SkeletonVi
     if (sLastSwipeTime[skeleton.SkeletonIndex()] + mTimeBetweenSwipes
             > TheTaskMgr.UISeconds()
         && sLastSwipeTime[skeleton.SkeletonIndex()] < TheTaskMgr.UISeconds()) {
-        viz.DrawPoint3D(
-            skeleton.HandJoint(mSide).mPos[0],
-            0.1f,
-            // FIXME: I need to be able to reuse the color from the first DrawPoint3D call
-            IsValidSwipePosition(skeleton) ? Hmx::Color(0, 1, 0) : Hmx::Color(1, 0, 0),
-            0.2f
-        );
+        const TrackedJoint &handJoint = skeleton.HandJoint(mSide);
+        viz.DrawPoint3D(handJoint.mPos[0], 0.1f, Hmx::Color(0, 1, 0), 0.2f);
     }
 }
 
@@ -133,7 +128,7 @@ float DirectionGestureFilterSingleUser::UpdateOverlay(RndOverlay *overlay, float
 }
 
 bool DirectionGestureFilterSingleUser::HandAtSide(
-    const Skeleton &skeleton, float f1, float f2, float f3
+    const Skeleton &skeleton, float distance, float shape, float xshift
 ) const {
     float jointVal =
         skeleton.TrackedJoints()[3].mPos[0].y - skeleton.TrackedJoints()[19].mPos[0].y;
@@ -142,12 +137,13 @@ bool DirectionGestureFilterSingleUser::HandAtSide(
     const TrackedJoint &hipJoint = skeleton.HipJoint(mSide);
     const TrackedJoint &kneeJoint = skeleton.KneeJoint(mSide);
     const TrackedJoint &elbowJoint = skeleton.ElbowJoint(mSide);
-    float jointX = handJoint.mPos[0].x - (f1 * f3 + elbowJoint.mPos[0].x) * f2;
+    float jointX =
+        handJoint.mPos[0].x - (distance * xshift + elbowJoint.mPos[0].x) * shape;
     float jointY = handJoint.mPos[0].y - (kneeJoint.mPos[0].y + hipJoint.mPos[0].y) / 2;
     float jointZ = handJoint.mPos[0].z - (kneeJoint.mPos[0].z + hipJoint.mPos[0].z) / 2;
 
     return sqrt(jointX * jointX + jointZ * jointZ + jointY * jointY)
-        <= jointVal * 0.59171593f * f1;
+        <= jointVal * 0.59171593f * distance;
 }
 
 #pragma endregion
@@ -182,14 +178,16 @@ JointConfidence DirectionGestureFilterDoubleUser::Confidence() const {
     return Max(mFilter1->Confidence(), mFilter2->Confidence());
 }
 
-void DirectionGestureFilterDoubleUser::Update(const Skeleton &skeleton, int ms) {
+void DirectionGestureFilterDoubleUser::Update(const Skeleton &skeleton, int elapsed_ms) {
     for (int i = 0; i < 2; i++) {
-        mStandingStillFilters[i]->Update(TheGestureMgr->GetPlayerSkeletonID(i), ms);
+        mStandingStillFilters[i]->Update(
+            TheGestureMgr->GetPlayerSkeletonID(i), elapsed_ms
+        );
     }
-    int i1, i2;
-    GetValidSkeletons(i1, i2);
-    mFilter1->Update(TheGestureMgr->GetSkeleton(i1), ms);
-    mFilter2->Update(TheGestureMgr->GetSkeleton(i2), ms);
+    int skel1, skel2;
+    GetValidSkeletons(skel1, skel2);
+    mFilter1->Update(TheGestureMgr->GetSkeleton(skel1), elapsed_ms);
+    mFilter2->Update(TheGestureMgr->GetSkeleton(skel2), elapsed_ms);
 }
 
 void DirectionGestureFilterDoubleUser::Draw(const Skeleton &skeleton, SkeletonViz &viz) {

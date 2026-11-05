@@ -110,16 +110,13 @@ void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
         MILO_NOTIFY("Wave file %s is compressed", fp);
         return;
     } else {
-        if (!b3) {
-            mCRCName = Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str()));
-        } else {
-            mCRCName = Hmx::CRC();
-        }
+        mCRCName =
+            !b3 ? Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str())) : Hmx::CRC();
         mFormat = kPCM;
-        mChannels = waveFile.NumChannels();
         mNumSamples = waveFile.NumSamples();
         mSampleRate = waveFile.SamplesPerSec();
-        mSizeBytes = SizeAs(kPCM);
+        mChannels = waveFile.NumChannels();
+        mSizeBytes = SizeAs(mFormat);
         if (mCRCName) {
             if (!TheWavMgr->CreateSample(mCRCName, mData, mSizeBytes)) {
                 WaveFileData data(waveFile);

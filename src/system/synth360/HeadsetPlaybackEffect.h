@@ -3,9 +3,7 @@
 #include "xdk/XAUDIO2.h"
 
 // size 0x1
-struct HeadsetPlaybackEffectParams {
-    bool unk0; // not in pdb??
-};
+struct HeadsetPlaybackEffectParams {};
 
 DEFINE_CLSID(HeadsetPlaybackEffect, B4D4C8AA, A20D, 40A1, 84, A7, 64, 19, 35, 51, A9, BF);
 

@@ -11,6 +11,11 @@ public:
     void Update(const Skeleton &, int elapsed_ms);
     bool InPosition() const { return mInPosition; }
 
+    void Clear() {
+        mInPosition = false;
+        mTimer = 0;
+    }
+
 private:
     float GetBend(const Vector3 &, const Vector3 &, const Vector3 &) const;
     bool UpdateBodyPlane(const Skeleton &, float);

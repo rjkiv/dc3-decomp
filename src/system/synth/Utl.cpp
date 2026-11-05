@@ -1,8 +1,14 @@
 #include "Utl.h"
+#include "os/File.h"
 #include "os/FileCache.h"
+#include "os/HolmesClient.h"
 #include "os/Platform.h"
+#include "os/PlatformMgr.h"
+#include "os/System.h"
 #include "utl/Cache.h"
 #include "utl/Loader.h"
+#include "utl/MakeString.h"
+#include <cstring>
 
 class WavFileCacheHelper : public FileCacheHelper {
 public:
@@ -37,4 +43,42 @@ float CalcRateForTempoSync(Symbol sym, float f1) {
         }
     }
     return res / temp;
+}
+
+char const *CacheWav(const char *wavFile, CacheResourceResult &result) {
+    static char cacheFile[256];
+    result = kCacheUnnecessary;
+    Platform platform = TheLoadMgr.GetPlatform();
+    if ((wavFile && wavFile[0] != 0) && platform != kPlatformNone) {
+        if (platform == kPlatformPC) {
+            return wavFile;
+        }
+        const char *file = FileLocalize(wavFile, 0);
+        const char *pathString = MakeString(
+            "%s/gen/%s.%s_%s",
+            FileGetPath(file),
+            FileGetBase(file),
+            FileGetExt(file),
+            PlatformSymbol(platform)
+        );
+
+        strcpy(cacheFile, pathString);
+        if (UsingCD()) {
+            return cacheFile;
+        }
+
+        String filename;
+        FileQualifiedFilename(filename, file);
+        result = HolmesClientCacheResource(filename.c_str(), cacheFile);
+        if (kCacheUnnecessary < result) {
+            return 0;
+        }
+        return cacheFile;
+    }
+    return 0;
+}
+
+char const *WavFileCacheHelper::CacheFile(char const *iFileToCache) {
+    CacheResourceResult rslt;
+    return CacheWav(iFileToCache, rslt);
 }

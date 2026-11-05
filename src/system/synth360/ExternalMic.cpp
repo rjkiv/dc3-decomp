@@ -1,9 +1,15 @@
 #include "synth360/ExternalMic.h"
+#include "macros.h"
+#include "obj/Data.h"
 #include "os/Debug.h"
+#include "os/System.h"
 #include "synth360/Mic.h"
+#include "utl/Symbol.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/XMIC.h"
 #include "xdk/win_types.h"
+#include "xdk/xapilibi/synchapi.h"
+#include "xdk/xapilibi/winerror.h"
 #include "xdk/xapilibi/xbase.h"
 #include "xdk/xmic/xmic.h"
 #include <cstring>
@@ -14,7 +20,12 @@ namespace {
         return mic->sampleProcessThread();
     }
 
-    void dataReadyEntry(DWORD, DWORD, XOVERLAPPED *);
+    void dataReadyEntry(
+        DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, XOVERLAPPED *pOverlapped
+    ) {
+        ((RequestCompletionData *)pOverlapped->dwCompletionContext)
+            ->pOwner->dataReady(dwErrorCode, dwNumberOfBytesTransferred, pOverlapped);
+    }
 
     std::vector<ExternalMic *> gMics;
 }
@@ -91,8 +102,147 @@ void ExternalMic::Terminate() {
 }
 
 DWORD ExternalMic::sampleProcessThread() {
+    XOVERLAPPED DataRequestOverlapped1;
+    XOVERLAPPED DataRequestOverlapped2;
     DWORD dwTransferLength = 0;
-    DWORD dwMicrophoneIndex = 0;
+    DWORD dwMicrophoneIndex = mIndex | 0x4000000;
+
+    RequestCompletionData MCD1;
+    RequestCompletionData MCD2;
+    XMICCAPABILITIES capabilities;
+
+    while (!mShutdown) {
+        while (!mShutdown) {
+            Sleep(10);
+            if (XMicGetStatus(dwMicrophoneIndex) == 1) {
+                break;
+            }
+        }
+        mIsActive = true;
+
+        if (XMicGetCapabilities(dwMicrophoneIndex, &capabilities) == 0) {
+            if (XMicStart(dwMicrophoneIndex, 0x100, &dwTransferLength, 0) == 0
+                && SUCCEEDED(gatherGainAttribs(dwMicrophoneIndex))) {
+                static Symbol generic_usb("generic_usb");
+                Symbol micName = generic_usb;
+                DataArray *sysConfig = SystemConfig("synth", "mic_types", "xbox");
+                for (int i = 1; i < sysConfig->Size(); i++) {
+                    DataArray *configArray = sysConfig->Array(i);
+                    DataArray *capabilitiesArray = configArray->FindArray("capabilities");
+                    if (capabilitiesArray->Int(1) == capabilities.dwFeatures) {
+                        if (capabilitiesArray->Int(2) == capabilities.wFormatTag) {
+                            if (capabilitiesArray->Int(3) == capabilities.nChannels) {
+                                if (capabilitiesArray->Int(4)
+                                    == capabilities.dwSampleRatesSupported) {
+                                    if (capabilitiesArray->Int(5)
+                                        == capabilities.wBitsPerSample) {
+                                        if (capabilitiesArray->Int(6)
+                                            == capabilities.dwFrameLength) {
+                                            if (configArray->FindArray("min_gain")
+                                                    ->Float(1)
+                                                == mMinGain) {
+                                                DataArray *maxGainArray =
+                                                    configArray->FindArray("max_gain");
+                                                if (maxGainArray->Float(1) == mMaxGain) {
+                                                    micName = maxGainArray->Sym(0);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ExternalMicClientProxy *proxy =
+                    ExternalMicClientMgr::GetMasterForIndex(mIndex);
+
+                if (proxy) {
+                    HRESULT hr = proxy->OnMicConnected(
+                        0x100, capabilities.dwFeatures == 0, micName
+                    );
+                    if (SUCCEEDED(hr)) {
+                        MCD1.pOverlap = &DataRequestOverlapped1;
+                        MCD1.dwAudioFrameBufferLength = dwTransferLength;
+                        MCD1.dwFrameCount = capabilities.dwFeatures + 1; // idk
+                        MCD1.dwMicrophoneIndex = dwMicrophoneIndex;
+                        MCD1.pAudioFramesBufferAlloc =
+                            new BYTE[dwTransferLength + 0x100]; // idk
+                        MCD1.pAudioFramesBuffer = MCD1.pAudioFramesBufferAlloc + 0x80;
+                        MCD2.pOverlap = &DataRequestOverlapped2;
+                        MCD2.dwAudioFrameBufferLength = dwTransferLength;
+                        MCD1.pOwner = this;
+                        MCD2.dwFrameCount = capabilities.dwFeatures + 1; // idk
+                        MCD2.dwMicrophoneIndex = dwMicrophoneIndex;
+                        MCD2.pAudioFramesBufferAlloc =
+                            new BYTE[dwTransferLength + 0x100]; // idk
+                        DataRequestOverlapped1.dwExtendedError = 0;
+                        DataRequestOverlapped1.pCompletionRoutine = dataReadyEntry;
+                        MCD2.pAudioFramesBuffer = MCD2.pAudioFramesBufferAlloc + 0x80;
+                        // DataRequestOverlapped1.dwCompletionContext = &MCD1; what
+                        DataRequestOverlapped1.hEvent = 0;
+                        DataRequestOverlapped2.dwExtendedError = 0;
+                        // DataRequestOverlapped2.dwCompletionContext = &MCD2; what
+                        DataRequestOverlapped2.hEvent = 0;
+                        DataRequestOverlapped2.pCompletionRoutine = dataReadyEntry;
+                        MCD2.pOwner = this;
+
+                        if (XMicRequestData(
+                                MCD1.dwMicrophoneIndex,
+                                MCD1.dwFrameCount,
+                                MCD1.pAudioFramesBuffer,
+                                MCD1.wFrameLengths,
+                                MCD1.pOverlap
+                            )
+                            != ERROR_IO_PENDING) {
+                            hr = -0x7fffbffb;
+                        }
+
+                        if (XMicRequestData(
+                                MCD2.dwMicrophoneIndex,
+                                MCD2.dwFrameCount,
+                                MCD2.pAudioFramesBuffer,
+                                MCD2.wFrameLengths,
+                                MCD2.pOverlap
+                            )
+                            != ERROR_IO_PENDING) {
+                            hr = -0x7fffbffb;
+                        }
+
+                        // legit no idea what all this is
+                        if (SUCCEEDED(hr)) {
+                            int status;
+                            do {
+                                if (mShutdown) {
+                                    break;
+                                }
+                                SleepEx(10, 1);
+                                hr = processGain(dwMicrophoneIndex);
+                                MILO_ASSERT(SUCCEEDED(hr), 0x149);
+                                status = XMicGetStatus(dwMicrophoneIndex);
+                            } while (status == 2);
+                        }
+                    }
+                }
+            }
+        }
+
+        XMicStop(dwMicrophoneIndex, 0);
+        mIsActive = false;
+        ExternalMicClientMgr::OnMicDisconnected(mIndex);
+        mGain = -1.0f;
+        if (MCD1.pAudioFramesBufferAlloc) {
+            delete MCD1.pAudioFramesBufferAlloc;
+            MCD1.pAudioFramesBuffer = 0;
+            MCD1.pAudioFramesBufferAlloc = 0;
+        }
+        if (MCD2.pAudioFramesBufferAlloc) {
+            delete MCD2.pAudioFramesBufferAlloc;
+        }
+    }
+
     return 0;
 }
 

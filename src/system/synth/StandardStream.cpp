@@ -1,4 +1,5 @@
 #include "synth/StandardStream.h"
+#include "macros.h"
 #include "math/Decibels.h"
 #include "math/Utl.h"
 #include "os/Debug.h"
@@ -678,6 +679,5 @@ void StandardStream::PollStream() {
     }
 
     UpdateVolumes();
-    // wrong vfunc address
     UpdateTime();
 }
