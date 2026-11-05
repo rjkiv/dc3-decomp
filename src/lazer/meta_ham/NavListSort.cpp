@@ -174,7 +174,44 @@ int NavListSort::GetCurrentShortcut() {
     }
 }
 
-// void NavListSort::ChangeHighlightHeader(int dir) {
-//     if (dir != 1 && dir != -1)
-//         MILO_ASSERT(dir == 1 || dir == -1, 0xa0);
-// }
+int WrapShortcutIndex(int idx, int num) {
+    if (num == 0) {
+        return 0;
+    }
+
+    int res = idx % num;
+    if (res < 0) {
+        res += num;
+    }
+
+    return res;
+}
+
+void NavListSort::ChangeHighlightHeader(int dir) {
+    MILO_ASSERT(dir == 1 || dir == -1, 0xA0);
+
+    int shortcut = GetCurrentShortcut();
+    NavListSortNode *highlight = mHighlightNode;
+    NavListNodeType type = highlight->GetType();
+
+    if (dir == 1) {
+        if (type != kNodeFunction) {
+            shortcut += 1;
+            shortcut = WrapShortcutIndex(shortcut, mTree.size());
+        }
+    } else if (dir == -1) {
+        if (type == kNodeFunction || type == kNodeHeader
+            || (type == kNodeItem && !GetHeaderSelectable()
+                && highlight == mTree[shortcut]->GetFirstActive())) {
+            shortcut -= 1;
+            shortcut = WrapShortcutIndex(shortcut, mTree.size());
+        }
+    }
+
+    while (!mTree[shortcut]->IsActive()) {
+        shortcut += dir;
+        shortcut = WrapShortcutIndex(shortcut, mTree.size());
+    }
+
+    OnSelectShortcut(shortcut);
+}
