@@ -75,7 +75,7 @@ void MQSongSortMgr::UpdateList() {
     const std::vector<int> &rankedSongs = TheHamSongMgr.RankedSongs((SongType)1);
     FOREACH_CONST (it, rankedSongs) {
         const HamSongMetadata *metadata = TheHamSongMgr.Data(*it);
-        Symbol character = GetOutfitCharacter(metadata->Outfit());
+        const Symbol &character = GetOutfitCharacter(metadata->Outfit());
         Symbol crew = GetCrewForCharacter(character);
         Symbol temp = character;
         Symbol mqHeader = MakeString("mqheader_%s", temp);
