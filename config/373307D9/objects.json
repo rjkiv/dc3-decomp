@@ -992,7 +992,7 @@
             "system/net/HttpReq.cpp": "Matching",
             "system/net/HttpReqCurl.cpp": "NonMatching",
             "system/net/JsonMemory.cpp": "Matching",
-            "system/net/JsonUtils.cpp": "NonMatching",
+            "system/net/JsonUtils.cpp": "Matching",
             "system/net/SessionJobs_Xbox.cpp": "Matching",
             "system/net/WebSvcMgr.cpp": "NonMatching",
             "system/net/WebSvcMgrCurl.cpp": "Matching",
