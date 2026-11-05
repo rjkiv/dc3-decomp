@@ -30,7 +30,7 @@ private:
     bool mSatisfied; // 0x2c
     int mRaisedMs; // 0x30
     int mRequiredMs; // 0x34
-    Vector3 mCenter;
+    Vector3 mCenter; // 0x38
     float mForwardFacingCutoff; // 0x48
     bool unk4c; // not in PDB?
 };

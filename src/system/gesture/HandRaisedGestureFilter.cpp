@@ -6,10 +6,6 @@
 #include "math/Vec.h"
 #include "obj/Object.h"
 
-static const float sFloat1 = 0.05f;
-static const float sFloat2 = 0.1f;
-static const float sFloat3 = 0.3f;
-
 HandRaisedGestureFilter::HandRaisedGestureFilter()
     : mHandRaised(false), mHandRaisedTimer(0), mNeedHandRaisedTime(500) {
     Clear();
@@ -55,4 +51,62 @@ void HandRaisedGestureFilter::Update(int trackingID, int j) {
 void HandRaisedGestureFilter::Clear() {
     mHandRaised = false;
     mHandRaisedTimer = 0;
+}
+
+void HandRaisedGestureFilter::Update(const Skeleton &skeleton, int elapsed_ms) {
+    static float sScreenBorder = 0.05f;
+    static float sHandAboveShoulderMin = 0.1f;
+    static float sHandShoulderTolerance = 0.3f;
+
+    mHandRaised = false;
+    int idx = skeleton.SkeletonIndex();
+    TheGestureMgr->SetSkeletonStatus(idx, 1);
+    mStandingStillFilter.Update(skeleton, elapsed_ms);
+    if (!HandPotentiallyRaised()) {
+        mHandRaisedTimer = 0;
+    } else {
+        if (mHandRaisedTimer == 0) {
+            mHandRaisedTimer = 1;
+        }
+        if (mStandingStillFilter.Satisfied()) {
+            bool check = false;
+            TheGestureMgr->SetSkeletonStatus(idx, 12);
+            for (int i = 0; i < 2; i++) {
+                SkeletonSide side = i == 0 ? kSkeletonLeft : kSkeletonRight;
+                const TrackedJoint &handJoint = skeleton.HandJoint(side);
+                const TrackedJoint &elbowJoint = skeleton.ElbowJoint(side);
+                const TrackedJoint &shoulderJoint = skeleton.ShoulderJoint(side);
+                Vector2 vHandScreen;
+                skeleton.ScreenPos(
+                    side == kSkeletonLeft ? kJointHandLeft : kJointHandRight, vHandScreen
+                );
+                bool withinBorder =
+                    vHandScreen.x > sScreenBorder && vHandScreen.x < 1.0f - sScreenBorder;
+                if (withinBorder) {
+                    if (handJoint.mPos[0].y
+                            > shoulderJoint.mPos[0].y + sHandAboveShoulderMin
+                        && handJoint.mPos[0].y > elbowJoint.mPos[0].y) {
+                        if ((side == kSkeletonRight
+                             && handJoint.mPos[0].x
+                                 > shoulderJoint.mPos[0].x - sHandShoulderTolerance)
+                            || (side == kSkeletonLeft
+                                && handJoint.mPos[0].x
+                                    < shoulderJoint.mPos[0].x + sHandShoulderTolerance)) {
+                            check = true;
+                        }
+                    }
+                }
+            }
+            if (check) {
+                TheGestureMgr->SetSkeletonStatus(idx, 13);
+                mHandRaisedTimer += elapsed_ms;
+            } else {
+                mHandRaisedTimer = 0;
+            }
+            if (mHandRaisedTimer > mNeedHandRaisedTime) {
+                TheGestureMgr->SetSkeletonStatus(idx, 14);
+                mHandRaised = true;
+            }
+        }
+    }
 }

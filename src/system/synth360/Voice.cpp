@@ -6,6 +6,8 @@
 #include "synth/FxSend.h"
 #include "synth360/EnvelopeGenerator.h"
 #include "synth360/Synth.h"
+#include "utl/MemMgr.h"
+#include "utl/PoolAlloc.h"
 #include "xdk/win_types.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/xapilibi/handleapi.h"
@@ -13,6 +15,8 @@
 #include "xdk/xaudio2/xaudio2.h"
 #include <list>
 #include <deque>
+
+static int s_TotalInUseVoices = 0;
 
 HANDLE gEvent = INVALID_HANDLE_VALUE;
 HANDLE gVoiceThread = INVALID_HANDLE_VALUE;

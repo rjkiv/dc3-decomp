@@ -5,6 +5,7 @@
 #include "gesture/Skeleton.h"
 #include "hamobj/HamGameData.h"
 #include "math/Vec.h"
+#include "math/Vec.inl"
 #include <cstdio>
 
 int dummyunusedskeletonqualityfilterlmao() {
@@ -45,23 +46,34 @@ void SkeletonQualityFilter::UpdateIsConfident(const TrackedJoint *joints) {
     }
 }
 
-void SkeletonQualityFilter::UpdateIsSideways(const TrackedJoint *joint) {
-    Vector3 vDiff;
-    Subtract(joint[8].mPos[0], joint[4].mPos[0], vDiff);
-    Normalize(vDiff, vDiff);
-    float threshold = fabsf((vDiff.x + vDiff.y) * 0.0f + vDiff.z);
+void SkeletonQualityFilter::UpdateIsSideways(const TrackedJoint *joints) {
+    static float _shouldersBentDot = 0.25f;
+
+    Vector3 vShoulders;
+    Subtract(joints[kBoneHandLeft].mPos[0], joints[kBoneHandRight].mPos[0], vShoulders);
+    Normalize(vShoulders, vShoulders);
+
+    float threshold = fabsf((vShoulders.x + vShoulders.y) * 0.0f + vShoulders.z);
     float thresh = mSideways ? mSidewaysCutoffThreshold * 0.9f : mSidewaysCutoffThreshold;
     bool side = true;
     if (thresh <= threshold) {
         side = false;
     }
     mSideways = side;
-    Subtract(joint[8].mPos[0], joint[2].mPos[0], vDiff);
-    Normalize(vDiff, vDiff);
-    Vector3 vDiff2;
-    Subtract(joint[4].mPos[0], joint[2].mPos[0], vDiff2);
-    Normalize(vDiff2, vDiff2);
-    if (0.25f < Dot(vDiff, vDiff2)) {
+
+    Vector3 vLeftShoulder;
+    Subtract(
+        joints[kBoneHandLeft].mPos[0], joints[kBoneArmUpperRight].mPos[0], vLeftShoulder
+    );
+    Normalize(vLeftShoulder, vLeftShoulder);
+
+    Vector3 vRightShoulder;
+    Subtract(
+        joints[kBoneHandRight].mPos[0], joints[kBoneArmUpperRight].mPos[0], vRightShoulder
+    );
+    Normalize(vRightShoulder, vRightShoulder);
+
+    if (Dot(vLeftShoulder, vRightShoulder) > _shouldersBentDot) {
         mSideways = true;
     }
 }

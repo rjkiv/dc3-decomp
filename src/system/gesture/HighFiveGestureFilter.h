@@ -12,10 +12,13 @@ public:
     bool CheckHighFive();
     void Update(const Skeleton *, const Skeleton *);
 
+    bool CheckSide(int i) { return i / 2; }
+
     NEW_OBJ(HighFiveGestureFilter)
 
 protected:
     HighFiveGestureFilter();
 
-    bool mHighFived; // 0x2c
+private:
+    bool mHighFive; // 0x2c
 };

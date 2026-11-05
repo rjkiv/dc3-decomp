@@ -21,7 +21,7 @@ public:
     void Clear();
     bool IsStandingStill() { return mStandingStillFilter.Satisfied(); }
     bool HandRaised() const { return mHandRaised; }
-    bool HandPotentiallyRaised() {} // ???
+    bool HandPotentiallyRaised() { return (float)mStandingStillFilter.RaisedMs() > 0; }
     int RaisedMs() const { return mHandRaisedTimer; }
 
     NEW_OBJ(HandRaisedGestureFilter)

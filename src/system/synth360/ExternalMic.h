@@ -1,6 +1,8 @@
 #pragma once
 #include "xdk/XAPILIB.h"
 #include "synth360/Mic.h"
+#include "xdk/win_types.h"
+#include "xdk/xapilibi/xbase.h"
 
 // size 0x18
 class ExternalMic {
@@ -59,4 +61,15 @@ private:
     static std::vector<ExternalMicClientProxy *> mMicMasters;
     static std::vector<DWORD> mDevToMicMaster;
     static std::vector<DWORD> mMicMasterToDev;
+};
+
+struct RequestCompletionData {
+    DWORD dwMicrophoneIndex; // 0x0
+    _XOVERLAPPED *pOverlap; // 0x4
+    DWORD dwFrameCount; // 0x8
+    DWORD dwAudioFrameBufferLength; // 0xc
+    PBYTE pAudioFramesBuffer; // 0x10
+    PBYTE pAudioFramesBufferAlloc; // 0x14
+    WORD wFrameLengths[8]; // 0x18
+    ExternalMic *pOwner; // 0x28
 };
