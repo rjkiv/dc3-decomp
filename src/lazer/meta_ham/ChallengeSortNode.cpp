@@ -462,16 +462,7 @@ Symbol ChallengeSortNode::Select() {
     case 1:
         MILO_ASSERT(false, 0x1a9);
     default: {
-        Symbol token = GetToken();
-        HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
-        if (profile && profile->IsContentNew(token)) {
-            profile->MarkContentNotNew(token);
-        }
-        if (UseQuickplayPerformer()) {
-            MetaPerformer *pPerformer = MetaPerformer::Current();
-            pPerformer->SetSong(GetToken());
-        }
-        return gNullStr;
+        break;
     }
     case 2:
     case 3:
@@ -493,6 +484,20 @@ Symbol ChallengeSortNode::Select() {
         }
         return screen;
     }
+
+    Symbol token = GetToken();
+    HamProfile *pProf = TheProfileMgr.GetActiveProfile(true);
+
+    if (pProf && pProf->IsContentNew(token)) {
+        pProf->MarkContentNotNew(token);
+    }
+
+    if (UseQuickplayPerformer()) {
+        MetaPerformer *pPerformer = MetaPerformer::Current();
+        pPerformer->SetSong(GetToken());
+    }
+
+    return gNullStr;
 }
 
 Symbol ChallengeSortNode::OnSelect() {
