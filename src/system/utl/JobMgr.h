@@ -6,6 +6,7 @@
 #include "utl/Str.h"
 #include "xdk/win_types.h"
 #include "xdk/xapilibi/xbase.h"
+#include "xdk/xonline/xonline.h"
 
 class Job {
 public:
@@ -44,6 +45,12 @@ private:
 
 class SingleItemEnumJob : public Job {
 public:
+    enum State {
+        kIdle = 0,
+        kEnumerating = 1,
+        kSuccess = 2,
+        kFailure = 3
+    };
     SingleItemEnumJob(Hmx::Object *, int, QWORD);
     virtual ~SingleItemEnumJob();
     virtual void Start();
@@ -57,10 +64,10 @@ protected:
     Hmx::Object *mCallback; // 0x8
     int mPadNum; // 0xc
     QWORD mOfferID; // 0x10
-    int mState; // 0x18
-    bool unk1c; // 0x1c - purchase made?
-    void *unk20; // 0x20 - enumeration buffer?
-    HANDLE mEnum; // 0x24
+    State mState; // 0x18
+    bool mPurchaseMade; // 0x1c
+    XMARKETPLACE_CONTENTOFFER_INFO *mOfferEnum; // 0x20
+    HANDLE mHandle; // 0x24
     XOVERLAPPED mOverlapped; // 0x28
 };
 
@@ -71,11 +78,17 @@ public:
 
 private:
     Symbol mSource; // 0x48
-    unsigned int mPurchaser; // 0x4c
+    unsigned int mPID; // 0x4c
 };
 
 class MultipleItemsEnumJob : public Job {
 public:
+    enum State {
+        kIdle = 0,
+        kEnumerating = 1,
+        kSuccess = 2,
+        kFailure = 3
+    };
     MultipleItemsEnumJob(Hmx::Object *, int, std::vector<QWORD> &);
     virtual ~MultipleItemsEnumJob();
     virtual void Start();
@@ -89,11 +102,11 @@ protected:
     Hmx::Object *mCallback; // 0x8
     int mPadNum; // 0xc
     std::vector<QWORD> mOfferIDs; // 0x10
-    std::vector<bool> unk1c; // 0x1c - purchased?
-    int mState; // 0x30
-    bool unk34;
-    void *unk38; // 0x38 - enumeration buffer? - array of 0x68 sized structs?
-    HANDLE mEnum; // 0x3c
+    std::vector<bool> mPurchased; // 0x1c
+    State mState; // 0x30
+    bool mPurchaseMade; // 0x34
+    XMARKETPLACE_CONTENTOFFER_INFO *mOfferEnum; // 0x38
+    HANDLE mHandle; // 0x3c
     XOVERLAPPED mOverlapped; // 0x40
 };
 

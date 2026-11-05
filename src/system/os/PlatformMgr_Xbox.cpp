@@ -27,6 +27,7 @@
 #include "xdk/NUI.h"
 #include "xdk/XBC.h"
 #include "xdk/win_types.h"
+#include "xdk/xapilibi/winerror.h"
 #include "xdk/xapilibi/xbox.h"
 #include <algorithm>
 #include <cstdlib>
@@ -94,20 +95,18 @@ namespace {
         for (int i = 0; i < 4; i++) {
             XUSER_SIGNIN_INFO info;
             memset(&info, 0, sizeof(XUSER_SIGNIN_INFO));
-            info.xuid = xuid;
             XUserGetSigninInfo(i, 1, &info);
-            if (info.xuid == 0) {
+            if (xuid == info.xuid) {
                 return i;
             }
             memset(&info, 0, sizeof(XUSER_SIGNIN_INFO));
-            info.xuid = xuid;
             XUserGetSigninInfo(i, 2, &info);
-            if (info.xuid == 0) {
+            if (xuid == info.xuid) {
                 return i;
             }
             memset(&info, 0, sizeof(XUSER_SIGNIN_INFO));
             XUserGetXUID(i, &info.xuid);
-            if (info.xuid == 0) {
+            if (xuid == info.xuid) {
                 return i;
             }
         }
@@ -334,8 +333,8 @@ namespace {
 #pragma region Jobs
 
 SingleItemEnumJob::SingleItemEnumJob(Hmx::Object *callback, int pad_num, QWORD offerID)
-    : mCallback(callback), mPadNum(pad_num), mOfferID(offerID), mState(0), unk1c(false),
-      unk20(0), mEnum(0) {}
+    : mCallback(callback), mPadNum(pad_num), mOfferID(offerID), mState(),
+      mPurchaseMade(false), mOfferEnum(0), mHandle(0) {}
 
 SingleItemEnumJob::~SingleItemEnumJob() {
     if (mState == 1 && mOverlapped.InternalLow == ERROR_IO_PENDING) {
@@ -344,39 +343,39 @@ SingleItemEnumJob::~SingleItemEnumJob() {
             MILO_FAIL("Error cancelling enum %d", res);
         }
     }
-    if (mEnum) {
-        CloseHandle(mEnum);
-        mEnum = nullptr;
+    if (mHandle) {
+        CloseHandle(mHandle);
+        mHandle = nullptr;
     }
-    RELEASE(unk20);
+    RELEASE(mOfferEnum);
 }
 
 void SingleItemEnumJob::Start() {
     DWORD size = 0;
-    mState = 1;
+    mState = kEnumerating;
     DWORD res = XMarketplaceCreateOfferEnumeratorByOffering(
-        mPadNum, 1, &mOfferID, 1, &size, &mEnum
+        mPadNum, 1, &mOfferID, 1, &size, &mHandle
     );
     if (res != 0) {
-        if (mEnum) {
-            CloseHandle(mEnum);
-            mEnum = nullptr;
+        if (mHandle) {
+            CloseHandle(mHandle);
+            mHandle = nullptr;
         }
         MILO_NOTIFY("Error creating enumerator after purchase: %d", res);
-        mState = 3;
+        mState = kFailure;
     } else {
-        unk20 = new char[size];
-        memset(unk20, 0, size);
+        mOfferEnum = (XMARKETPLACE_CONTENTOFFER_INFO *)new char[size];
+        memset(mOfferEnum, 0, size);
         memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
-        DWORD enumRes = XEnumerate(mEnum, unk20, size, nullptr, &mOverlapped);
+        DWORD enumRes = XEnumerate(mHandle, mOfferEnum, size, nullptr, &mOverlapped);
         if (enumRes != ERROR_IO_PENDING) {
-            if (mEnum) {
-                CloseHandle(mEnum);
-                mEnum = nullptr;
+            if (mHandle) {
+                CloseHandle(mHandle);
+                mHandle = nullptr;
             }
-            RELEASE(unk20);
+            RELEASE(mOfferEnum);
             MILO_NOTIFY("Error enumerating after purchase: %d", enumRes);
-            mState = 3;
+            mState = kFailure;
         }
     }
 }
@@ -396,7 +395,7 @@ void SingleItemEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mCallback) {
         static SingleItemEnumCompleteMsg msg(false, false, gNullStr);
         msg.SetSuccess(mState == 2);
-        msg.SetPurchaseMade(unk1c);
+        msg.SetPurchaseMade(mPurchaseMade);
         String offerID = MakeString("%016llX", mOfferID);
         msg.SetOfferID(offerID);
         mCallback->Handle(msg, true);
@@ -408,29 +407,28 @@ void SingleItemEnumJob::Poll() {
         DWORD dwResult;
         DWORD res = XGetOverlappedResult(&mOverlapped, &dwResult, false);
         if (dwResult == 1 && res == 0) {
-            mState = 2;
-            // unk1c =
+            mState = kSuccess;
+            mPurchaseMade = mOfferEnum->fUserHasPurchased;
         } else {
-            mState = 3;
+            mState = kFailure;
             MILO_NOTIFY("Error enumerating after purchase: %d", res);
         }
-        if (mEnum) {
-            CloseHandle(mEnum);
-            mEnum = nullptr;
+        if (mHandle) {
+            CloseHandle(mHandle);
+            mHandle = nullptr;
         }
-        RELEASE(unk20);
+        RELEASE(mOfferEnum);
     }
 }
 
 PostPurchaseEnumJob::PostPurchaseEnumJob(
     Hmx::Object *callback, int pad_num, QWORD offerID, Symbol pid, unsigned int purchaser
 )
-    : SingleItemEnumJob(callback, pad_num, offerID), mSource(pid), mPurchaser(purchaser) {
-}
+    : SingleItemEnumJob(callback, pad_num, offerID), mSource(pid), mPID(purchaser) {}
 
 void PostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mState == 2) {
-        if (unk1c) {
+        if (mPurchaseMade) {
             static Symbol source("source");
             static Symbol offer("offer");
             static Symbol purchaser("purchaser");
@@ -442,7 +440,7 @@ void PostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
                 offer,
                 offerStr.c_str(),
                 purchaser,
-                (int)mPurchaser
+                (int)mPID
             );
         }
     }
@@ -452,8 +450,8 @@ void PostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
 MultipleItemsEnumJob::MultipleItemsEnumJob(
     Hmx::Object *callback, int pad_num, std::vector<QWORD> &ids
 )
-    : mCallback(callback), mPadNum(pad_num), mOfferIDs(ids), mState(0), unk34(false),
-      unk38(0), mEnum(0) {}
+    : mCallback(callback), mPadNum(pad_num), mOfferIDs(ids), mState(),
+      mPurchaseMade(false), mOfferEnum(0), mHandle(0) {}
 
 MultipleItemsEnumJob::~MultipleItemsEnumJob() {
     if (mState == 1 && mOverlapped.InternalLow == ERROR_IO_PENDING) {
@@ -462,42 +460,42 @@ MultipleItemsEnumJob::~MultipleItemsEnumJob() {
             MILO_FAIL("Error cancelling enum %d", res);
         }
     }
-    if (mEnum) {
-        CloseHandle(mEnum);
-        mEnum = nullptr;
+    if (mHandle) {
+        CloseHandle(mHandle);
+        mHandle = nullptr;
     }
-    RELEASE(unk38);
+    RELEASE(mOfferEnum);
 }
 
 void MultipleItemsEnumJob::Start() {
-    mState = 1;
-    unk1c.resize(mOfferIDs.size());
-    std::fill(unk1c.begin(), unk1c.end(), false);
+    mState = kEnumerating;
+    mPurchased.resize(mOfferIDs.size());
+    std::fill(mPurchased.begin(), mPurchased.end(), false);
     DWORD size = 0;
     int numItems = mOfferIDs.size();
     DWORD res = XMarketplaceCreateOfferEnumeratorByOffering(
-        mPadNum, numItems, mOfferIDs.begin(), numItems, &size, &mEnum
+        mPadNum, numItems, mOfferIDs.begin(), numItems, &size, &mHandle
     );
     if (res != 0) {
-        if (mEnum) {
-            CloseHandle(mEnum);
-            mEnum = nullptr;
+        if (mHandle) {
+            CloseHandle(mHandle);
+            mHandle = nullptr;
         }
         MILO_NOTIFY("Error creating enumerator after purchase: %d", res);
-        mState = 3;
+        mState = kFailure;
     } else {
-        unk38 = new char[size];
-        memset(unk38, 0, size);
+        mOfferEnum = (XMARKETPLACE_CONTENTOFFER_INFO *)new char[size];
+        memset(mOfferEnum, 0, size);
         memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
-        DWORD enumRes = XEnumerate(mEnum, unk38, size, nullptr, &mOverlapped);
+        DWORD enumRes = XEnumerate(mHandle, mOfferEnum, size, nullptr, &mOverlapped);
         if (enumRes != ERROR_IO_PENDING) {
-            if (mEnum) {
-                CloseHandle(mEnum);
-                mEnum = nullptr;
+            if (mHandle) {
+                CloseHandle(mHandle);
+                mHandle = nullptr;
             }
-            RELEASE(unk38);
+            RELEASE(mOfferEnum);
             MILO_NOTIFY("Error enumerating after purchase: %d", enumRes);
-            mState = 3;
+            mState = kFailure;
         }
     }
 }
@@ -517,36 +515,50 @@ void MultipleItemsEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mCallback) {
         static MultipleItemsEnumCompleteMsg msg(false, false, mOfferIDs.size(), gNullStr);
         msg.SetSuccess(mState == 2);
-        msg.SetPurchaseMade(unk34);
+        msg.SetPurchaseMade(mPurchaseMade);
         int numIDs = mOfferIDs.size();
         msg.SetNumOfferIDs(numIDs);
         for (int i = 0; i < numIDs; i++) {
             String curID = MakeString("%016llX", mOfferIDs[i]);
             msg.SetOfferID(i, curID);
-            msg.SetPurchased(i, unk1c[i]);
+            msg.SetPurchased(i, mPurchased[i]);
         }
         mCallback->Handle(msg, true);
     }
 }
 
 void MultipleItemsEnumJob::Poll() {
-    if (mState == 1 && mOverlapped.InternalLow != ERROR_IO_PENDING) {
+    if (mState == kEnumerating && mOverlapped.InternalLow != ERROR_IO_PENDING) {
         DWORD dwResult;
         DWORD res = XGetOverlappedResult(&mOverlapped, &dwResult, false);
-        if (res == 0) {
-            mState = 2;
-            for (int i = 0; i < mOfferIDs.size(); i++) {
-                // stuff happens here
+        if (res == ERROR_SUCCESS) {
+            mState = kSuccess;
+            auto it = mOfferIDs.begin();
+            auto offerIt = &mOfferEnum[0];
+            auto purchaseIt = mPurchased.begin();
+            for (int i = 0; i < mOfferIDs.size(); i++, purchaseIt++, it++) {
+                if (offerIt->qwOfferID == *it) {
+                    if (offerIt->fUserHasPurchased) {
+                        *purchaseIt = true;
+                    } else {
+                        *purchaseIt = false;
+                    }
+                    mPurchaseMade = mPurchaseMade || *purchaseIt;
+                    offerIt++;
+                } else {
+                    MILO_NOTIFY("Could not enumerate offerId %016llX", *it);
+                    *purchaseIt = false;
+                }
             }
         } else {
-            mState = 3;
+            mState = kFailure;
             MILO_NOTIFY("Error enumerating after purchase: %d", res);
         }
-        if (mEnum) {
-            CloseHandle(mEnum);
-            mEnum = nullptr;
+        if (mHandle) {
+            CloseHandle(mHandle);
+            mHandle = nullptr;
         }
-        RELEASE(unk38);
+        RELEASE(mOfferEnum);
     }
 }
 
@@ -562,7 +574,7 @@ MultipleItemsPostPurchaseEnumJob::MultipleItemsPostPurchaseEnumJob(
 
 void MultipleItemsPostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mState == 2) {
-        if (unk34) {
+        if (mPurchaseMade) {
             static Symbol source("source");
             static Symbol offer("offer");
             static Symbol purchaser("purchaser");
@@ -614,11 +626,11 @@ PlatformMgr::PlatformMgr() : mSigninMask(0) {
     for (int i = 0; i < 4; i++) {
         mXuidCache[i] = 0;
     }
+    mServiceIdState = kServiceIdStart;
     mServiceIDOverlapped = nullptr;
     mServiceIDOverlapped2 = nullptr;
     mStorageList = nullptr;
     mPathLen = 0x200;
-    mServiceIdState = kServiceIdStart;
     mListSize = 0;
     mUserID = -1;
     mResult = 0;
