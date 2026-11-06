@@ -24,23 +24,23 @@ MergeFilter::SubdirAction
 MergeFilter::DefaultSubdirAction(ObjectDir *dir, Subdirs subdirs) {
     switch (subdirs) {
     case kNoSubdirs:
-        return kMergeKeep;
-    case kAllSubdirs:
-        return kMergeMerge;
-    case kMoveAllSubdirs:
-        return kMergeReplace;
-    case kInlineSubdirs:
+        return kSubdirIgnore;
+    case kMergeAll:
+        return kSubdirRecurse;
+    case kMoveAll:
+        return kSubdirMove;
+    case kMergeInlined:
         if (dir->InlineSubDirType() == kInlineNever
             || dir->InlineSubDirType() == kInlineCachedShared)
-            return kMergeKeep;
-    case kMergeInlinedMoveSharedSubdirs:
+            return kSubdirIgnore;
+    case kMergeInlinedMoveShared:
         if (dir->InlineSubDirType() == kInlineNever
             || dir->InlineSubDirType() == kInlineCachedShared)
-            return kMergeReplace;
+            return kSubdirMove;
     default:
         break;
     }
-    return kMergeMerge;
+    return kSubdirRecurse;
 }
 
 bool RecurseSuperClassesSearch(Symbol classSym, Symbol searchClass) {

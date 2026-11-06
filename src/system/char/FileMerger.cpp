@@ -46,7 +46,7 @@ protected:
     Loader::Callback *mCallback; // 0x18
 };
 
-void FileMerger::Merger::Clear(bool b1) {
+void FileMerger::Merger::Clear(bool flushFrees) {
     loaded.Set(FilePath::Root().c_str(), "");
     Hmx::Object *owner = loadedObjects.Owner();
     if (owner != sFmDeleting) {
@@ -67,7 +67,7 @@ void FileMerger::Merger::Clear(bool b1) {
     } else {
         loadedSubdirs.clear();
     }
-    if (b1 && !TheRnd.Splashing()) {
+    if (flushFrees && !TheRnd.Splashing()) {
         TheRnd.BeginDrawing();
         TheRnd.EndDrawing();
     }
