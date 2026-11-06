@@ -29,13 +29,13 @@ public:
     float GetRadius() const { return mRadius; }
     float GetYRadius() const { return mYRadius; }
 
-    float ShapeDelta(float);
-    void ShapeDelta(Vector3 const &, Vector3 &);
-    void Constrain(class Transform &);
+    float ShapeDelta(float ang);
+    void ShapeDelta(const Vector3 &pos, Vector3 &delta);
+    void Constrain(class Transform &t);
 
     static void Init();
     static void Terminate();
-    static Waypoint *FindNearest(const Vector3 &, int);
+    static Waypoint *FindNearest(const Vector3 &p, int flags);
 
 protected:
     Waypoint();
@@ -50,8 +50,8 @@ private:
     static DataNode OnWaypointNearest(DataArray *);
     static DataNode OnWaypointLast(DataArray *);
 
-    float ShapeDeltaAng(float, float);
-    void ShapeDeltaBox(Vector3 const &, float, float, Vector3 &);
+    float ShapeDeltaAng(float angLimit, float ang);
+    void ShapeDeltaBox(const Vector3 &pos, float xradius, float yradius, Vector3 &delta);
 
     /** "Flags for this waypoint, should be a bitfield per app" */
     int mFlags; // 0xc0
