@@ -179,7 +179,7 @@ public:
     float LengthBeats() const { return EndBeat() - StartBeat(); }
     /** "Number of original samples taken, pre-keyframe compression" */
     int NumFrames() const {
-        return Max<int>(Max<int>(1, mFull.NumSamples()), mFull.NumFrames());
+        return Max<int>(Max<int>(1, mFull.NumSamples()), mFull.Frames().size());
     }
     int Flags() const { return mFlags; }
     Transitions &GetTransitions() { return mTransitions; }

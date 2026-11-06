@@ -336,16 +336,7 @@ void CharBonesSamples::Relativize(CharClip *clip) {
         for (int i = mNumSamples - 1; i >= 0; i--) {
             Bone *myBoneItr = &mBones[0];
             SetSamplePointers(i);
-            if (mCompression < kCompressVects) {
-                for (Vector3 *it = GetPos(); it < ScaleEnd(); ++it) {
-                    Vector3 v;
-                    clip->EvaluateChannel(
-                        &v, clip->GetChannel(myBoneItr->name), clip->StartBeat()
-                    );
-                    *it -= v;
-                    myBoneItr++;
-                }
-            } else {
+            if (mCompression >= kCompressVects) {
                 for (ShortVector3 *it = GetShortPos(); it < (ShortVector3 *)ScaleEnd();
                      ++it) {
                     Vector3 eval;
@@ -354,12 +345,22 @@ void CharBonesSamples::Relativize(CharClip *clip) {
                     );
                     Vector3 v;
                     it->ToVector3(v);
-                    v -= eval;
-                    it->Set(v);
+                    Vector3 res;
+                    Subtract(v, eval, res);
+                    it->Set(res);
+                    myBoneItr++;
+                }
+            } else {
+                for (Vector3 *it = GetPos(); it < ScaleEnd(); ++it) {
+                    Vector3 v;
+                    clip->EvaluateChannel(
+                        &v, clip->GetChannel(myBoneItr->name), clip->StartBeat()
+                    );
+                    *it -= v;
                     myBoneItr++;
                 }
             }
-            if (mCompression >= 3) {
+            if (mCompression >= kCompressQuats) {
                 for (ByteQuat *it = GetByteQuat(); it < (ByteQuat *)QuatEnd(); ++it) {
                     Hmx::Quat eval;
                     clip->EvaluateChannel(
@@ -382,10 +383,11 @@ void CharBonesSamples::Relativize(CharClip *clip) {
                     clip->EvaluateChannel(
                         &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
                     );
-                    *it = MakeShortAng(LimitAng(*it * 0.00061035156f - eval));
+                    float val = *it * 0.00061035156f;
+                    *it = MakeShortAng(LimitAng(val - eval));
                     myBoneItr++;
                 }
-            } else if (mCompression != 0) {
+            } else if (mCompression != kCompressNone) {
                 for (ShortQuat *it = GetShortQuat(); it < (ShortQuat *)QuatEnd(); ++it) {
                     Hmx::Quat eval;
                     clip->EvaluateChannel(
@@ -408,7 +410,8 @@ void CharBonesSamples::Relativize(CharClip *clip) {
                     clip->EvaluateChannel(
                         &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
                     );
-                    *it = MakeShortAng(LimitAng(*it * 0.00061035156f - eval));
+                    float val = *it * 0.00061035156f;
+                    *it = MakeShortAng(LimitAng(val - eval));
                     myBoneItr++;
                 }
             } else {
