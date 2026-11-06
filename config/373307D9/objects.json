@@ -212,7 +212,7 @@
             "system/char/CharIKHead.cpp": "NonMatching",
             "system/char/CharIKMidi.cpp": "Matching",
             "system/char/CharIKRod.cpp": "Matching",
-            "system/char/CharIKScale.cpp": "NonMatching",
+            "system/char/CharIKScale.cpp": "Matching",
             "system/char/CharIKSliderMidi.cpp": "Matching",
             "system/char/CharInterest.cpp": "Matching",
             "system/char/CharLipSync.cpp": "Matching",
