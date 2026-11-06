@@ -60,22 +60,22 @@ int CharBones::TypeSize(int type) const {
     case TYPE_POS:
     case TYPE_SCALE:
         if (mCompression >= kCompressVects)
-            return 6;
+            return sizeof(ShortVector3);
         else
             return sizeof(Vector3);
     case TYPE_QUAT:
         if (mCompression >= kCompressQuats)
-            return 4;
+            return sizeof(ByteQuat);
         else if (mCompression != kCompressNone)
-            return 8;
+            return sizeof(ShortQuat);
         else
             return sizeof(Hmx::Quat);
-
+    // type rotx/y/z
     default:
         if (mCompression != kCompressNone)
-            return 2;
+            return sizeof(short);
         else
-            return 4;
+            return sizeof(float);
     }
 }
 
@@ -311,7 +311,7 @@ void CharBones::ScaleDown(CharBones &bones, float f2) const {
                 Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mPosCount];
                 Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mQuatCount];
                 Bone *myBonesEnd = (Bone *)&mBones[mQuatCount];
-                Vector3 *otherVecItr = bones.VecOffset();
+                Vector3 *otherVecItr = bones.GetPos();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -339,7 +339,7 @@ void CharBones::ScaleDown(CharBones &bones, float f2) const {
                 Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mQuatCount];
                 Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mRotXCount];
                 Bone *myBonesEnd = (Bone *)&mBones[mRotXCount];
-                Hmx::Quat *otherQuatItr = bones.QuatOffset();
+                Hmx::Quat *otherQuatItr = bones.GetQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -367,7 +367,7 @@ void CharBones::ScaleDown(CharBones &bones, float f2) const {
                 Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mRotXCount];
                 Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mEndCount];
                 Bone *myBonesEnd = (Bone *)&mBones[mEndCount];
-                float *otherRotItr = bones.RotOffset();
+                float *otherRotItr = bones.GetRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -396,7 +396,7 @@ void CharBones::ScaleDown(CharBones &bones, float f2) const {
                 Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mPosCount];
                 Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mQuatCount];
                 Bone *myBonesEnd = (Bone *)&mBones[mQuatCount];
-                Vector3 *otherVecItr = bones.VecOffset();
+                Vector3 *otherVecItr = bones.GetPos();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -423,7 +423,7 @@ void CharBones::ScaleDown(CharBones &bones, float f2) const {
                 Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mQuatCount];
                 Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mRotXCount];
                 Bone *myBonesEnd = (Bone *)&mBones[mRotXCount];
-                Hmx::Quat *otherQuatItr = bones.QuatOffset();
+                Hmx::Quat *otherQuatItr = bones.GetQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -455,7 +455,7 @@ void CharBones::ScaleDown(CharBones &bones, float f2) const {
                 Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mRotXCount];
                 Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mEndCount];
                 Bone *myBonesEnd = (Bone *)&mBones[mEndCount];
-                float *otherRotItr = bones.RotOffset();
+                float *otherRotItr = bones.GetRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -489,9 +489,9 @@ void CharBones::ScaleAdd(CharBones &bones, float f2) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mPosCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *myBonesEnd = (Bone *)&mBones[mQuatCount];
-            Vector3 *otherVecItr = bones.VecOffset();
+            Vector3 *otherVecItr = bones.GetPos();
             if (mCompression >= kCompressVects) {
-                ShortVector3 *myVecItr = (ShortVector3 *)VecOffset();
+                ShortVector3 *myVecItr = GetShortPos();
                 while (true) {
                     Vector3 v;
                     myVecItr->ToVector3(v);
@@ -518,7 +518,7 @@ void CharBones::ScaleAdd(CharBones &bones, float f2) const {
                     myVecItr++;
                 }
             } else {
-                Vector3 *myVecItr = VecOffset();
+                Vector3 *myVecItr = GetPos();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -549,11 +549,11 @@ void CharBones::ScaleAdd(CharBones &bones, float f2) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *myBonesEnd = (Bone *)&mBones[mRotXCount];
-            Hmx::Quat *otherQuatItr = bones.QuatOffset();
+            Hmx::Quat *otherQuatItr = bones.GetQuat();
             if (mCompression >= kCompressQuats) {
                 float absConstant = f2abs * 0.007874016f;
                 float notAbsConstant = f2 * 0.007874016f;
-                ByteQuat *myQuatItr = (ByteQuat *)QuatOffset();
+                ByteQuat *myQuatItr = GetByteQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -597,7 +597,7 @@ void CharBones::ScaleAdd(CharBones &bones, float f2) const {
             } else if (mCompression != kCompressNone) {
                 float absConstant = f2abs * 0.000030518509f;
                 float notAbsConstant = f2 * 0.000030518509f;
-                ShortQuat *myQuatItr = (ShortQuat *)QuatOffset();
+                ShortQuat *myQuatItr = GetShortQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -639,7 +639,7 @@ void CharBones::ScaleAdd(CharBones &bones, float f2) const {
                     myQuatItr++;
                 }
             } else {
-                Hmx::Quat *myQuatItr = QuatOffset();
+                Hmx::Quat *myQuatItr = GetQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -686,10 +686,10 @@ void CharBones::ScaleAdd(CharBones &bones, float f2) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mEndCount];
             Bone *myBonesEnd = (Bone *)&mBones[mEndCount];
-            float *otherRotItr = bones.RotOffset();
+            float *otherRotItr = bones.GetRotX();
             if (mCompression != kCompressNone) {
                 float shortConstant = f2 * 0.00061035156f;
-                short *myRotItr = (short *)RotOffset();
+                short *myRotItr = GetShortRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -714,7 +714,7 @@ void CharBones::ScaleAdd(CharBones &bones, float f2) const {
                     myRotItr++;
                 }
             } else {
-                float *myRotItr = RotOffset();
+                float *myRotItr = GetRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -751,8 +751,8 @@ void CharBones::Blend(CharBones &bones) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mPosCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *myBonesEnd = (Bone *)&mBones[mQuatCount];
-            Vector3 *myVecItr = VecOffset();
-            Vector3 *otherVecItr = bones.VecOffset();
+            Vector3 *myVecItr = GetPos();
+            Vector3 *otherVecItr = bones.GetPos();
             while (true) {
                 while (otherBonesItr->name != myBonesItr->name) {
                     otherBonesItr++;
@@ -781,8 +781,8 @@ void CharBones::Blend(CharBones &bones) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *myBonesEnd = (Bone *)&mBones[mRotXCount];
-            Hmx::Quat *otherQuatItr = bones.QuatOffset();
-            Hmx::Quat *myQuatItr = QuatOffset();
+            Hmx::Quat *otherQuatItr = bones.GetQuat();
+            Hmx::Quat *myQuatItr = GetQuat();
             while (true) {
                 while (otherBonesItr->name != myBonesItr->name) {
                     otherBonesItr++;
@@ -832,8 +832,8 @@ void CharBones::Blend(CharBones &bones) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mEndCount];
             Bone *myBonesEnd = (Bone *)&mBones[mEndCount];
-            float *otherRotItr = bones.RotOffset();
-            float *myRotItr = RotOffset();
+            float *otherRotItr = bones.GetRotX();
+            float *myRotItr = GetRotX();
             while (true) {
                 while (otherBonesItr->name != myBonesItr->name) {
                     otherBonesItr++;
@@ -868,9 +868,9 @@ void CharBones::RotateBy(CharBones &bones) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mPosCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *myBonesEnd = (Bone *)&mBones[mQuatCount];
-            Vector3 *otherVecItr = bones.VecOffset();
+            Vector3 *otherVecItr = bones.GetPos();
             if (mCompression >= kCompressVects) {
-                ShortVector3 *myVecItr = (ShortVector3 *)VecOffset();
+                ShortVector3 *myVecItr = GetShortPos();
                 while (true) {
                     Vector3 v;
                     myVecItr->ToVector3(v);
@@ -896,7 +896,7 @@ void CharBones::RotateBy(CharBones &bones) const {
                     myVecItr++;
                 }
             } else {
-                Vector3 *myVecItr = VecOffset();
+                Vector3 *myVecItr = GetPos();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -925,9 +925,9 @@ void CharBones::RotateBy(CharBones &bones) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *myBonesEnd = (Bone *)&mBones[mRotXCount];
-            Hmx::Quat *otherQuatItr = bones.QuatOffset();
+            Hmx::Quat *otherQuatItr = bones.GetQuat();
             if (mCompression >= kCompressQuats) {
-                ByteQuat *myQuatItr = (ByteQuat *)QuatOffset();
+                ByteQuat *myQuatItr = GetByteQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -953,7 +953,7 @@ void CharBones::RotateBy(CharBones &bones) const {
                     myQuatItr++;
                 }
             } else if (mCompression != kCompressNone) {
-                ShortQuat *myQuatItr = (ShortQuat *)QuatOffset();
+                ShortQuat *myQuatItr = GetShortQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -979,7 +979,7 @@ void CharBones::RotateBy(CharBones &bones) const {
                     myQuatItr++;
                 }
             } else {
-                Hmx::Quat *myQuatItr = QuatOffset();
+                Hmx::Quat *myQuatItr = GetQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1008,9 +1008,9 @@ void CharBones::RotateBy(CharBones &bones) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mEndCount];
             Bone *myBonesEnd = (Bone *)&mBones[mEndCount];
-            float *otherRotItr = bones.RotOffset();
+            float *otherRotItr = bones.GetRotX();
             if (mCompression != kCompressNone) {
-                short *myRotItr = (short *)RotOffset();
+                short *myRotItr = GetShortRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1034,7 +1034,7 @@ void CharBones::RotateBy(CharBones &bones) const {
                     myRotItr++;
                 }
             } else {
-                float *myRotItr = RotOffset();
+                float *myRotItr = GetRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1069,9 +1069,9 @@ void CharBones::RotateTo(CharBones &bones, float f2) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mPosCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *myBonesEnd = (Bone *)&mBones[mQuatCount];
-            Vector3 *otherVecItr = bones.VecOffset();
+            Vector3 *otherVecItr = bones.GetPos();
             if (mCompression >= kCompressVects) {
-                ShortVector3 *myVecItr = (ShortVector3 *)VecOffset();
+                ShortVector3 *myVecItr = GetShortPos();
                 while (true) {
                     Vector3 v;
                     myVecItr->ToVector3(v);
@@ -1097,7 +1097,7 @@ void CharBones::RotateTo(CharBones &bones, float f2) const {
                     myVecItr++;
                 }
             } else {
-                Vector3 *myVecItr = VecOffset();
+                Vector3 *myVecItr = GetPos();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1126,9 +1126,9 @@ void CharBones::RotateTo(CharBones &bones, float f2) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mQuatCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *myBonesEnd = (Bone *)&mBones[mRotXCount];
-            Hmx::Quat *otherQuatItr = bones.QuatOffset();
+            Hmx::Quat *otherQuatItr = bones.GetQuat();
             if (mCompression >= kCompressQuats) {
-                ByteQuat *myQuatItr = (ByteQuat *)QuatOffset();
+                ByteQuat *myQuatItr = GetByteQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1162,7 +1162,7 @@ void CharBones::RotateTo(CharBones &bones, float f2) const {
                     myQuatItr++;
                 }
             } else if (mCompression != kCompressNone) {
-                ShortQuat *myQuatItr = (ShortQuat *)QuatOffset();
+                ShortQuat *myQuatItr = GetShortQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1196,7 +1196,7 @@ void CharBones::RotateTo(CharBones &bones, float f2) const {
                     myQuatItr++;
                 }
             } else {
-                Hmx::Quat *myQuatItr = QuatOffset();
+                Hmx::Quat *myQuatItr = GetQuat();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1237,10 +1237,10 @@ void CharBones::RotateTo(CharBones &bones, float f2) const {
             Bone *otherBonesItr = (Bone *)&bones.mBones[bones.mRotXCount];
             Bone *otherBonesEnd = (Bone *)&bones.mBones[bones.mEndCount];
             Bone *myBonesEnd = (Bone *)&mBones[mEndCount];
-            float *otherRotItr = bones.RotOffset();
+            float *otherRotItr = bones.GetRotX();
             if (mCompression != kCompressNone) {
                 float shortConstant = f2 * 0.00061035156f;
-                short *myRotItr = (short *)RotOffset();
+                short *myRotItr = GetShortRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;
@@ -1264,7 +1264,7 @@ void CharBones::RotateTo(CharBones &bones, float f2) const {
                     myRotItr++;
                 }
             } else {
-                float *myRotItr = RotOffset();
+                float *myRotItr = GetRotX();
                 while (true) {
                     while (otherBonesItr->name != myBonesItr->name) {
                         otherBonesItr++;

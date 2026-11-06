@@ -2,13 +2,13 @@
 #include "char/CharBoneDir.h"
 #include "obj/Object.h"
 
-void CharBonesBlender::Enter() { CharBones::Enter(); }
+void CharBonesBlender::Enter() { CharBones::ZeroOut(); }
 
 void CharBonesBlender::ReallocateInternal() {
     CharBonesAlloc::ReallocateInternal();
     if (mDest)
         mDest->AddBones(mBones);
-    CharBones::Enter();
+    CharBones::ZeroOut();
 }
 
 BEGIN_SAVES(CharBonesBlender)
@@ -81,5 +81,5 @@ void CharBonesBlender::Poll() {
     if (mBones.empty() || !mDest)
         return;
     Blend(*mDest);
-    CharBones::Enter();
+    CharBones::ZeroOut();
 }

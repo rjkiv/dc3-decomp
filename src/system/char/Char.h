@@ -3,7 +3,7 @@
 #include "obj/Object.h"
 #include "rndobj/Overlay.h"
 
-void CharDeferHighlight(Hmx::Object *);
+void CharDeferHighlight(Hmx::Object *o);
 void CharInit();
 void CharTerminate();
 
@@ -14,7 +14,7 @@ public:
     CharDebug();
     virtual ~CharDebug();
 
-    void Once(Hmx::Object *);
+    void Once(Hmx::Object *o);
     void Init();
 
 private:
@@ -22,9 +22,9 @@ private:
 
     static DataNode OnSetObjects(DataArray *);
 
-    void AddObject(Hmx::Object *, bool);
-    void SetObjects(DataArray *);
-    void DisplayObject(Hmx::Object *);
+    void AddObject(Hmx::Object *o, bool once);
+    void SetObjects(DataArray *msg);
+    void DisplayObject(Hmx::Object *o);
 
     ObjPtrList<Hmx::Object> mObjects; // 0x4
     ObjPtrList<Hmx::Object> mOnce; // 0x18

@@ -105,10 +105,10 @@ void CharMirror::SyncBones() {
             bones.push_back(CharBones::Bone(mapArr->Array(i)->Sym(0), 1));
         }
         mBones.AddBones(bones);
-        int numBones = mBones.GetBones().size();
+        int numBones = mBones.Bones().size();
         mOps.resize(numBones);
         for (int i = 0; i < mOps.size(); i++) {
-            Symbol boneName = mBones.GetBonesAt(i).name;
+            Symbol boneName = mBones.Bones()[i].name;
             DataArray *boneArr = mapArr->FindArray(boneName);
             mOps[i].ptr = mMirrorServo->FindPtr(boneArr->Sym(1));
             mOps[i].op = boneArr->Size() > 2 ? boneArr->Sym(2) : Symbol();

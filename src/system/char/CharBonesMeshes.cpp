@@ -62,28 +62,28 @@ void CharBonesMeshes::ReallocateInternal() {
 
 void CharBonesMeshes::AcquirePose() {
     ObjPtrVec<RndTransformable>::iterator curMesh = mMeshes.begin();
-    Vector3 *vecEnd = ScaleOffset();
-    for (Vector3 *it = VecOffset(); it < vecEnd; ++it, ++curMesh) {
+    Vector3 *vecEnd = PosEnd();
+    for (Vector3 *it = GetPos(); it < vecEnd; ++it, ++curMesh) {
         *it = (*curMesh)->LocalXfm().v;
     }
-    vecEnd = (Vector3 *)QuatOffset();
-    for (Vector3 *it = ScaleOffset(); it < vecEnd; ++it, ++curMesh) {
+    vecEnd = ScaleEnd();
+    for (Vector3 *it = GetScale(); it < vecEnd; ++it, ++curMesh) {
         MakeScale((*curMesh)->LocalXfm().m, *it);
     }
-    Hmx::Quat *quatEnd = (Hmx::Quat *)RotOffset();
-    for (Hmx::Quat *it = QuatOffset(); it < quatEnd; ++it, ++curMesh) {
+    Hmx::Quat *quatEnd = QuatEnd();
+    for (Hmx::Quat *it = GetQuat(); it < quatEnd; ++it, ++curMesh) {
         it->Set((*curMesh)->LocalXfm().m);
     }
-    float *rotIt = RotOffset();
-    float *rotEnd = RotYOffset();
+    float *rotIt = GetRotX();
+    float *rotEnd = GetRotY();
     for (; rotIt < rotEnd; ++rotIt, ++curMesh) {
         *rotIt = GetXAngle((*curMesh)->LocalXfm().m);
     }
-    rotEnd = RotZOffset();
+    rotEnd = GetRotZ();
     for (; rotIt < rotEnd; ++rotIt, ++curMesh) {
         *rotIt = GetYAngle((*curMesh)->LocalXfm().m);
     }
-    rotEnd = (float *)EndOffset();
+    rotEnd = GetEnd();
     for (; rotIt < rotEnd; ++rotIt, ++curMesh) {
         *rotIt = GetZAngle((*curMesh)->LocalXfm().m);
     }
@@ -91,35 +91,35 @@ void CharBonesMeshes::AcquirePose() {
 
 void CharBonesMeshes::PoseMeshes() {
     ObjPtrVec<RndTransformable>::iterator curMesh = mMeshes.begin();
-    Vector3 *vecEnd = ScaleOffset();
-    for (Vector3 *it = VecOffset(); it < vecEnd; ++it, ++curMesh) {
+    Vector3 *vecEnd = PosEnd();
+    for (Vector3 *it = GetPos(); it < vecEnd; ++it, ++curMesh) {
         (*curMesh)->SetLocalPos(*it);
     }
     if (mQuatCount < mMeshes.size()) {
         curMesh = mMeshes.begin() + mQuatCount;
-        Hmx::Quat *quatEnd = (Hmx::Quat *)RotOffset();
-        for (Hmx::Quat *it = QuatOffset(); it < quatEnd; ++it, ++curMesh) {
+        Hmx::Quat *quatEnd = QuatEnd();
+        for (Hmx::Quat *it = GetQuat(); it < quatEnd; ++it, ++curMesh) {
             Normalize(*it, *it);
             MakeRotMatrix(*it, (*curMesh)->DirtyLocalXfm().m);
         }
-        float *rotIt = RotOffset();
-        float *rotEnd = RotYOffset();
+        float *rotIt = GetRotX();
+        float *rotEnd = GetRotY();
         for (; rotIt < rotEnd; ++rotIt, ++curMesh) {
             MakeRotMatrixX(*rotIt, (*curMesh)->DirtyLocalXfm().m);
         }
-        rotEnd = RotZOffset();
+        rotEnd = GetRotZ();
         for (; rotIt < rotEnd; ++rotIt, ++curMesh) {
             MakeRotMatrixY(*rotIt, (*curMesh)->DirtyLocalXfm().m);
         }
-        rotEnd = (float *)EndOffset();
+        rotEnd = GetEnd();
         for (; rotIt < rotEnd; ++rotIt, ++curMesh) {
             MakeRotMatrixZ(*rotIt, (*curMesh)->DirtyLocalXfm().m);
         }
     }
     if (mScaleCount < mMeshes.size()) {
         curMesh = mMeshes.begin() + mScaleCount;
-        Vector3 *vecEnd = (Vector3 *)QuatOffset();
-        for (Vector3 *it = ScaleOffset(); it < vecEnd; ++it, ++curMesh) {
+        Vector3 *vecEnd = ScaleEnd();
+        for (Vector3 *it = GetScale(); it < vecEnd; ++it, ++curMesh) {
             Hmx::Matrix3 &mtx = (*curMesh)->DirtyLocalXfm().m;
             Vector3 v;
             MakeScale(mtx, v);

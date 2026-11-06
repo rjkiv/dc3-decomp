@@ -30,11 +30,11 @@ public:
     };
 
     enum CompressionType {
-        kCompressNone,
-        kCompressRots,
-        kCompressVects,
-        kCompressQuats,
-        kCompressAll
+        kCompressNone = 0,
+        kCompressRots = 1,
+        kCompressVects = 2,
+        kCompressQuats = 3,
+        kCompressAll = 4
     };
 
     struct Bone {
@@ -53,12 +53,10 @@ public:
     virtual void ScaleAdd(CharClip *, float, float, float);
     virtual void Print();
 
-    void Zero();
     int TypeSize(int) const;
-    void SetCompression(CompressionType);
     int FindOffset(Symbol) const;
+    // int FindIndex(Symbol) const;
     void *FindPtr(Symbol) const;
-    const char *StringVal(Symbol);
     void SetWeights(float);
     void ListBones(std::list<Bone> &) const;
     void ClearBones();
@@ -68,23 +66,53 @@ public:
     void ScaleDown(CharBones &, float) const;
     void RotateBy(CharBones &) const;
     void RotateTo(CharBones &, float) const;
-    void Enter() {
+    void Zero();
+    void ZeroOut() {
         Zero();
         SetWeights(0);
     }
     void ScaleAddIdentity();
     void Blend(CharBones &) const;
-    CompressionType GetCompression() const { return mCompression; }
+
+    //   public: bool BoneWeights();
+    std::vector<Bone> &Bones() { return mBones; }
+    const std::vector<Bone> &Bones() const { return mBones; }
+
+    Vector3 *PosPtr(int idx) { return GetPos() + idx; }
+    ShortVector3 *ShortPosPtr(int idx) { return GetShortPos() + idx; }
+    Hmx::Quat *QuatPtr(int idx) { return GetQuat() + idx; }
+    float *RotPtr(int idx) { return GetRotX() + idx; }
+    Vector3 *ScalePtr(int idx) { return GetScale() + idx; }
+
+    char *GetStart() { return mStart; }
+    Vector3 *GetPos() const { return (Vector3 *)mStart; }
+    ShortVector3 *GetShortPos() const { return (ShortVector3 *)mStart; }
+    Vector3 *GetScale() const { return (Vector3 *)(mStart + mScaleOffset); }
+    Hmx::Quat *GetQuat() const { return (Hmx::Quat *)(mStart + mQuatOffset); }
+    ShortQuat *GetShortQuat() const { return (ShortQuat *)(mStart + mQuatOffset); }
+    ByteQuat *GetByteQuat() const { return (ByteQuat *)(mStart + mQuatOffset); }
+    float *GetRotX() const { return (float *)(mStart + mRotXOffset); }
+    short *GetShortRotX() const { return (short *)(mStart + mRotXOffset); }
+    float *GetRotY() const { return (float *)(mStart + mRotYOffset); }
+    float *GetRotZ() const { return (float *)(mStart + mRotZOffset); }
+    Vector3 *PosEnd() const { return (Vector3 *)(mStart + mScaleOffset); }
+    Vector3 *ScaleEnd() const { return (Vector3 *)(mStart + mQuatOffset); }
+    Hmx::Quat *QuatEnd() const { return (Hmx::Quat *)(mStart + mRotXOffset); }
+    float *RotEnd() const { return (float *)(mStart + mEndOffset); }
+    float *GetEnd() const { return (float *)(mStart + mEndOffset); }
+    CompressionType Compression() const { return mCompression; }
+    void SetCompression(CompressionType);
     int TotalSize() const { return mTotalSize; }
-    std::vector<Bone> GetBones() { return mBones; }
-    Bone GetBonesAt(int index) { return mBones[index]; }
-    Vector3 *VecOffset() const { return (Vector3 *)mStart; }
-    Vector3 *ScaleOffset() const { return (Vector3 *)(mStart + mScaleOffset); }
-    Hmx::Quat *QuatOffset() const { return (Hmx::Quat *)(mStart + mQuatOffset); }
-    float *RotOffset() const { return (float *)(mStart + mRotXOffset); }
-    float *RotYOffset() const { return (float *)(mStart + mRotYOffset); }
-    float *RotZOffset() const { return (float *)(mStart + mRotZOffset); }
-    char *EndOffset() const { return mStart + mEndOffset; }
+    const char *StringVal(Symbol);
+    const int *Counts() const { return mCounts; }
+    int *Counts() { return mCounts; }
+    const int *Offsets() const { return mOffsets; }
+    int *Offsets() { return mOffsets; }
+
+    //   public: void SetPointers(char*);
+    //   public: void SetFromMeshes(ObjectDir*);
+    //   public: void CopyInto(CharBones&) const;
+    //   public: DataNode ListChannels(CharBones::Type, CharBones::Type);
 
     static Type TypeOf(Symbol);
     static const char *SuffixOf(Type);
@@ -113,21 +141,19 @@ protected:
         };
         int mCounts[NUM_TYPES]; // 0x18 - 0x30
     };
-    struct {
-        union {
-            struct {
-                int mPosOffset; // 0x34
-                int mScaleOffset; // 0x38
-                int mQuatOffset; // 0x3c
-                int mRotXOffset; // 0x40
-                int mRotYOffset; // 0x44
-                int mRotZOffset; // 0x48
-                int mEndOffset; // 0x4c
-            };
-            int mOffsets[NUM_TYPES]; // 0x34 - 0x4c
+    union {
+        struct {
+            int mPosOffset; // 0x34
+            int mScaleOffset; // 0x38
+            int mQuatOffset; // 0x3c
+            int mRotXOffset; // 0x40
+            int mRotYOffset; // 0x44
+            int mRotZOffset; // 0x48
+            int mEndOffset; // 0x4c
         };
-        int mTotalSize; // 0x50
+        int mOffsets[NUM_TYPES]; // 0x34 - 0x4c
     };
+    int mTotalSize; // 0x50
 };
 
 /** "Holds state for a set of bones" */
@@ -156,5 +182,5 @@ protected:
 
 BinStream &operator<<(BinStream &, const CharBones::Bone &);
 BinStream &operator>>(BinStream &, CharBones::Bone &);
-bool PropSync(CharBones ::Bone &o, DataNode &_val, DataArray *_prop, int _i, PropOp _op);
+bool PropSync(CharBones::Bone &o, DataNode &_val, DataArray *_prop, int _i, PropOp _op);
 extern CharBones *gPropBones;

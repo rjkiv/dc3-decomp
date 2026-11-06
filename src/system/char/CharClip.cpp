@@ -402,7 +402,7 @@ BEGIN_PROPSYNCS(CharClip)
     SYNC_PROP(transitions, mTransitions)
     SYNC_MEMBER(full, mFull)
     SYNC_MEMBER(one, mOne)
-    SYNC_PROP_SET(compression, mFull.GetCompression(), )
+    SYNC_PROP_SET(compression, mFull.Compression(), )
     SYNC_PROP_SET(num_frames, NumFrames(), )
     SYNC_PROP(sync_anim, mSyncAnim)
     SYNC_SUPERCLASS(Hmx::Object)
@@ -765,7 +765,7 @@ void CharClip::ScaleAddSample(
 }
 
 void CharClip::Relativize() {
-    if (mFull.GetCompression() != CharBones::kCompressNone) {
+    if (mFull.Compression() != CharBones::kCompressNone) {
         MILO_NOTIFY("%s relativizing compressed clip, should reexport", PathName(this));
     }
     MILO_ASSERT(mRelative, 0x3A3);
@@ -1048,7 +1048,7 @@ void CharClip::LockAndDelete(CharClip **const deathRow, int count, int remaining
     while (remaining > 0) {
         CharClip *clip = deathRow[--count];
         clip->mPlayFlags |= 0x10000;
-        remaining--;  // It fit pretty well with band 3, except that Xenon is awful.
+        remaining--; // It fit pretty well with band 3, except that Xenon is awful.
     }
     while (count > 0) {
         delete deathRow[--count];
