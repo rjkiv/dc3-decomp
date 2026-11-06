@@ -182,7 +182,7 @@
         "cflags": "engine",
         "objects": {
             "system/char/Char.cpp": "NonMatching",
-            "system/char/CharBlendBone.cpp": "NonMatching",
+            "system/char/CharBlendBone.cpp": "Matching",
             "system/char/CharBone.cpp": "NonMatching",
             "system/char/CharBoneDir.cpp": "Matching",
             "system/char/CharBoneOffset.cpp": "Matching",
