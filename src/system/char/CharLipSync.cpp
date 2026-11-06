@@ -130,12 +130,12 @@ void CharLipSync::PlayBack::Set(CharLipSync *lipsync, ObjPtr<ObjectDir> clips) {
     static Message viseme_list("viseme_list");
     DataNode result = mLipSync->Handle(viseme_list, false);
     if (result.Type() == kDataArray) {
-        int newSize = numVisemes + result.Array()->Size();
-        if (mWeights.size() != newSize) {
-            mWeights.resize(newSize);
-            for (int i = 0; i < numVisemes + newSize; i++) {
-                Symbol visemeSym = result.Array()->Sym(i);
-                ObjPtr<CharClip> &clip = mWeights[i + numVisemes].clip;
+        int size = result.Array()->Size();
+        if (mWeights.size() != numVisemes + size) {
+            mWeights.resize(numVisemes + size);
+            for (int i = numVisemes; i < numVisemes + size; i++) {
+                Symbol visemeSym = result.Array()->Sym(i - numVisemes);
+                ObjPtr<CharClip> &clip = mWeights[i].clip;
                 clip = mClips->Find<CharClip>(visemeSym.Str(), false);
             }
         }

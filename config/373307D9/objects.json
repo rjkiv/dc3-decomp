@@ -215,7 +215,7 @@
             "system/char/CharIKScale.cpp": "NonMatching",
             "system/char/CharIKSliderMidi.cpp": "Matching",
             "system/char/CharInterest.cpp": "Matching",
-            "system/char/CharLipSync.cpp": "NonMatching",
+            "system/char/CharLipSync.cpp": "Matching",
             "system/char/CharLipSyncDriver.cpp": "NonMatching",
             "system/char/CharLookAt.cpp": "NonMatching",
             "system/char/CharMeshHide.cpp": "Matching",
