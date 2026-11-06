@@ -50,29 +50,29 @@ public:
 
     CharBones();
     virtual ~CharBones() {}
-    virtual void ScaleAdd(CharClip *, float, float, float);
+    virtual void ScaleAdd(CharClip *clip, float weight, float frame, float dframe);
     virtual void Print();
 
-    int TypeSize(int) const;
-    int FindOffset(Symbol) const;
+    int TypeSize(int type) const;
+    int FindOffset(Symbol name) const;
     // int FindIndex(Symbol) const;
-    void *FindPtr(Symbol) const;
-    void SetWeights(float);
-    void ListBones(std::list<Bone> &) const;
+    void *FindPtr(Symbol channel) const;
+    void SetWeights(float w);
+    void ListBones(std::list<Bone> &bones) const;
     void ClearBones();
-    void AddBones(const std::vector<Bone> &);
-    void AddBones(const std::list<Bone> &);
-    void ScaleAdd(CharBones &, float) const;
-    void ScaleDown(CharBones &, float) const;
-    void RotateBy(CharBones &) const;
-    void RotateTo(CharBones &, float) const;
+    void AddBones(const std::vector<Bone> &bones);
+    void AddBones(const std::list<Bone> &bones);
+    void ScaleAdd(CharBones &bones, float weight) const;
+    void ScaleDown(CharBones &bones, float scale) const;
+    void RotateBy(CharBones &bones) const;
+    void RotateTo(CharBones &bones, float weight) const;
     void Zero();
     void ZeroOut() {
         Zero();
         SetWeights(0);
     }
     void ScaleAddIdentity();
-    void Blend(CharBones &) const;
+    void Blend(CharBones &bones) const;
 
     //   public: bool BoneWeights();
     std::vector<Bone> &Bones() { return mBones; }
@@ -114,16 +114,16 @@ public:
     //   public: void CopyInto(CharBones&) const;
     //   public: DataNode ListChannels(CharBones::Type, CharBones::Type);
 
-    static Type TypeOf(Symbol);
-    static const char *SuffixOf(Type);
-    static Symbol ChannelName(const char *, Type);
-    static void SetWeights(float, std::vector<Bone> &);
+    static Type TypeOf(Symbol bone);
+    static const char *SuffixOf(Type t);
+    static Symbol ChannelName(const char *name, Type t);
+    static void SetWeights(float w, std::vector<Bone> &s);
 
 protected:
     virtual void ReallocateInternal() {}
 
     void RecomputeSizes();
-    void AddBoneInternal(const Bone &);
+    void AddBoneInternal(const Bone &bone);
 
     CompressionType mCompression; // 0x4
     /** "Bones that are animated" */

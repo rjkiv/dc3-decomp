@@ -10,7 +10,7 @@
 
 class CharMirror : public CharWeightable, public CharPollable {
 public:
-    struct MirrorOp { // From RB3 decomp
+    struct MirrorOp {
         void *ptr; // 0x0
         Symbol op; // 0x4
     };

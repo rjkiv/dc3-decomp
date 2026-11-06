@@ -97,8 +97,8 @@ void CharBones::SetCompression(CompressionType ty) {
 
 CharBones::Type CharBones::TypeOf(Symbol s) {
     for (const char *p = s.Str(); *p != '\0'; p++) {
-        if (p[0] == '.') {
-            switch (p[1]) {
+        if (*p == '.') {
+            switch (*++p) {
             case 'p':
                 return TYPE_POS;
             case 's':
@@ -142,17 +142,16 @@ Symbol CharBones::ChannelName(const char *cc, CharBones::Type t) {
     return Symbol(buf);
 }
 
-int CharBones::FindOffset(Symbol s) const {
-    Type ty = TypeOf(s);
+int CharBones::FindOffset(Symbol name) const {
+    Type ty = TypeOf(name);
     int nextcount = mCounts[ty + 1];
     int size = TypeSize(ty);
     int count = mCounts[ty];
     int offset = mOffsets[ty];
-    for (int i = 0; i < nextcount - count; i++) {
-        if (mBones[count << 3].name == s)
+    for (int i = count; i < nextcount; i++, offset += size) {
+        if (mBones[i].name == name) {
             return offset;
-        else
-            offset += size;
+        }
     }
     return -1;
 }
@@ -229,8 +228,8 @@ BEGIN_PROPSYNCS(CharBonesObject)
 END_PROPSYNCS
 
 void CharBones::ScaleAddIdentity() {
-    Hmx::Quat *quatEnd = (Hmx::Quat *)(mStart + mOffsets[TYPE_ROTX]);
-    Hmx::Quat *quatStart = (Hmx::Quat *)(mStart + mOffsets[TYPE_QUAT]);
+    Hmx::Quat *quatEnd = QuatEnd();
+    Hmx::Quat *quatStart = GetQuat();
     Bone *bone = &mBones[mQuatCount];
     for (Hmx::Quat *q = quatStart; q != quatEnd; q++, bone++) {
         float diff = 1 - bone->weight;
