@@ -183,7 +183,7 @@
         "objects": {
             "system/char/Char.cpp": "NonMatching",
             "system/char/CharBlendBone.cpp": "Matching",
-            "system/char/CharBone.cpp": "NonMatching",
+            "system/char/CharBone.cpp": "Matching",
             "system/char/CharBoneDir.cpp": "Matching",
             "system/char/CharBoneOffset.cpp": "Matching",
             "system/char/CharBoneTwist.cpp": "Matching",

@@ -153,26 +153,27 @@ END_LOADS
 
 void CharBone::StuffBones(std::list<CharBones::Bone> &bones, int mask) const {
     if (mPositionContext & mask) {
-        Symbol name = CharBones::ChannelName(Name(), CharBones::TYPE_POS);
-        CharBones::Bone bone;
-        bone.name = name;
-        bone.weight = GetWeight(mask);
-        bones.push_back(bone);
+        bones.push_back(
+            CharBones::Bone(ChannelName(CharBones::TYPE_POS), GetWeight(mask))
+        );
     }
     if (mScaleContext & mask) {
-        Symbol name = CharBones::ChannelName(Name(), CharBones::TYPE_SCALE);
-        CharBones::Bone bone;
-        bone.name = name;
-        bone.weight = GetWeight(mask);
-        bones.push_back(bone);
+        bones.push_back(
+            CharBones::Bone(ChannelName(CharBones::TYPE_SCALE), GetWeight(mask))
+        );
     }
     if (mRotation != CharBones::TYPE_END && mRotationContext & mask) {
-        Symbol name = CharBones::ChannelName(Name(), mRotation);
-        CharBones::Bone bone;
-        bone.name = name;
-        bone.weight = GetWeight(mask);
-        bones.push_back(bone);
+        bones.push_back(CharBones::Bone(ChannelName(mRotation), GetWeight(mask)));
     }
+}
+
+CharBone::WeightContext *CharBone::FindWeight(int ctx) {
+    FOREACH (it, mWeights) {
+        if (it->context & ctx) {
+            return &*it;
+        }
+    }
+    return nullptr;
 }
 
 const CharBone::WeightContext *CharBone::FindWeight(int ctx) const {

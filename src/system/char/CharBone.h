@@ -11,6 +11,7 @@ class CharBone : public Hmx::Object {
 public:
     struct WeightContext {
         WeightContext() : context(0), weight(0) {}
+        WeightContext(int ctx, float wt) : context(ctx), weight(wt) {}
 
         /** "context for this bone weight" */
         int context; // 0x0
@@ -29,25 +30,36 @@ public:
     NEW_OBJ(CharBone);
     REGISTER_OBJ(CharBone);
 
+    void ClearContext(int mask);
+    void StuffBones(std::list<CharBones::Bone> &bones, int context) const;
+    float GetWeight(int context) const;
+
+    Symbol ChannelName(CharBones::Type t) const {
+        return CharBones::ChannelName(Name(), t);
+    }
+    void AddWeight(int ctx, float wt) { mWeights.push_back(WeightContext(ctx, wt)); }
+
     int PositionContext() const { return mPositionContext; }
-    int ScaleContext() const { return mScaleContext; }
+    void SetPositionContext(int c) { mPositionContext = c; }
     CharBones::Type Rotation() const { return mRotation; }
+    void SetRotation(CharBones::Type ty) { mRotation = ty; }
+    int ScaleContext() const { return mScaleContext; }
     int RotationContext() const { return mRotationContext; }
-    CharBone *GetTarget() const { return mTarget; }
+    void SetRotationContext(int c) { mRotationContext = c; }
+    CharBone *GetTarget() { return mTarget; }
+    void SetTarget(CharBone *b) { mTarget = b; }
     RndTransformable *Trans() { return mTrans; }
     void SetTrans(RndTransformable *t) { mTrans = t; }
-    void SetTarget(CharBone *b) { mTarget = b; }
-    void SetPositionContext(int c) { mPositionContext = c; }
-    void SetRotationContext(int c) { mRotationContext = c; }
-    void SetRotation(CharBones::Type ty) { mRotation = ty; }
     bool BakeOutAsTopLevel() { return mBakeOutAsTopLevel; }
-    void ClearContext(int);
-    void StuffBones(std::list<CharBones::Bone> &, int) const;
-    float GetWeight(int) const;
-    const WeightContext *FindWeight(int mask) const;
+
+    //  public: bool Used() const;
+    //  public: bool UsedRecurse();
 
 protected:
     CharBone();
+
+    const WeightContext *FindWeight(int mask) const;
+    WeightContext *FindWeight(int mask);
 
     DataNode OnGetContextFlags(DataArray *);
 
