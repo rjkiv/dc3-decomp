@@ -75,6 +75,7 @@ public:
 
     /** "duration in seconds" */
     float Duration() { return (float)(mFrames - 1) / 30.0f; }
+    std::vector<String> &Visemes() { return mVisemes; }
     void Print(TextStream &);
     void Parse(DataArray *);
 
