@@ -70,8 +70,8 @@ public:
 
     // const float* AsArray() const;
     // float* AsArray();
-    // Vector2 &AsVector2();
-    // const Vector2 &AsVector2() const;
+    Vector2 &AsVector2() { return reinterpret_cast<Vector2 &>(*this); }
+    const Vector2 &AsVector2() const { return reinterpret_cast<const Vector2 &>(*this); }
 
     static const Vector3 &GetXAxis() { return sX; }
     static const Vector3 &GetYAxis() { return sY; }

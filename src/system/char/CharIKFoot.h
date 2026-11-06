@@ -42,7 +42,7 @@ protected:
     void DoFSM(Character *, Transform &);
 
     ObjPtr<RndTransformable> mDummy; // 0xb0
-    State mState; // 0xc4, PDB says CharIKFoot::State
+    State mState; // 0xc4
     ObjPtr<RndTransformable> mData; // 0xc8
     int mDataIndex; // 0xdc
     Vector3 mFreezePos; // 0xe0
