@@ -45,6 +45,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(CharDriver);
+    REGISTER_OBJ(CharDriver);
 
     ObjectDir *ClipDir() const { return mClips; }
     CharBonesObject *GetBones() const { return mBones; }

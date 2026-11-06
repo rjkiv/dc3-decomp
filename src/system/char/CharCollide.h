@@ -36,6 +36,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(CharCollide)
+    REGISTER_OBJ(CharCollide)
 
     void SyncShape();
     void CopyOriginalToCur();

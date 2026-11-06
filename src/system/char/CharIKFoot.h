@@ -31,6 +31,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(CharIKFoot)
+    REGISTER_OBJ(CharIKFoot)
 
     RndTransformable *GetData() const { return mData; }
     int GetDataIndex() const { return mDataIndex; }

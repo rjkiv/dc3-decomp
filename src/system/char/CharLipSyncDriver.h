@@ -33,6 +33,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(CharLipSyncDriver)
+    REGISTER_OBJ(CharLipSyncDriver)
 
     void Sync();
     void ClearLipSync();

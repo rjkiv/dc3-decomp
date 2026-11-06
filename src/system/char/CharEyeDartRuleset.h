@@ -56,6 +56,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(CharEyeDartRuleset)
+    REGISTER_OBJ(CharEyeDartRuleset)
 
 protected:
     CharEyeDartRuleset();

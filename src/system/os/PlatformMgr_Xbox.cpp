@@ -274,7 +274,7 @@ namespace {
         ThePlatformMgr.Handle(msg, true);
     }
 
-    void XbcCallback(long hr, XBC_EVENT_PARAMS *pParams, void *pv) {
+    void XbcCallback(HRESULT hr, XBC_EVENT_PARAMS *pParams, void *pv) {
         if (hr != 0) {
             MILO_NOTIFY("SmartGlass: Error in cb: 0x%08x", hr);
         } else if (pParams->nUserIndex >= 4) {
@@ -364,7 +364,7 @@ void SingleItemEnumJob::Start() {
         MILO_NOTIFY("Error creating enumerator after purchase: %d", res);
         mState = kFailure;
     } else {
-        mOfferEnum = (XMARKETPLACE_CONTENTOFFER_INFO *)new char[size];
+        mOfferEnum = (XMARKETPLACE_CONTENTOFFER_INFO *)new BYTE[size];
         memset(mOfferEnum, 0, size);
         memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
         DWORD enumRes = XEnumerate(mHandle, mOfferEnum, size, nullptr, &mOverlapped);
@@ -484,7 +484,7 @@ void MultipleItemsEnumJob::Start() {
         MILO_NOTIFY("Error creating enumerator after purchase: %d", res);
         mState = kFailure;
     } else {
-        mOfferEnum = (XMARKETPLACE_CONTENTOFFER_INFO *)new char[size];
+        mOfferEnum = (XMARKETPLACE_CONTENTOFFER_INFO *)new BYTE[size];
         memset(mOfferEnum, 0, size);
         memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
         DWORD enumRes = XEnumerate(mHandle, mOfferEnum, size, nullptr, &mOverlapped);
@@ -1275,7 +1275,7 @@ void PlatformMgr::Poll() {
         bool failed = false;
         if (res == ERROR_SUCCESS) {
             MILO_ASSERT(!mFriendsBuffer, 0x503);
-            mFriendsBuffer = new char[bufferSize];
+            mFriendsBuffer = new BYTE[bufferSize];
             XOVERLAPPED *pFriendsAsync = new XOVERLAPPED;
             mFriendsAsync = pFriendsAsync;
             memset(pFriendsAsync, 0, sizeof(XOVERLAPPED));

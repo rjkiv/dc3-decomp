@@ -113,6 +113,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(FileMerger);
+    REGISTER_OBJ(FileMerger);
 
     static FileMerger *sFmDeleting;
 

@@ -27,6 +27,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B);
     NEW_OBJ(CharBone);
+    REGISTER_OBJ(CharBone);
 
     int PositionContext() const { return mPositionContext; }
     int ScaleContext() const { return mScaleContext; }

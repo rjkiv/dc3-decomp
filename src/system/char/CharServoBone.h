@@ -40,6 +40,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(CharServoBone)
+    REGISTER_OBJ(CharServoBone)
 
 protected:
     // CharBonesMeshes

@@ -71,6 +71,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(CharLipSync)
+    REGISTER_OBJ(CharLipSync)
 
     /** "duration in seconds" */
     float Duration() { return (float)(mFrames - 1) / 30.0f; }

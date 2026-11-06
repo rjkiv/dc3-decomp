@@ -26,6 +26,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(CharCuff)
+    REGISTER_OBJ(CharCuff)
 
 protected:
     CharCuff();

@@ -51,6 +51,7 @@
 #include "char/ClipCollide.h"
 #include "char/FileMerger.h"
 #include "char/Waypoint.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
@@ -71,55 +72,55 @@ void CharInit() {
     TheCharDebug.Init();
     Character::Init();
     CharBonesObject::Init();
-    REGISTER_OBJ_FACTORY(CharBoneOffset);
-    REGISTER_OBJ_FACTORY(CharBlendBone);
-    REGISTER_OBJ_FACTORY(CharBone);
-    REGISTER_OBJ_FACTORY(CharBonesBlender);
+    CharBoneOffset::Register();
+    CharBlendBone::Register();
+    CharBone::Register();
+    CharBonesBlender::Register();
     CharBonesMeshes::Init();
-    REGISTER_OBJ_FACTORY(CharBoneTwist);
+    CharBoneTwist::Register();
     CharClip::Init();
-    REGISTER_OBJ_FACTORY(CharClipSet);
-    REGISTER_OBJ_FACTORY(CharClipGroup);
-    REGISTER_OBJ_FACTORY(CharCollide);
-    REGISTER_OBJ_FACTORY(CharCuff);
-    REGISTER_OBJ_FACTORY(CharDriver);
-    REGISTER_OBJ_FACTORY(CharDriverMidi);
-    REGISTER_OBJ_FACTORY(CharEyes);
-    REGISTER_OBJ_FACTORY(CharInterest);
-    REGISTER_OBJ_FACTORY(CharEyeDartRuleset);
-    REGISTER_OBJ_FACTORY(CharFaceServo);
-    REGISTER_OBJ_FACTORY(CharForeTwist);
-    REGISTER_OBJ_FACTORY(CharHair);
-    REGISTER_OBJ_FACTORY(CharIKFingers);
-    REGISTER_OBJ_FACTORY(CharIKFoot);
-    REGISTER_OBJ_FACTORY(CharIKHand);
-    REGISTER_OBJ_FACTORY(CharIKHead)
-    REGISTER_OBJ_FACTORY(CharIKMidi);
-    REGISTER_OBJ_FACTORY(CharIKSliderMidi);
-    REGISTER_OBJ_FACTORY(CharIKRod);
-    REGISTER_OBJ_FACTORY(CharIKScale);
-    REGISTER_OBJ_FACTORY(CharLipSync);
+    CharClipSet::Register();
+    CharClipGroup::Register();
+    CharCollide::Register();
+    CharCuff::Register();
+    CharDriver::Register();
+    CharDriverMidi::Register();
+    CharEyes::Register();
+    CharInterest::Register();
+    CharEyeDartRuleset::Register();
+    CharFaceServo::Register();
+    CharForeTwist::Register();
+    CharHair::Register();
+    CharIKFingers::Register();
+    CharIKFoot::Register();
+    CharIKHand::Register();
+    CharIKHead::Register();
+    CharIKMidi::Register();
+    CharIKSliderMidi::Register();
+    CharIKRod::Register();
+    CharIKScale::Register();
+    CharLipSync::Register();
     CharLipSync::Init();
-    REGISTER_OBJ_FACTORY(CharLipSyncDriver);
-    REGISTER_OBJ_FACTORY(CharLookAt);
+    CharLipSyncDriver::Register();
+    CharLookAt::Register();
     CharMeshHide::Init();
-    REGISTER_OBJ_FACTORY(CharMirror);
-    REGISTER_OBJ_FACTORY(CharNeckTwist);
-    REGISTER_OBJ_FACTORY(CharPollGroup);
-    REGISTER_OBJ_FACTORY(CharPosConstraint);
-    REGISTER_OBJ_FACTORY(CharServoBone);
-    REGISTER_OBJ_FACTORY(CharSignalApplier);
-    REGISTER_OBJ_FACTORY(CharSleeve);
+    CharMirror::Register();
+    CharNeckTwist::Register();
+    CharPollGroup::Register();
+    CharPosConstraint::Register();
+    CharServoBone::Register();
+    CharSignalApplier::Register();
+    CharSleeve::Register();
     CharTaskMgr::Init();
-    REGISTER_OBJ_FACTORY(CharTransDraw);
-    REGISTER_OBJ_FACTORY(CharUpperTwist);
-    REGISTER_OBJ_FACTORY(CharWeightable);
-    REGISTER_OBJ_FACTORY(CharWeightSetter);
+    CharTransDraw::Register();
+    CharUpperTwist::Register();
+    CharWeightable::Register();
+    CharWeightSetter::Register();
     Waypoint::Init();
-    REGISTER_OBJ_FACTORY(CharGuitarString);
-    REGISTER_OBJ_FACTORY(FileMerger);
-    REGISTER_OBJ_FACTORY(CharBoneDir);
-    REGISTER_OBJ_FACTORY(ClipCollide);
+    CharGuitarString::Register();
+    FileMerger::Register();
+    CharBoneDir::Register();
+    ClipCollide::Register();
     FileMergerOrganizer::Init();
     PreloadSharedSubdirs("char");
     CharBoneDir::Init();
@@ -228,20 +229,20 @@ void CharDebug::DisplayObject(Hmx::Object *obj) {
                 mesh->Verts().resize(4);
                 mesh->Faces().resize(2);
                 for (int i = 0; i < 4; i++) {
-                    float f4 = i == 1 || i == 2 ? 0.0f : 1.0f;
-                    float f5 = i < 2 ? 1.0f : 0.0f;
-                    float floats[2] = { f5, f4 };
-                    mesh->Verts()[i].pos.Set(
-                        (floats[0] + 1) * 20, 0, -(floats[1] * 20 - 60)
-                    );
-                    memcpy(&mesh->Verts()[i].bone0, floats, sizeof(floats));
-                    mesh->Verts()[i].norm.Set(0, -1, 0);
-                    mesh->Verts()[i].boneWeights.Set(0, 0, 0, 0);
-                    mesh->Verts()[i].color.Set(1, 1, 1, 1);
+                    Vector2 uv(i < 2 ? 1.0f : 0.0f, i == 1 || i == 2 ? 0.0f : 1.0f);
+
+                    auto &vert = mesh->Verts()[i];
+                    vert.pos.y = 0;
+                    vert.pos.z = -(uv.y * 20 - 60);
+                    vert.pos.x = (uv.x + 1) * 20;
+                    vert.tex = uv;
+                    vert.norm.Set(0, -1, 0);
+                    vert.boneWeights.Set(0, 0, 0, 0);
+                    vert.color.Set(1, 1, 1, 1);
                 }
                 mesh->Faces()[0].Set(0, 1, 2);
                 mesh->Faces()[1].Set(0, 2, 3);
-                mesh->Sync(0x13F);
+                mesh->Sync(RndMesh::kFastPatch | RndMesh::kAll);
                 mesh->SetMat(mat);
             }
             mat->SetDiffuseTex(tex);

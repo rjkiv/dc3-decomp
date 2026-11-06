@@ -62,6 +62,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1F)
     NEW_OBJ(CharIKFingers)
+    REGISTER_OBJ(CharIKFingers)
 
     void MeasureLengths();
 

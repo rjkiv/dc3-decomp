@@ -30,6 +30,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(CharFaceServo)
+    REGISTER_OBJ(CharFaceServo)
 
     void SetClips(ObjectDir *);
     void SetClipType(Symbol);

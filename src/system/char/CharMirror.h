@@ -26,6 +26,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18)
     NEW_OBJ(CharMirror);
+    REGISTER_OBJ(CharMirror);
 
     void SetServo(CharServoBone *);
     void SetMirrorServo(CharServoBone *);

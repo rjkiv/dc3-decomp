@@ -21,6 +21,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14);
     NEW_OBJ(CharBonesBlender);
+    REGISTER_OBJ(CharBonesBlender);
 
     void SetDest(CharBonesObject *);
     void SetClipType(Symbol);

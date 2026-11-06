@@ -85,6 +85,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x20)
     NEW_OBJ(CharEyes)
+    REGISTER_OBJ(CharEyes)
 
     void SetInterestFilterFlags(int i) { mCurInterestFilterFlags = i; }
     void ClearInterestFilterFlags() {

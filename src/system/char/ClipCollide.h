@@ -32,6 +32,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1D)
     NEW_OBJ(ClipCollide);
+    REGISTER_OBJ(ClipCollide);
 
 protected:
     virtual void SetTypeDef(DataArray *);

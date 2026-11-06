@@ -77,7 +77,7 @@ void OptionsPanel::OnXboxTokenRedemption(int i) {
 
 DataNode OptionsPanel::OnMsg(SingleItemEnumCompleteMsg const &msg) {
     if (msg.Success()) {
-        if (msg.HasOfferID())
+        if (msg.PurchaseMade())
             msg.OfferID();
     }
     return 0;
