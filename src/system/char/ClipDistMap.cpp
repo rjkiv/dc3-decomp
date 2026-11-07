@@ -69,13 +69,9 @@ ClipDistMap::ClipDistMap(
       mDists(CalcWidth(), CalcHeight()) {
     mBeatAlignPeriod = mBeatAlign * (float)mSamplesPerBeat + 0.5;
     if (mBeatAlignPeriod != 0) {
-        float samples = mSamplesPerBeat;
-        float negA = -mAStart;
-        float negB = -mBStart;
-        int samplesA = negA * samples;
-        int samplesB = negB * samples;
-        int tmp = samplesA - samplesB;
-        mBeatAlignOffset = Mod(tmp, mBeatAlignPeriod);
+        int samplesA = IndexA(0);
+        int samplesB = IndexB(0);
+        mBeatAlignOffset = Mod(samplesA - samplesB, mBeatAlignPeriod);
     }
 }
 
@@ -88,17 +84,14 @@ bool ClipDistMap::FindBestNode(float minErr, float a, float b, ClipDistMap::Node
         return false;
     } else {
         n.err = minErr;
-        int distsWidth = mDists.Width();
-        int i = Max<int>((a - mAStart) * (float)mSamplesPerBeat, 0);
-        distsWidth = Max<int>((b - mAStart) * (float)mSamplesPerBeat, distsWidth);
+        int i = Max<int>(IndexA(a), 0);
+        int distsWidth = Min<int>(IndexA(b), mDists.Width());
         for (; i < distsWidth; i++) {
-            float samps = mSamplesPerBeat;
-            int j = mDists.Height();
-            int minus = j - 1;
-            for (; j != 0; j--, minus--) {
-                if (MinEq(n.err, mDists(i, minus))) {
-                    n.a = (float)i / samps + mAStart;
-                    n.b = (float)minus / samps + mBStart;
+            float a = BeatA(i);
+            for (int j = mDists.Height() - 1; j >= 0; j--) {
+                if (MinEq(n.err, mDists(i, j))) {
+                    n.a = a;
+                    n.b = BeatB(j);
                 }
             }
         }
@@ -150,7 +143,7 @@ int ClipDistMap::CalcWidth() {
         mAEnd += div;
     }
     int i1 = Max(0, (int)floorf((mAEnd - mAStart) * (float)(mSamplesPerBeat) + 0.5f)) + 1;
-    mAEnd = (float)(i1 - 1) / (float)mSamplesPerBeat + mAStart;
+    mAEnd = BeatA(i1 - 1);
     return i1;
 }
 
@@ -191,9 +184,8 @@ void ClipDistMap::DrawDot(float x, float y, float f3, float f4, Hmx::Color const
     Hmx::Rect rect;
     rect.w = 2.0;
     rect.h = 2.0;
-    float scale = (float)mSamplesPerBeat;
-    rect.x = (f3 - mAStart) * scale * 2.0f + (x - 1.0f);
-    rect.y = ((float)(mDists.Height() - 1) - (f4 - mBStart) * scale) * 2.0f + y + 1.0f;
+    rect.x = IndexA(f3) * 2.0f + (x - 1.0f);
+    rect.y = ((float)(mDists.Height() - 1) - IndexB(f4)) * 2.0f + y + 1.0f;
     TheRnd.DrawRect(rect, color, nullptr, nullptr, nullptr);
 }
 
@@ -285,8 +277,10 @@ void ClipDistMap::GenerateDistEntry(
     }
 }
 
-float ClipDistMap::BeatA(int i) { return (float)(mAStart + i) / (float)mSamplesPerBeat; }
-float ClipDistMap::BeatB(int i) { return (float)(mBStart + i) / (float)mSamplesPerBeat; }
+float ClipDistMap::BeatA(int i) { return mAStart + (float)i / (float)mSamplesPerBeat; }
+float ClipDistMap::BeatB(int i) { return mBStart + (float)i / (float)mSamplesPerBeat; }
+float ClipDistMap::IndexA(float i) { return (i - mAStart) * (float)mSamplesPerBeat; }
+float ClipDistMap::IndexB(float i) { return (i - mBStart) * (float)mSamplesPerBeat; }
 
 void ClipDistMap::FindDists(float maxFacing, DataArray *restricts) {
     CharBoneDir *rsrcDir = mClipA->GetResource();
@@ -296,10 +290,11 @@ void ClipDistMap::FindDists(float maxFacing, DataArray *restricts) {
     rsrcDir->StuffBones(meshes, mClipA->GetContext());
     std::vector<RndTransformable *> bones;
     for (ObjDirItr<RndTransformable> it(rsrcDir, true); it != nullptr; ++it) {
-        if (strnicmp(it->Name(), "bone", 4) == 0) {
-            bones.push_back(&*it);
+        if (strnicmp(it->Name(), "bone_", 4) == 0) {
+            bones.push_back(it);
         }
     }
+
     mClipA->GetChannel("bone_facing.rotz");
     DataNode &aBeatVar = DataVariable("a_beat");
     float aBeatVal = aBeatVar.Float();
@@ -319,15 +314,17 @@ void ClipDistMap::FindDists(float maxFacing, DataArray *restricts) {
     float bMiddleVal = bMiddleVar.Float();
     DataNode &deltaVar = DataVariable("delta");
     float deltaVal = deltaVar.Float();
+
     std::vector<DistEntry> distEntries;
     distEntries.resize(mDists.Height());
     std::vector<float> weights;
     float aInterp = Interp(mClipA->StartBeat(), mClipA->EndBeat(), 0.5f);
     float bInterp = Interp(mClipB->StartBeat(), mClipB->EndBeat(), 0.5f);
     mWorstErr = 0;
+
     for (int i = 0; i < mDists.Width(); i++) {
-        DistEntry entry;
         float beatA = BeatA(i);
+        DistEntry entry;
         for (int j = 0; j < mDists.Height(); j++) {
             mDists(i, j) = kNoData;
             float beatB = BeatB(j);
@@ -350,22 +347,35 @@ void ClipDistMap::FindDists(float maxFacing, DataArray *restricts) {
                 GenerateDistEntry(meshes, curDistEntry, BeatB(j), mClipB, bones);
                 GenerateDistEntry(meshes, entry, BeatA(i), mClipA, bones);
                 if (maxFacing > 0) {
-                    // ...
+                    float f38 = entry.facing[0];
+                    float f40 = 1.0f / 3.0f;
+                    for (int k = 0; k < 3; k++) {
+                        float f30 = LimitAng(entry.facing[k + 1] - entry.facing[k]);
+                        float f41 =
+                            LimitAng(curDistEntry.facing[k + 1] - curDistEntry.facing[k]);
+                        f38 += (1 - f40) * f30 + f40 * f41;
+                        f40 += 1.0f / 3.0f;
+                    }
+                    if (fabsf(LimitAng(f38 - curDistEntry.facing[3])) > maxFacing) {
+                        mDists(i, j) = kNoData;
+                        continue;
+                    }
                 }
                 if (weights.empty()) {
                     FindWeights(bones, weights, mWeightData);
                 }
                 float f27 = 0;
                 for (int k = 0; k < entry.bones.size(); k++) {
-                    f27 += DistanceSquared(entry.bones[k], curDistEntry.bones[k])
-                        * weights[k % weights.size()];
+                    float wt = weights[k % weights.size()];
+                    f27 += DistanceSquared(entry.bones[k], curDistEntry.bones[k]) * wt;
                 }
-                float sqrted = std::sqrt((float)entry.bones.size());
+                float sqrted = sqrtf(f27 / (float)entry.bones.size());
                 MaxEq(mWorstErr, sqrted);
                 mDists(i, j) = sqrted;
             }
         }
     }
+
     aBeatVar = aBeatVal;
     bBeatVar = bBeatVal;
     aStartVar = aStartVal;

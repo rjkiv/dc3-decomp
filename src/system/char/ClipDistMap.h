@@ -74,12 +74,11 @@ protected:
     );
     float BeatA(int);
     float BeatB(int);
+    float IndexA(float);
+    float IndexB(float);
 
     // protected: bool ClipLine(Vector2&, Vector2&, float);
     // protected: float ClipBeat(CharClip*, CharDriver*, bool);
-
-    // protected: float IndexA(float);
-    // protected: float IndexB(float);
 
     CharClip *mClipA; // 0x0
     CharClip *mClipB; // 0x4
