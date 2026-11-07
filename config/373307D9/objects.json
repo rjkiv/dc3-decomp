@@ -193,7 +193,7 @@
             "system/char/CharBonesSamples.cpp": "NonMatching",
             "system/char/CharClip.cpp": "NonMatching",
             "system/char/CharClipDisplay.cpp": "NonMatching",
-            "system/char/CharClipDriver.cpp": "NonMatching",
+            "system/char/CharClipDriver.cpp": "Matching",
             "system/char/CharClipGroup.cpp": "Matching",
             "system/char/CharClipSet.cpp": "Matching",
             "system/char/CharCollide.cpp": "Matching",

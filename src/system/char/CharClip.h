@@ -132,7 +132,8 @@ public:
         kPlayNoLoop = 0x10,
         kPlayLoop = 0x20,
         kPlayGraphLoop = 0x30,
-        kPlayNodeLoop = 0x40
+        kPlayNodeLoop = 0x40,
+        kPlaySkipFirstDelta = 0x80,
     };
 
     /** "Time units/alignment, if any, for this clip" */
