@@ -18,7 +18,7 @@
     once they are fully blended in." */
 class CharDriver : public RndHighlightable, public CharWeightable, public CharPollable {
 public:
-    enum ApplyMode { // from RB3 decomp
+    enum ApplyMode {
         kApplyBlend,
         kApplyAdd,
         kApplyRotateTo,

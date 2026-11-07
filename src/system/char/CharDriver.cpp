@@ -413,7 +413,7 @@ void CharDriver::SetBeatScale(float beatscale, bool) {
         float oldbeatscale = mBeatScale / beatscale;
         for (CharClipDriver *d = playing; d != nullptr; d = d->Next()) {
             if ((playing->mPlayFlags & 0xF600) != 0x200) {
-                CharClip::SetDefaultBeatAlignModeFlag(d->mPlayFlags, 0);
+                CharClip::SetBeatAlignMode(d->mPlayFlags, 0);
                 d->mTimeScale *= oldbeatscale;
             }
         }

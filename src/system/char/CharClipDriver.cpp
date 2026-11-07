@@ -25,11 +25,11 @@ CharClipDriver::CharClipDriver(
       mAdvanceBeat(0), mClip(owner, clip), mNext(next), mNextEvent(-1),
       mPlayMultipleClips(playMultiple) {
     if (playFlags & 0xF0U)
-        CharClip::SetDefaultLoopFlag(mPlayFlags, playFlags & 0xF0U);
+        CharClip::SetLoopMode(mPlayFlags, playFlags & 0xF0U);
     if (playFlags & 0xFU)
-        CharClip::SetDefaultBlendFlag(mPlayFlags, playFlags & 0xFU);
+        CharClip::SetPlayMode(mPlayFlags, playFlags & 0xFU);
     if (playFlags & 0xF600)
-        CharClip::SetDefaultBeatAlignModeFlag(mPlayFlags, playFlags & 0xF600U);
+        CharClip::SetBeatAlignMode(mPlayFlags, playFlags & 0xF600U);
     while (mNext && mNext->mBlendFrac == 0) {
         mNext = mNext->Exit(false);
     }
