@@ -97,25 +97,29 @@ void CharClip::Transitions::AddNode(CharClip *clip, const CharGraphNode &node) {
     if (found) {
         int n = (int)mNodeEnd - (int)found->Next();
         it = Resize(AllocSize() + 8, found);
-        memmove((void *)((char *)(it->Next()) + 8), it->Next(), n);
+        NodeVector *next = it->Next();
+        memmove(((char *)next + 8), next, n);
     } else {
-        it = Resize(AllocSize() + 0x20, mNodeEnd);
+        it = Resize(AllocSize() + sizeof(NodeVector), mNodeEnd);
         it = new (it) NodeVector(this);
         it->clip = clip;
         it->size = 0;
     }
-    int size = it->size;
     int i;
-    for (i = 0; i < size; i++) {
-        if (node.curBeat < it->nodes[i].curBeat) {
+    for (i = 0; i < it->size; i++) {
+        if (it->nodes[i].curBeat > node.curBeat) {
             break;
         }
     }
-    for (; i < size; size--) {
-        it->nodes[size << 3] = it->nodes[size - 1];
+    for (int j = it->size; j > i; j--) {
+        it->nodes[j] = it->nodes[j - 1];
     }
-    it->nodes[size] = node;
+    it->nodes[i] = node;
     it->size++;
+    RelinkRefs();
+}
+
+void CharClip::Transitions::RelinkRefs() {
     for (NodeVector *n = mNodeStart; n < mNodeEnd; n = n->Next()) {
         n->clip.LinkSelf();
     }
@@ -127,9 +131,7 @@ void CharClip::Transitions::RemoveNodes(NodeVector *n) {
     n->~NodeVector();
     memmove(n, next, (int)mNodeEnd - (int)next);
     Resize(AllocSize() - ((int)next - (int)n), nullptr);
-    for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
-        it->clip.LinkSelf();
-    }
+    RelinkRefs();
 }
 
 void CharClip::Transitions::Save(BinStream &bs) {
@@ -784,9 +786,9 @@ int CharClip::TransitionVersion() {
 }
 
 const CharGraphNode *
-CharClip::FindNode(CharClip *clip, float mBeat, int flags, float f2) const {
+CharClip::FindNode(CharClip *clip, float beat, int playFlags, float blendWidth) const {
     const CharGraphNode *n = nullptr;
-    int blendMode = flags & 0xF;
+    int blendMode = playFlags & 0xF;
     switch (blendMode) {
     case kPlayNoDefault:
     case kPlayNow:
@@ -795,29 +797,23 @@ CharClip::FindNode(CharClip *clip, float mBeat, int flags, float f2) const {
     case kPlayNoBlend:
         return nullptr;
     case kPlayFirst: {
-        n = FindFirstNode(clip, mBeat);
-        if (n) {
-            return n;
-        }
+        n = FindFirstNode(clip, beat);
         break;
     }
     case kPlayLast: {
-        n = FindLastNode(clip, mBeat);
-        if (n) {
-            return n;
-        }
+        n = FindLastNode(clip, beat);
         break;
     }
     default:
-        MILO_NOTIFY("Unknown mode flags %x, default to kPlayNow", flags);
+        MILO_NOTIFY("Unknown mode flags %x, default to kPlayNow", playFlags);
         break;
     }
     if (!n) {
+        blendWidth /= 2;
         static CharGraphNode node;
-        f2 /= 2;
-        node.curBeat = mBeat;
+        node.curBeat = beat;
         if (blendMode == kPlayLast) {
-            MaxEq(node.curBeat, EndBeat() - f2);
+            MaxEq(node.curBeat, EndBeat() - blendWidth);
         }
         node.nextBeat = clip->StartBeat();
         n = &node;
@@ -871,6 +867,16 @@ int CharClip::BeatToSample(float beat, float *frac) const {
     }
     *frac = fracToSet;
     return mFull.FracToSample(frac);
+}
+
+float CharClip::SampleToBeat(int sample) const {
+    if (mFull.Frames().size() == 0) {
+        return FrameToBeat(sample);
+    } else {
+        auto &frames = mFull.Frames();
+        auto it = std::lower_bound(frames.begin(), frames.end(), (float)sample);
+        return FrameToBeat(it - frames.begin());
+    }
 }
 
 void CharClip::EvaluateChannel(void *dst, const void *data, float mBeat) {

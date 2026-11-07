@@ -11,6 +11,8 @@
 #include "utl/Symbol.h"
 
 struct CharGraphNode {
+    CharGraphNode() {}
+    CharGraphNode(float cur, float next) : curBeat(cur), nextBeat(next) {}
     /** "where to blend from in my clip" */
     float curBeat;
     /** "where to blend to in clip" */
@@ -51,8 +53,8 @@ public:
         void Load(BinStreamRev &d, int oldRev);
         void RemoveClip(CharClip *clip);
         void AddNode(CharClip *clip, const CharGraphNode &node);
+        void RelinkRefs();
 
-        //  public: void RelinkRefs();
         //  public: void Print();
 
     protected:
