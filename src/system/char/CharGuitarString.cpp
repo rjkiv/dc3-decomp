@@ -64,9 +64,11 @@ void CharGuitarString::Poll() {
         Subtract(targetV, nutV, distNutToTarget);
         Vector3 distNutToBridge;
         Subtract(bridgeV, nutV, distNutToBridge);
-        float dotdiv =
-            Dot(distNutToTarget, distNutToBridge) / Dot(distNutToBridge, distNutToBridge);
-        float clamped = Clamp(0.0f, 1.0f, dotdiv);
+        float clamped = Clamp(
+            0.0f,
+            1.0f,
+            Dot(distNutToTarget, distNutToBridge) / Dot(distNutToBridge, distNutToBridge)
+        );
         if (mOpen) {
             clamped = 0;
         }

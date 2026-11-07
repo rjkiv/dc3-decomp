@@ -204,7 +204,7 @@
             "system/char/CharEyes.cpp": "NonMatching",
             "system/char/CharFaceServo.cpp": "Matching",
             "system/char/CharForeTwist.cpp": "NonMatching",
-            "system/char/CharGuitarString.cpp": "NonMatching",
+            "system/char/CharGuitarString.cpp": "Matching",
             "system/char/CharHair.cpp": "NonMatching",
             "system/char/CharIKFingers.cpp": "NonMatching",
             "system/char/CharIKFoot.cpp": "NonMatching",
