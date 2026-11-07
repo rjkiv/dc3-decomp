@@ -223,7 +223,7 @@
             "system/char/CharNeckTwist.cpp": "Matching",
             "system/char/CharPollGroup.cpp": "Matching",
             "system/char/CharPosConstraint.cpp": "Matching",
-            "system/char/CharServoBone.cpp": "NonMatching",
+            "system/char/CharServoBone.cpp": "Matching",
             "system/char/CharSignalApplier.cpp": "NonMatching",
             "system/char/CharSleeve.cpp": "NonMatching",
             "system/char/CharTaskMgr.cpp": "Matching",
