@@ -107,21 +107,31 @@ void CharClipGroup::SetClipFlags(int flags) {
 
 void CharClipGroup::Sort() { mClips.sort(Alphabetically()); }
 
-int CharClipGroup::QueueRandom(int i1, int i2) const {
-    int diff = i2 - i1;
+int CharClipGroup::PosMod(int idx) const {
+    int next = idx + 1;
+    return next - (next < mClips.size() ? 0 : mClips.size());
+}
+
+int CharClipGroup::NegMod(int idx) const {
+    int next = idx - 1;
+    return next - (next < mClips.size() ? 0 : mClips.size());
+}
+
+int CharClipGroup::QueueRandom(int start, int end) const {
+    int diff = end - start;
     int offset = diff < 0 ? mClips.size() : 0;
-    int rand = Rand::sRand.FastInt(0, diff + offset) + i1;
+    int rand = Rand::sRand.FastInt(0, diff + offset) + start;
     return rand - (rand < mClips.size() ? 0 : mClips.size());
 }
 
 CharClip *CharClipGroup::GetClip(int flags) {
     if (mClips.size()) {
-        mWhich = Min<int>(mWhich, mClips.size() - 1);
-        mQueueStart = Min<int>(mQueueStart, mClips.size() - 1);
+        MinEq<int>(mWhich, mClips.size() - 1);
+        MinEq<int>(mQueueStart, mClips.size() - 1);
         int oldWhich = mWhich;
-        int it = mWhich - (mWhich < mClips.size() ? 0 : mClips.size());
-        mWhich = it;
-        for (; it < mQueueStart; it = (it == mClips.size() ? 0 : it + 1)) {
+        mWhich = PosMod(mWhich);
+        int it = mWhich;
+        for (; it != mQueueStart; it = PosMod(it)) {
             mClips.swap(it, QueueRandom(it, mQueueStart));
             CharClip *clip = mClips[it];
             if ((clip->Flags() & flags) == flags) {
@@ -129,14 +139,13 @@ CharClip *CharClipGroup::GetClip(int flags) {
                 return clip;
             }
         }
-        for (; it < oldWhich; it = (it == mClips.size() ? 0 : it + 1)) {
+        for (; it != oldWhich; it = PosMod(it)) {
             mClips.swap(it, QueueRandom(it, oldWhich));
             CharClip *clip = mClips[it];
             if ((clip->Flags() & flags) == flags) {
                 mClips.swap(it, mWhich);
                 mClips.swap(it, mQueueStart);
-                mQueueStart =
-                    (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
+                mQueueStart = PosMod(mQueueStart);
                 return clip;
             }
         }
@@ -144,8 +153,7 @@ CharClip *CharClipGroup::GetClip(int flags) {
         if ((clip->Flags() & flags) == flags) {
             mClips.swap(it, mWhich);
             mClips.swap(it, mQueueStart);
-            mQueueStart =
-                (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
+            mQueueStart = PosMod(mQueueStart);
             return clip;
         }
     }

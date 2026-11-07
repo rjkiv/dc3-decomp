@@ -194,7 +194,7 @@
             "system/char/CharClip.cpp": "NonMatching",
             "system/char/CharClipDisplay.cpp": "NonMatching",
             "system/char/CharClipDriver.cpp": "NonMatching",
-            "system/char/CharClipGroup.cpp": "NonMatching",
+            "system/char/CharClipGroup.cpp": "Matching",
             "system/char/CharClipSet.cpp": "Matching",
             "system/char/CharCollide.cpp": "Matching",
             "system/char/CharCuff.cpp": "NonMatching",
