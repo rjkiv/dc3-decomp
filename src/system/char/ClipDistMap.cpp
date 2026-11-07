@@ -2,7 +2,9 @@
 #include "char/CharBoneDir.h"
 #include "char/CharBonesMeshes.h"
 #include "char/CharClip.h"
+#include "char/CharClipDriver.h"
 #include "char/CharUtl.h"
+#include "math/Geo.h"
 #include "math/Trig.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
@@ -385,4 +387,86 @@ void ClipDistMap::FindDists(float maxFacing, DataArray *restricts) {
     aMiddleVar = aMiddleVal;
     bMiddleVar = bMiddleVal;
     deltaVar = deltaVal;
+}
+
+void ClipDistMap::Draw(float x, float y, CharDriver *d) {
+    Hmx::Rect r(x - 1, y - 1, 1, ((float)mDists.Height() + 1) * 2);
+    TheRnd.DrawRect(r, Hmx::Color(1, 1, 1), nullptr, nullptr, nullptr);
+
+    r.x = (float)(mDists.Width() * 2) + x;
+    TheRnd.DrawRect(r, Hmx::Color(1, 1, 1), nullptr, nullptr, nullptr);
+
+    r.x = x - 1;
+    r.h = 1;
+    r.w = ((float)mDists.Width() + 1) * 2;
+    TheRnd.DrawRect(r, Hmx::Color(1, 1, 1), nullptr, nullptr, nullptr);
+
+    r.y = (float)(mDists.Height() * 2) + y;
+    TheRnd.DrawRect(r, Hmx::Color(1, 1, 1), nullptr, nullptr, nullptr);
+
+    for (float fIt = ceilf(BeatA(0)); fIt < BeatA(mDists.Width()); fIt += 1) {
+        r.x = IndexA(fIt) * 2 + x;
+        r.w = 2;
+        TheRnd.DrawRect(r, Hmx::Color(0, 0, 0), nullptr, nullptr, nullptr);
+    }
+
+    for (float fIt = ceilf(BeatB(0)); fIt < BeatB(mDists.Height()); fIt += 1) {
+        r.x = x - 1;
+        r.y = ((float)(mDists.Height() - 1) - IndexB(fIt)) * 2 + y;
+        r.h = 2;
+        r.w = 1;
+        TheRnd.DrawRect(r, Hmx::Color(0, 0, 0), nullptr, nullptr, nullptr);
+    }
+
+    Hmx::Rect wr(0, 0, 2, 2);
+    for (int i = 0; i < mDists.Width(); i++) {
+        wr.x = (float)(i * 2) + x;
+        for (int j = 0; j < mDists.Height(); j++) {
+            float data = mDists(i, j);
+            if (data != kNoData) {
+                float err = (mWorstErr - data) / mWorstErr;
+                Hmx::Color c(err, err, err);
+                wr.y = (float)((mDists.Height() - j - 1) * 2) + y;
+                if (data > mLastMinErr) {
+                    c.Set((err + 1) / 2, 0, 0);
+                }
+                TheRnd.DrawRect(wr, c, nullptr, nullptr, nullptr);
+            }
+        }
+    }
+
+    for (int i = 0; i < mDists.Width(); i++) {
+        wr.x = (float)(i * 2) + x;
+        for (int j = 0; j < mDists.Height(); j++) {
+            wr.y = (float)((mDists.Height() - j - 1) * 2) + y;
+            if (LocalMin(i, j)) {
+                TheRnd.DrawRect(wr, Hmx::Color(1, 1, 0), nullptr, nullptr, nullptr);
+            }
+        }
+    }
+
+    for (int i = 0; i < mNodes.size(); i++) {
+        Node &n = mNodes[i];
+        DrawDot(x + 1, y - 1, n.a, n.b, Hmx::Color(1, 0, 0));
+    }
+
+    if (d && d->First()) {
+        float startBeatA = mClipA->StartBeat();
+        for (CharClipDriver *it = d->First(); it != nullptr; it = it->Next()) {
+            if (it->Clip() == mClipA) {
+                startBeatA = it->mBeat;
+            }
+        }
+        float startBeatB = mClipB->StartBeat();
+        for (CharClipDriver *it = d->First(); it != nullptr; it = it->Next()) {
+            if (it->Clip() == mClipB) {
+                startBeatB = it->mBeat;
+                break;
+            }
+        }
+        if (mClipA == mClipB && startBeatA == startBeatB) {
+            startBeatB = mBStart;
+        }
+        DrawDot(x, y, startBeatA, startBeatB, Hmx::Color(0, 1, 1));
+    }
 }
