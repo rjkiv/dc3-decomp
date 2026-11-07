@@ -24,21 +24,37 @@ public:
     NEW_OBJ(CharClipGroup)
     REGISTER_OBJ(CharClipGroup)
 
-    CharClip *GetClip(int);
-    void DeleteRemaining(int);
-    bool HasClip(CharClip *) const;
-    void AddClip(CharClip *);
-    void SetClipFlags(int);
-    CharClip *FindClip(const char *) const;
+    CharClip *GetClip(int flags);
+    //  public: CharClip* GetClip();
+    //  public: void MakeMRU(CharClip*);
+    //  public: void MakeMRU(int32_t);
+    //  public: int32_t Size() const;
+    void DeleteRemaining(int remaining);
+    void AddClip(CharClip *c);
+    //  public: void RemoveClip(CharClip*);
+    //  public: bool HasClip(int32_t) const;
+    bool HasClip(CharClip *c) const;
+    CharClip *FindClip(const char *name) const;
     void Sort();
+    void SetClipFlags(int flags);
+
+    ObjPtrVec<CharClip> &Clips() { return mClips; }
+    int GetFlags() const { return mFlags; }
+    void SetFlags(int flags) { mFlags = flags; }
+
+    //  public: bool FlagUnique(CharClip*, int32_t);
+    //  public: int32_t NumFlagDuplicates(CharClip*, int32_t);
 
 protected:
     CharClipGroup();
-    int QueueRandom(int pos, int end) const;
+
+    int PosMod(int) const;
+    int NegMod(int) const;
+    int QueueRandom(int start, int end) const;
 
     /** "LRU list of clips belonging to this group" */
     ObjPtrVec<CharClip> mClips; // 0x4
     int mWhich; // 0x20
-    int mQueueStart;
+    int mQueueStart; // 0x24
     int mFlags; // 0x28
 };
