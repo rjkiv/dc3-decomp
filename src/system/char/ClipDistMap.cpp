@@ -14,7 +14,7 @@
 #include "utl/Std.h"
 #include <cmath>
 
-static const float sLargeFloat = kHugeFloat;
+static const float kNoData = kHugeFloat;
 
 struct DistMapNodeSort {
     bool operator()(const ClipDistMap::Node &n1, const ClipDistMap::Node &n2) const {
@@ -56,46 +56,53 @@ void ClipDistMap::Array2d::Resize(int w, int h) {
 #pragma endregion
 
 ClipDistMap::ClipDistMap(
-    CharClip *clip1, CharClip *clip2, float f1, float f2, int i, const DataArray *a
+    CharClip *a,
+    CharClip *b,
+    float beatAlign,
+    float blendWidth,
+    int numSamples,
+    const DataArray *weightData
 )
-    : mClipA(clip1), mClipB(clip2), mWeightData(a), mSamplesPerBeat(8),
-      mLastMinErr(sLargeFloat), mBeatAlign(f1), mBeatAlignOffset(0), mBlendWidth(f2),
-      mNumSamples(i), mDists(CalcWidth(), CalcHeight()) {
+    : mClipA(a), mClipB(b), mWeightData(weightData), mSamplesPerBeat(8),
+      mLastMinErr(kNoData), mBeatAlign(beatAlign), mBeatAlignOffset(0),
+      mBlendWidth(blendWidth), mNumSamples(numSamples),
+      mDists(CalcWidth(), CalcHeight()) {
     mBeatAlignPeriod = mBeatAlign * (float)mSamplesPerBeat + 0.5;
     if (mBeatAlignPeriod != 0) {
-        int tmp = (-mAStart - -mBStart) * (float)mSamplesPerBeat;
-        mBeatAlignOffset = Offset(tmp);
+        float samples = mSamplesPerBeat;
+        float negA = -mAStart;
+        float negB = -mBStart;
+        int samplesA = negA * samples;
+        int samplesB = negB * samples;
+        int tmp = samplesA - samplesB;
+        mBeatAlignOffset = Mod(tmp, mBeatAlignPeriod);
     }
 }
 
-bool ClipDistMap::BeatAligned(int i1, int i2) {
-    return Offset(i1 - i2) == mBeatAlignOffset;
+bool ClipDistMap::BeatAligned(int i, int j) {
+    return Mod(i - j, mBeatAlignPeriod) == mBeatAlignOffset;
 }
 
-bool ClipDistMap::FindBestNode(float f1, float f2, float f3, ClipDistMap::Node &node) {
-    if (f2 >= f3) {
+bool ClipDistMap::FindBestNode(float minErr, float a, float b, ClipDistMap::Node &n) {
+    if (a >= b) {
         return false;
     } else {
-        node.err = f1;
+        n.err = minErr;
         int distsWidth = mDists.Width();
-        int i1 = (f3 - mAStart) * (float)mSamplesPerBeat;
-        int i2 = (f2 - mAStart) * (float)mSamplesPerBeat;
-        int i = Max(i2, 0);
-        distsWidth = Max(i1, distsWidth);
+        int i = Max<int>((a - mAStart) * (float)mSamplesPerBeat, 0);
+        distsWidth = Max<int>((b - mAStart) * (float)mSamplesPerBeat, distsWidth);
         for (; i < distsWidth; i++) {
             float samps = mSamplesPerBeat;
             int j = mDists.Height();
             int minus = j - 1;
-            if (minus >= 0) {
-                for (; j != 0; j--, minus--) {
-                    if (MinEq(node.err, mDists(i, minus))) {
-                        node.a = (float)i / samps + mAStart;
-                        node.b = (float)minus / samps + mBStart;
-                    }
+            for (; j != 0; j--, minus--) {
+                if (MinEq(n.err, mDists(i, minus))) {
+                    n.a = (float)i / samps + mAStart;
+                    n.b = (float)minus / samps + mBStart;
                 }
             }
         }
-        return node.err < f1;
+        return n.err < minErr;
     }
 }
 
@@ -105,7 +112,7 @@ void ClipDistMap::FindNodes(float minErr, float maxDist, float endDist) {
 
     float f7 = maxDist * 0.45f;
     if (maxDist == 0) {
-        f7 = sLargeFloat;
+        f7 = kNoData;
         endDist = f7;
     } else if (endDist == 0) {
         endDist = maxDist;
@@ -192,7 +199,7 @@ void ClipDistMap::DrawDot(float x, float y, float f3, float f4, Hmx::Color const
 
 bool ClipDistMap::LocalMin(int i, int j) {
     float data = mDists(i, j);
-    if (data == sLargeFloat) {
+    if (data == kNoData) {
         return false;
     } else {
         if (mBeatAlign != 0 && BeatAligned(i, j)) {
@@ -211,7 +218,7 @@ bool ClipDistMap::LocalMin(int i, int j) {
                 if (n != i || i9 != j) {
                     if (n >= 0 && n < mDists.Width() && i9 >= 0 && i9 < mDists.Height()) {
                         float curData = mDists(n, i9);
-                        if (curData != sLargeFloat && curData < data) {
+                        if (curData != kNoData && curData < data) {
                             return false;
                         }
                     }
@@ -322,7 +329,7 @@ void ClipDistMap::FindDists(float maxFacing, DataArray *restricts) {
         DistEntry entry;
         float beatA = BeatA(i);
         for (int j = 0; j < mDists.Height(); j++) {
-            mDists(i, j) = sLargeFloat;
+            mDists(i, j) = kNoData;
             float beatB = BeatB(j);
             if (mBeatAlign == 0 || BeatAligned(i, j)) {
                 if (restricts) {

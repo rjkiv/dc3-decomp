@@ -4951,7 +4951,7 @@ __ehfuncinfo$?SyncProperty@CharBonesSamples@@UAA_NAAVDataNode@@PAVDataArray@@HW4
 __iptostatemap$?SyncProperty@CharBonesSamples@@UAA_NAAVDataNode@@PAVDataArray@@HW4PropOp@@@Z = .rdata:0x82021138; // type:object size:0x70 scope:global
 ??_C@_0L@JNFBEPGO@d?4rev?5?$DO?512?$AA@ = .rdata:0x820211A8; // type:object size:0xC scope:global
 ??_C@_0BA@DEABGEIP@CharBonesSample?$AA@ = .rdata:0x820211B4; // type:object size:0x10 scope:global data:string
-lbl_820211C4 = .rdata:0x820211C4; // type:object size:0x4 align:4 data:float
+kNoData = .rdata:0x820211C4; // type:object size:0x4 align:4 data:float
 __unwindtable$??0?$vector@VVector3@@V?$StlNodeAlloc@VVector3@@@stlpmtx_std@@@stlpmtx_std@@QAA@ABV01@@Z = .rdata:0x820211C8; // type:object size:0x8 scope:global
 __ehfuncinfo$??0?$vector@VVector3@@V?$StlNodeAlloc@VVector3@@@stlpmtx_std@@@stlpmtx_std@@QAA@ABV01@@Z = .rdata:0x820211D0; // type:object size:0x28 scope:global
 __iptostatemap$??0?$vector@VVector3@@V?$StlNodeAlloc@VVector3@@@stlpmtx_std@@@stlpmtx_std@@QAA@ABV01@@Z = .rdata:0x820211F8; // type:object size:0x8 scope:global

@@ -18,9 +18,7 @@ public:
     public:
         Array2d(int w, int h) : mWidth(0), mHeight(0), mData(0) { Resize(w, h); }
         ~Array2d() { delete[] mData; }
-        void Resize(int, int);
-        int CalcWidth();
-        int CalcHeight();
+        void Resize(int w, int h);
         int Width() { return mWidth; }
         int Height() { return mHeight; }
         float &operator()(int i, int j) { return mData[i + j * mWidth]; }
@@ -41,46 +39,47 @@ public:
     // musta been a copy/paste error
     MEM_OVERLOAD(ShadowBone, 0x24);
 
-    ClipDistMap(CharClip *, CharClip *, float, float, int, DataArray const *);
+    ClipDistMap(
+        CharClip *a,
+        CharClip *b,
+        float beatAlign,
+        float blendWidth,
+        int numSamples,
+        const DataArray *weightData
+    );
     void SetNodes(ClipDistMap::Node *best, ClipDistMap::Node *worst);
     void Draw(float x, float y, CharDriver *d);
     void FindNodes(float minErr, float maxDist, float endDist);
     void FindDists(float maxFacing, DataArray *restricts);
-    CharClip *ClipA() { return mClipA; }
-    CharClip *ClipB() { return mClipB; }
+    CharClip *ClipA() const { return mClipA; }
+    CharClip *ClipB() const { return mClipB; }
+    std::vector<Node> &Nodes() { return mNodes; }
+    // void PrintNodes();
 
 protected:
-    bool BeatAligned(int, int);
-    void DrawDot(float, float, float, float, Hmx::Color const &);
-    bool LocalMin(int, int);
+    bool BeatAligned(int i, int j);
+    void DrawDot(float x, float y, float beatA, float beatB, const Hmx::Color &col);
+    bool LocalMin(int x, int y);
     int CalcWidth();
     int CalcHeight();
-    bool FindBestNode(float, float, float, ClipDistMap::Node &);
+    bool FindBestNode(float minErr, float a, float b, ClipDistMap::Node &n);
     void
     FindBestNodeRecurse(float minErr, float minDist, float minGap, float start, float end);
     void GenerateDistEntry(
         CharBonesMeshes &boneMeshes,
         DistEntry &e,
-        float,
+        float beat,
         CharClip *clip,
         const std::vector<RndTransformable *> &bones
     );
     float BeatA(int);
     float BeatB(int);
 
-    // rename this once known/have a better idea of what it does
-    int Offset(int x) const {
-        int period = mBeatAlignPeriod;
-        if (period == 0) {
-            return 0;
-        } else {
-            int tmp = x % period;
-            if (tmp < 0) {
-                tmp += period;
-            }
-            return tmp;
-        }
-    }
+    // protected: bool ClipLine(Vector2&, Vector2&, float);
+    // protected: float ClipBeat(CharClip*, CharDriver*, bool);
+
+    // protected: float IndexA(float);
+    // protected: float IndexB(float);
 
     CharClip *mClipA; // 0x0
     CharClip *mClipB; // 0x4
