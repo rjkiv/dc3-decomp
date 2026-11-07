@@ -14,7 +14,8 @@ float CharClipDisplay::sZoom = 1;
 float CharClipDisplay::sEm;
 ObjectDir *CharClipDisplay::sDir;
 
-static const float sDisplayFloat = 2;
+static const float kBarHeight = 3;
+static const float kSpacing = 2;
 
 float CharClipDisplay::GetX(float f1) const {
     float f2;
@@ -60,7 +61,7 @@ void CharClipDisplay::DrawCursor() {
 }
 
 void CharClipDisplay::DrawBlend(float f1, float f2) {
-    Hmx::Rect r(0, mTop + 1, 0, sDisplayFloat);
+    Hmx::Rect r(0, mTop + 1, 0, kSpacing);
     r.x = GetX(f1);
     float sub = GetX(f1 + f2) - r.x;
     Hmx::Color c(0, 0, 1, 0.4f);
@@ -73,33 +74,33 @@ void CharClipDisplay::DrawBlend(float f1, float f2) {
     TheRnd.DrawRect(r, Hmx::Color(0, 0, 1), nullptr, nullptr, nullptr);
 }
 
-void CharClipDisplay::SetStartEnd(float f1, float f2, bool b3) {
-    mStart = f1;
-    mEnd = f2;
-    mLeft = f1;
-    mRight = f2;
+void CharClipDisplay::SetStartEnd(float start, float end, bool center) {
+    mStart = start;
+    mEnd = end;
+    mLeft = start;
+    mRight = end;
     float div = 16.0f / sZoom;
-    if (b3) {
+    if (center) {
         float em3 = sEm * 3.0f;
         float w = TheRnd.Width();
         float fvar1 = mIndent + mTextWidth + em3;
-        mLeft = mBeat - ((w / 2.0f - fvar1) * div) / w;
+        float &left = mLeft;
+        left = mBeat - ((w / 2.0f - fvar1) * div) / w;
         mRight = (((w - em3) - fvar1) * div) / TheRnd.Width() + mLeft;
-    } else if (f2 - f1 > div) {
+    } else if (end - start > div) {
+        float beat = mBeat;
         float fvar3 = div / 2;
-        if (mBeat < fvar3 + f1) {
-            mRight = div + f1;
+        if (beat < fvar3 + start) {
+            mRight = div + start;
+        } else if (beat > end - fvar3) {
+            mLeft = end - div;
         } else {
-            if (mBeat > f2 - fvar3) {
-                mLeft = f2 - div;
-            } else {
-                mLeft = mBeat - fvar3;
-                mRight = fvar3 + mBeat;
-            }
+            mLeft = beat - fvar3;
+            mRight = fvar3 + beat;
         }
-    } else if (f2 == f1) {
-        mLeft = f1 - div / 2;
-        mRight = f2 + div / 2;
+    } else if (end == start) {
+        mLeft = start - div / 2;
+        mRight = end + div / 2;
     }
 }
 
@@ -122,44 +123,41 @@ void CharClipDisplay::DrawTrack() {
     firstRect.x = GetX(start);
     firstRect.y = mTop;
     firstRect.w = GetX(end) - firstRect.x;
-    firstRect.h = 3;
+    firstRect.h = kBarHeight;
     TheRnd.DrawRect(firstRect, white, nullptr, nullptr, nullptr);
     float f18 = ceilf(start / 1.0f) * 1.0f;
     float f17 = floorf(end / 1.0f) * 1.0f;
-    float f11 = f18;
     if (f18 + 1 != f18) {
-        for (; f18 <= f17; f18 += 1) {
+        for (float fIt = f18; fIt <= f17; fIt += 1) {
             Hmx::Rect r;
-            r.y = topProxy - 3;
+            r.y = topProxy - kBarHeight;
             r.h = 9;
-            r.x = GetX(f18);
+            r.x = GetX(fIt);
             r.w = 1;
             TheRnd.DrawRect(r, green, nullptr, nullptr, nullptr);
         }
     }
     if (mClip) {
-        bool b1 = true;
-        auto &beatEvents = mClip->BeatEvents();
-        for (int i = 0; i < beatEvents.size(); i++) {
-            auto &cur = beatEvents[i];
-            float xBeat = GetX(cur.Beat());
+        bool first = true;
+        for (int i = 0; i < mClip->BeatEvents().size(); i++) {
+            auto &cur = mClip->BeatEvents()[i];
+            Vector2 xy;
+            GetXY(xy, cur.Beat());
             float emdiv = sEm / 2;
             TheRnd.DrawRect(
-                Hmx::Rect(xBeat, topProxy - emdiv, 1, 0.2f),
+                Hmx::Rect(xy.x, topProxy - emdiv, 1, emdiv),
                 Hmx::Color(0.2f, 0.2f, 1),
                 nullptr,
                 nullptr,
                 nullptr
             );
-            if (b1
+            if (first
                 && (cur.Beat() > mBeat
                     || (i == 0 && mBeat > mClip->BeatEvents().back().Beat()))) {
-                b1 = false;
+                first = false;
+                xy.y -= emdiv + 10;
                 TheRnd.DrawString(
-                    cur.Handler().Str(),
-                    Vector2(xBeat, topProxy - (10.0f + emdiv)),
-                    Hmx::Color(0.2f, 0.2f, 1),
-                    true
+                    cur.Handler().Str(), xy, Hmx::Color(0.2f, 0.2f, 1), true
                 );
             }
         }
@@ -184,30 +182,35 @@ void CharClipDisplay::DrawTrack() {
                 float fdata[4];
                 mClip->EvaluateChannel(fdata, channel, mBeat);
                 Hmx::Color yellow(1, 1, 0);
-                float x1c = GetX(mBeat);
+                Vector2 xy;
+                GetXY(xy, mBeat);
                 if (leftIk) {
                     const char *dataStr =
                         MakeString("L: %.1f", fdata[leftIk->GetDataIndex()]);
-                    TheRnd.DrawString(dataStr, Vector2(x1c - 90, mTop + 10), yellow, true);
+                    TheRnd.DrawString(
+                        dataStr, Vector2(xy.x - 90, xy.y + 10), yellow, true
+                    );
                 }
                 if (rightIk) {
                     const char *dataStr =
                         MakeString("R: %.1f", fdata[rightIk->GetDataIndex()]);
-                    TheRnd.DrawString(dataStr, Vector2(x1c - 40, mTop + 10), yellow, true);
+                    TheRnd.DrawString(
+                        dataStr, Vector2(xy.x - 40, xy.y + 10), yellow, true
+                    );
                 }
             }
         }
-        DrawBeatString(f11, green);
+        DrawBeatString(f18, green);
         DrawBeatString(end, green);
         TheRnd.DrawString(
             MakeString("%.1f", mStart),
-            Vector2(-(sEm * 2 - (sEm * 3 + mIndent + mTextWidth)), f19),
+            Vector2(-(LineSpacing() - (TrackMargin() + mIndent + mTextWidth)), f19),
             white,
             true
         );
         TheRnd.DrawString(
             MakeString("%.1f", mEnd),
-            Vector2(-(sEm * 3 - (float)TheRnd.Width()), f19),
+            Vector2(-(TrackMargin() - (float)TheRnd.Width()), f19),
             white,
             true
         );
@@ -222,7 +225,10 @@ void CharClipDisplay::SetText(const char *text) {
         + sEm;
 }
 
-float CharClipDisplay::LineSpacing() { return sEm * sDisplayFloat; }
+float CharClipDisplay::LineSpacing() { return sEm * kSpacing; }
+
+// complete guess
+float CharClipDisplay::TrackMargin() { return sEm * kBarHeight; }
 
 void CharClipDisplay::Init(ObjectDir *dir) {
     sDir = dir;

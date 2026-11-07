@@ -12,15 +12,15 @@ public:
         mText[0] = 0;
     }
 
-    void SetText(char const *);
-    float GetX(float) const;
-    void GetXY(Vector2 &, float) const;
-    void SetStartEnd(float, float, bool);
-    void DrawBlend(float, float);
-    void DrawBeatString(const char *, float, const Hmx::Color &);
+    void SetText(const char *text);
+    float GetX(float beat) const;
+    void GetXY(Vector2 &xy, float beat) const;
+    void SetStartEnd(float start, float end, bool center);
+    void DrawBlend(float blendBeat, float blendWidth);
+    void DrawBeatString(const char *s, float beat, const Hmx::Color &col);
     void DrawCursor();
-    void SetClip(CharClip *, bool);
-    void DrawBeatString(float, const Hmx::Color &);
+    void SetClip(CharClip *clip, bool center);
+    void DrawBeatString(float beat, const Hmx::Color &col);
     void DrawTrack();
     void SetBeat(float beat) { mBeat = beat; }
     void SetWeight(float weight) { mWeight = weight; }
@@ -32,12 +32,17 @@ public:
     static float sZoom;
     static float Em() { return sEm; }
     static float LineSpacing();
+    static float TrackMargin();
     static void Init(ObjectDir *);
-    static Hmx::Object *FindSource(Hmx::Object *);
+    static Hmx::Object *FindSource(Hmx::Object *obj);
 
 protected:
     static float sEm;
     static ObjectDir *sDir;
+
+    // protected: float LeftEdge() const;
+    // protected: float RightEdge() const;
+    // protected: float XToBeat(float) const;
 
     CharClip *mClip; // 0x0
     float mStart; // 0x4
