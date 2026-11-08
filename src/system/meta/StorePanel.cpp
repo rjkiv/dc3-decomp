@@ -80,8 +80,10 @@ void StorePanel::Enter() {
             ExitStore(kStoreErrorSignedOut);
         }
 
-    } else if (!ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
-               || ThePlatformMgr.IsPadAGuest(profile->GetPadNum())) {
+    } else if (
+        !ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
+        || ThePlatformMgr.IsPadAGuest(profile->GetPadNum())
+    ) {
         if (mLoadOK) {
             mLoadOK = false;
             ExitStore(kStoreErrorLiveServer);
@@ -483,7 +485,7 @@ DataNode StorePanel::OnMsg(SigninChangedMsg const &msg) {
 DataNode StorePanel::OnMsg(ProfileSwappedMsg const &) { return 1; }
 
 DataNode StorePanel::OnMsg(SingleItemEnumCompleteMsg const &msg) {
-    bool ok = msg.Success() && msg.HasOfferID();
+    bool ok = msg.Success() && msg.PurchaseMade();
     if (ok) {
         unsigned long long id = msg.OfferID();
         FOREACH (it, mOffers) {

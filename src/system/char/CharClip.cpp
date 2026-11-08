@@ -15,7 +15,7 @@
 #include "utl/MemMgr.h"
 #include <cstring>
 
-const float CharClip::kBeatAccuracy = 0.02;
+const float CharClip::kBeatAccuracy = 0.02f;
 CharClip::FacingSet::FacingBones CharClip::FacingSet::sFacingPos;
 CharClip::FacingSet::FacingBones CharClip::FacingSet::sFacingRotAndPos;
 
@@ -52,12 +52,12 @@ CharClip::NodeVector *CharClip::Transitions::Resize(int size, const NodeVector *
     MemHeapTracker temp(_x);
     int n = (char *)old - (char *)mNodeStart;
     MILO_ASSERT((old == NULL) || (n >= 0), 0x9B);
-    if (size != BytesInMemory()) {
+    if (size != AllocSize()) {
         if (size == 0) {
             MemFree(mNodeStart);
             mNodeStart = nullptr;
             MILO_ASSERT(old == NULL, 0xA8);
-        } else if (size < BytesInMemory()) {
+        } else if (size < AllocSize()) {
             mNodeStart = (NodeVector *)MemTruncate(mNodeStart, size);
         } else {
             mNodeStart = (NodeVector *)MemRealloc(
@@ -96,26 +96,30 @@ void CharClip::Transitions::AddNode(CharClip *clip, const CharGraphNode &node) {
     NodeVector *it;
     if (found) {
         int n = (int)mNodeEnd - (int)found->Next();
-        it = Resize(BytesInMemory() + 8, found);
-        memmove((void *)((char *)(it->Next()) + 8), it->Next(), n);
+        it = Resize(AllocSize() + 8, found);
+        NodeVector *next = it->Next();
+        memmove(((char *)next + 8), next, n);
     } else {
-        it = Resize(BytesInMemory() + 0x20, mNodeEnd);
+        it = Resize(AllocSize() + sizeof(NodeVector), mNodeEnd);
         it = new (it) NodeVector(this);
         it->clip = clip;
         it->size = 0;
     }
-    int size = it->size;
     int i;
-    for (i = 0; i < size; i++) {
-        if (node.curBeat < it->nodes[i].curBeat) {
+    for (i = 0; i < it->size; i++) {
+        if (it->nodes[i].curBeat > node.curBeat) {
             break;
         }
     }
-    for (; i < size; size--) {
-        it->nodes[size << 3] = it->nodes[size - 1];
+    for (int j = it->size; j > i; j--) {
+        it->nodes[j] = it->nodes[j - 1];
     }
-    it->nodes[size] = node;
+    it->nodes[i] = node;
     it->size++;
+    RelinkRefs();
+}
+
+void CharClip::Transitions::RelinkRefs() {
     for (NodeVector *n = mNodeStart; n < mNodeEnd; n = n->Next()) {
         n->clip.LinkSelf();
     }
@@ -126,10 +130,8 @@ void CharClip::Transitions::RemoveNodes(NodeVector *n) {
     NodeVector *next = n->Next();
     n->~NodeVector();
     memmove(n, next, (int)mNodeEnd - (int)next);
-    Resize(BytesInMemory() - ((int)next - (int)n), nullptr);
-    for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
-        it->clip.LinkSelf();
-    }
+    Resize(AllocSize() - ((int)next - (int)n), nullptr);
+    RelinkRefs();
 }
 
 void CharClip::Transitions::Save(BinStream &bs) {
@@ -216,7 +218,7 @@ void CharClip::Transitions::Load(BinStreamRev &d, int oldRev) {
             }
         }
         Resize((int)it - (int)start, nullptr);
-        memcpy(mNodeStart, start, BytesInMemory());
+        memcpy(mNodeStart, start, AllocSize());
         for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
             it->clip.LinkSelf();
         }
@@ -312,7 +314,7 @@ void CharClip::BeatEvent::Load(BinStream &bs) {
 
 CharClip::CharClip()
     : mTransitions(this), mFramesPerSec(30), mFlags(0), mPlayFlags(0), mRange(0),
-      mRelative(this), mDirty(true), mOldVer(-1), mDoNotCompress(false), mSyncAnim(this),
+      mRelative(this), mDirty(true), mOldVer(-1), mDoNotCompress(false), mAnim(this),
       mBitmask(0) {
     mBeatTrack.resize(1);
     mBeatTrack[0].frame = 0;
@@ -402,9 +404,9 @@ BEGIN_PROPSYNCS(CharClip)
     SYNC_PROP(transitions, mTransitions)
     SYNC_MEMBER(full, mFull)
     SYNC_MEMBER(one, mOne)
-    SYNC_PROP_SET(compression, mFull.GetCompression(), )
+    SYNC_PROP_SET(compression, mFull.Compression(), )
     SYNC_PROP_SET(num_frames, NumFrames(), )
-    SYNC_PROP(sync_anim, mSyncAnim)
+    SYNC_PROP(sync_anim, mAnim)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
@@ -427,7 +429,7 @@ BEGIN_SAVES(CharClip)
     mOne.Save(bs);
     bs << mZeros;
     bs << mBeatTrack;
-    bs << mSyncAnim;
+    bs << mAnim;
     bs << mSkeletonSamples;
     bs << mBitmask;
 END_SAVES
@@ -450,7 +452,7 @@ BEGIN_COPYS(CharClip)
                 mBeatEvents[i] = c->mBeatEvents[i];
             }
             COPY_MEMBER(mDoNotCompress)
-            COPY_MEMBER(mSyncAnim)
+            COPY_MEMBER(mAnim)
         }
         mFull.Clone(c->mFull);
         mOne.Clone(c->mOne);
@@ -598,7 +600,7 @@ BEGIN_LOADS(CharClip)
         }
     }
     if (d.rev > 0x12) {
-        d >> mSyncAnim;
+        d >> mAnim;
     }
     if (EndBeat() == StartBeat() && mFull.NumSamples() > 1) {
         MILO_NOTIFY(
@@ -636,11 +638,11 @@ void CharClip::SetTypeDef(DataArray *def) {
 
 void CharClip::Init() {
     FacingSet::Init();
-    REGISTER_OBJ_FACTORY(CharClip);
+    CharClip::Register();
 }
 
 int CharClip::AllocSize() {
-    int size = mTransitions.BytesInMemory();
+    int size = mTransitions.AllocSize();
     size += mFull.AllocateSize() + mOne.AllocateSize();
     size += sizeof(CharClip);
     return size;
@@ -662,19 +664,19 @@ void CharClip::SetFlags(int i) {
 
 void CharClip::SetDefaultBlend(int blend) {
     int flags = mPlayFlags;
-    SetDefaultBlendFlag(flags, blend);
+    SetPlayMode(flags, blend);
     SetPlayFlags(flags);
 }
 
 void CharClip::SetDefaultLoop(int loop) {
     int flags = mPlayFlags;
-    SetDefaultLoopFlag(flags, loop);
+    SetLoopMode(flags, loop);
     SetPlayFlags(flags);
 }
 
 void CharClip::SetBeatAlignMode(int align) {
     int flags = mPlayFlags;
-    SetDefaultBeatAlignModeFlag(flags, align);
+    SetBeatAlignMode(flags, align);
     SetPlayFlags(flags);
 }
 
@@ -751,7 +753,7 @@ void CharClip::EvaluateChannel(void *dst, const void *data, int sample, float fr
         if (i2 < mOne.TotalSize()) {
             mOne.EvaluateChannel(dst, i2, 0, 0);
         } else {
-            MILO_FAIL("%s could not find offset %d %d", i3, i2, PathName(this));
+            MILO_FAIL("%s could not find offset %d %d", (int)data - 1, i2, PathName(this));
         }
     }
 }
@@ -765,7 +767,7 @@ void CharClip::ScaleAddSample(
 }
 
 void CharClip::Relativize() {
-    if (mFull.GetCompression() != CharBones::kCompressNone) {
+    if (mFull.Compression() != CharBones::kCompressNone) {
         MILO_NOTIFY("%s relativizing compressed clip, should reexport", PathName(this));
     }
     MILO_ASSERT(mRelative, 0x3A3);
@@ -784,9 +786,9 @@ int CharClip::TransitionVersion() {
 }
 
 const CharGraphNode *
-CharClip::FindNode(CharClip *clip, float mBeat, int flags, float f2) const {
+CharClip::FindNode(CharClip *clip, float beat, int playFlags, float blendWidth) const {
     const CharGraphNode *n = nullptr;
-    int blendMode = flags & 0xF;
+    int blendMode = playFlags & 0xF;
     switch (blendMode) {
     case kPlayNoDefault:
     case kPlayNow:
@@ -795,29 +797,23 @@ CharClip::FindNode(CharClip *clip, float mBeat, int flags, float f2) const {
     case kPlayNoBlend:
         return nullptr;
     case kPlayFirst: {
-        n = FindFirstNode(clip, mBeat);
-        if (n) {
-            return n;
-        }
+        n = FindFirstNode(clip, beat);
         break;
     }
     case kPlayLast: {
-        n = FindLastNode(clip, mBeat);
-        if (n) {
-            return n;
-        }
+        n = FindLastNode(clip, beat);
         break;
     }
     default:
-        MILO_NOTIFY("Unknown mode flags %x, default to kPlayNow", flags);
+        MILO_NOTIFY("Unknown mode flags %x, default to kPlayNow", playFlags);
         break;
     }
     if (!n) {
+        blendWidth /= 2;
         static CharGraphNode node;
-        f2 /= 2;
-        node.curBeat = mBeat;
+        node.curBeat = beat;
         if (blendMode == kPlayLast) {
-            MaxEq(node.curBeat, EndBeat() - f2);
+            MaxEq(node.curBeat, EndBeat() - blendWidth);
         }
         node.nextBeat = clip->StartBeat();
         n = &node;
@@ -845,9 +841,9 @@ float CharClip::FrameToBeat(float frame) const {
     return ret;
 }
 
-float CharClip::BeatToFrame(float mBeat) const {
+float CharClip::BeatToFrame(float beat) const {
     float ret = 0;
-    mBeatTrack.ReverseLinear(mBeat, ret);
+    mBeatTrack.ReverseLinear(beat, ret);
     return ret;
 }
 
@@ -855,20 +851,32 @@ float CharClip::DeltaSecondsToDeltaBeat(float f1, float mBeat) {
     if (mBeatTrack.size() == 1)
         return f1;
     else {
-        float ret = FrameToBeat(f1 * StartBeat() + BeatToFrame(mBeat));
+        float ret = FrameToBeat(f1 * mFramesPerSec + BeatToFrame(mBeat));
         ret -= mBeat;
         return ret;
     }
 }
 
-int CharClip::BeatToSample(float mBeat, float *fracPtr) const {
-    float frame = BeatToFrame(mBeat);
-    float frac = 0;
+int CharClip::BeatToSample(float beat, float *frac) const {
+    float frame = BeatToFrame(beat);
+    float fracToSet;
     if (mBeatTrack.back().frame != 0) {
-        frac = frame / mBeatTrack.back().frame;
+        fracToSet = frame / mBeatTrack.back().frame;
+    } else {
+        fracToSet = 0;
     }
-    *fracPtr = frac;
-    return mFull.FracToSample(fracPtr);
+    *frac = fracToSet;
+    return mFull.FracToSample(frac);
+}
+
+float CharClip::SampleToBeat(int sample) const {
+    if (mFull.Frames().size() == 0) {
+        return FrameToBeat(sample);
+    } else {
+        auto &frames = mFull.Frames();
+        auto it = std::lower_bound(frames.begin(), frames.end(), (float)sample);
+        return FrameToBeat(it - frames.begin());
+    }
 }
 
 void CharClip::EvaluateChannel(void *dst, const void *data, float mBeat) {
@@ -954,20 +962,17 @@ DataNode CharClip::GetClipEvents() {
 }
 
 void CharClip::ApplyBlendedSkeletons(
-    CharClip **clips, CharBones &bones, float mBeat, float frac
+    CharClip **clips, CharBones &bones, float beat, float weight
 ) {
-    float f60;
-    int sample = BeatToSample(mBeat, &frac);
-    float f7 = 0;
-    std::map<int, float> &curMap = mSkeletonSamples[sample];
-    float f6 = 1;
-    FOREACH (it, curMap) {
-        clips[it->first]->ScaleAdd(bones, (f6 - f60) * it->second * frac, f7, f7);
+    float frac;
+    int sample = BeatToSample(beat, &frac);
+    FOREACH (it, mSkeletonSamples[sample]) {
+        clips[it->first]->ScaleAdd(bones, (1 - frac) * it->second * weight, 0, 0);
     }
-    if (f7 < f60) {
-        std::map<int, float> &nextMap = mSkeletonSamples[sample + 1];
-        FOREACH (it, nextMap) {
-            clips[it->first]->ScaleAdd(bones, f60 * it->second * frac, f7, f7);
+    if (frac > 0) {
+        int next = sample + 1;
+        FOREACH (it, mSkeletonSamples[next]) {
+            clips[it->first]->ScaleAdd(bones, frac * it->second * weight, 0, 0);
         }
     }
 }
@@ -1048,7 +1053,7 @@ void CharClip::LockAndDelete(CharClip **const deathRow, int count, int remaining
     while (remaining > 0) {
         CharClip *clip = deathRow[--count];
         clip->mPlayFlags |= 0x10000;
-        remaining--;  // It fit pretty well with band 3, except that Xenon is awful.
+        remaining--; // It fit pretty well with band 3, except that Xenon is awful.
     }
     while (count > 0) {
         delete deathRow[--count];

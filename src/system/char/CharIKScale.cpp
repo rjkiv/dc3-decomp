@@ -94,12 +94,12 @@ void CharIKScale::Poll() {
                 vd0.z = mDest->LocalXfm().v.z * mScale;
                 Vector3 vc0;
                 Multiply(vd0, mDest->TransParent()->WorldXfm(), vc0);
-                vd0 = tf48.v;
-                vd0 -= vc0;
+                Vector3 vwat = tf48.v;
+                vwat -= vc0;
                 FOREACH (it, mSecondaryTargets) {
                     RndTransformable *cur = *it;
                     Transform tf78(cur->WorldXfm());
-                    tf78.v -= vd0;
+                    tf78.v -= vwat;
                     cur->SetWorldXfm(tf78);
                 }
             }

@@ -19,6 +19,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(CharInterest)
+    REGISTER_OBJ(CharInterest)
 
     bool IsWithinViewCone(Vector3 const &, Vector3 const &);
     bool IsMatchingFilterFlags(int);

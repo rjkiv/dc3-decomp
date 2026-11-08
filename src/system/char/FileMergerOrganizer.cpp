@@ -8,7 +8,7 @@
 
 struct CatData {
     int priority; // 0x0
-    bool unk4; // 0x4 - true if gender_order array contains category_order key
+    bool gendered; // 0x4
 };
 
 FileMergerOrganizer *TheFileMergerOrganizer;
@@ -113,7 +113,7 @@ void FileMergerOrganizer::Init() {
                 Symbol key = curCatArr->Sym(i);
                 CatData &val = gCatPriority[key];
                 val.priority = gNextCatPriority;
-                val.unk4 = genderArr && genderArr->Contains(key);
+                val.gendered = genderArr && genderArr->Contains(key);
             }
             gOrganizing = true;
         }
@@ -221,14 +221,14 @@ bool FileMergerSort::operator()(
             MILO_NOTIFY("unknown file merger organizer category %s", bMerger->name);
         }
         bRef.priority = gNextCatPriority++;
-        bRef.unk4 = false;
+        bRef.gendered = false;
     }
     if (aRef.priority == 0) {
         if (gOrganizing) {
             MILO_NOTIFY("unknown file merger organizer category %s", aMerger->name);
         }
         aRef.priority = gNextCatPriority++;
-        aRef.unk4 = false;
+        aRef.gendered = false;
     }
 
     CatData aData = aRef;
@@ -243,7 +243,7 @@ bool FileMergerSort::operator()(
         MILO_ASSERT(bData.priority < 0, 0x64);
     }
 
-    if (aData.unk4 && bData.unk4) {
+    if (aData.gendered && bData.gendered) {
         bool females = strstr(aMerger->loading.c_str(), "female")
             && strstr(bMerger->loading.c_str(), "female");
         if (females)

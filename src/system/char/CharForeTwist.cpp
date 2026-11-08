@@ -58,14 +58,13 @@ void CharForeTwist::Poll() {
     if (mHand && mTwist2 && mHand->TransParent() && mTwist2->TransParent()) {
         const Transform &parentxfm = mHand->TransParent()->WorldXfm();
         const Transform &handxfm = mHand->WorldXfm();
-        float newbias = mBias * DEG2RAD;
-        float parentHandDot = Dot(parentxfm.m.y, handxfm.m.z);
         Vector3 v98;
         Cross(parentxfm.m.y, handxfm.m.z, v98);
-        float v98Dot = Dot(parentxfm.m.x, v98);
-        float tan2res =
-            std::atan2(Clamp(-1.0f, 1.0f, v98Dot), Clamp(-1.0f, 1.0f, parentHandDot));
-        float sub = LimitAng(mOffset * DEG2RAD + tan2res + newbias) - newbias;
+        float newbias = mBias * DEG2RAD;
+        float clampxfms = Clamp(-1.0f, 1.0f, Dot(parentxfm.m.y, handxfm.m.z));
+        float clamp98 = Clamp(-1.0f, 1.0f, Dot(parentxfm.m.x, v98));
+        float sub =
+            LimitAng(mOffset * DEG2RAD + atan2f(clamp98, clampxfms) + newbias) - newbias;
         if (!IsNaN(sub)) {
             Hmx::Matrix3 m58;
             MakeRotMatrixX(sub * 0.33333f, m58);

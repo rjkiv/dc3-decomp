@@ -7,7 +7,7 @@
 #include "obj/Task.h"
 #include "rndobj/Trans.h"
 
-static const float sFSMFloat = 0.5f;
+static const float kFreezeRadius = 0.5f;
 
 CharIKFoot::CharIKFoot() : mDummy(this), mState(kFootFollow), mData(this), mDataIndex(0) {
     mDummy = Hmx::Object::New<RndTransformable>();
@@ -101,13 +101,11 @@ void CharIKFoot::DoFSM(Character *c, Transform &tf) {
     float vecIdx = mData->LocalXfm().v[mDataIndex];
     if (vecIdx >= 0.98f) {
         b7 = true;
-    } else if (vecIdx > 0 && tf.v.z < (mState == kFootFrozen ? 0.6f : sFSMFloat)) {
+    } else if (vecIdx > 0 && tf.v.z < (mState == kFootFrozen ? 0.6f : kFreezeRadius)) {
         b7 = true;
     }
     if (mState == kFootFollow) {
-        const Transform &fingerXfm = mFinger->WorldXfm();
-        tf.v.x = fingerXfm.v.x;
-        tf.v.y = fingerXfm.v.y;
+        tf.v.AsVector2() = mFinger->WorldXfm().v.AsVector2();
         if (b7) {
             mFreezePos = tf.v;
             mState = kFootFrozen;
@@ -122,7 +120,6 @@ void CharIKFoot::DoFSM(Character *c, Transform &tf) {
             Subtract(mFinger->WorldXfm().v, mFreezePos, v3c);
             float len = Length(v3c);
             if (len > 0.125f) {
-                // Scale(v3c, 0.125f / len, v3c);
                 v3c *= 0.125f / len;
             }
             Add(mFreezePos, v3c, tf.v);

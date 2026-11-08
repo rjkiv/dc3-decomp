@@ -29,6 +29,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(CharPollGroup);
+    REGISTER_OBJ(CharPollGroup);
 
     void SortPolls();
 

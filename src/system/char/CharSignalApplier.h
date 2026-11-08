@@ -50,6 +50,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(CharSignalApplier);
+    REGISTER_OBJ(CharSignalApplier);
 
 protected:
     CharSignalApplier();

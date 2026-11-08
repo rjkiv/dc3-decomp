@@ -22,6 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(CharGuitarString)
+    REGISTER_OBJ(CharGuitarString)
 
 protected:
     CharGuitarString();

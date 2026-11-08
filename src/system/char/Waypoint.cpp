@@ -12,9 +12,17 @@
 #include "rndobj/Mesh.h"
 #include "rndobj/Trans.h"
 
+std::list<Waypoint *> *Waypoint::sWaypoints;
+int Waypoint::sSearchID;
+Waypoint *sDest;
+
 int waypointunusedlmao() {
     Rand rand(0);
     return rand.Int(0, 69);
+}
+
+void waypointunusedpushbacklmao(std::vector<Waypoint *> &wps, Waypoint *ins) {
+    wps.push_back(ins);
 }
 
 Waypoint::Waypoint()
@@ -177,8 +185,10 @@ void Waypoint::ShapeDeltaBox(const Vector3 &v1, float f2, float f3, Vector3 &v4)
         Subtract(v1, WorldXfm().v, v4);
         float dot3 = Dot(v4, mtx.x);
         float dot4 = Dot(v4, mtx.y);
-        Scale(mtx.x, Clamp(-f2, f2, dot3) - dot3, v4);
-        ScaleAddEq(v4, mtx.y, Clamp(-f3, f3, dot4) - dot4);
+        float clamped3 = Clamp(-f2, f2, dot3);
+        float clamped4 = Clamp(-f3, f3, dot4);
+        Scale(mtx.x, clamped3 - dot3, v4);
+        ScaleAddEq(v4, mtx.y, clamped4 - dot4);
     } else {
         Subtract(WorldXfm().v, v1, v4);
         v4.z = 0;

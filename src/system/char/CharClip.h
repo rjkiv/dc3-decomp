@@ -12,6 +12,7 @@
 
 struct CharGraphNode {
     CharGraphNode() {}
+    CharGraphNode(float cur, float next) : curBeat(cur), nextBeat(next) {}
     /** "where to blend from in my clip" */
     float curBeat;
     /** "where to blend to in clip" */
@@ -43,17 +44,20 @@ public:
 
         void Clear();
         int Size() const;
-        NodeVector *GetNodes(int) const;
-        NodeVector *Resize(int, const NodeVector *);
-        NodeVector *FindNodes(CharClip *) const;
-        int BytesInMemory() const { return (int)mNodeEnd - (int)mNodeStart; }
-        void RemoveNodes(NodeVector *);
-        void Save(BinStream &);
-        void Load(BinStreamRev &, int);
-        void RemoveClip(CharClip *);
+        NodeVector *GetNodes(int idx) const;
+        NodeVector *Resize(int newSize, const NodeVector *old);
+        NodeVector *FindNodes(CharClip *clip) const;
+        int AllocSize() const { return (int)mNodeEnd - (int)mNodeStart; }
+        void RemoveNodes(NodeVector *n);
+        void Save(BinStream &d);
+        void Load(BinStreamRev &d, int oldRev);
+        void RemoveClip(CharClip *clip);
         void AddNode(CharClip *clip, const CharGraphNode &node);
+        void RelinkRefs();
 
-    private:
+        //  public: void Print();
+
+    protected:
         NodeVector *mNodeStart; // 0x4
         NodeVector *mNodeEnd; // 0x8
         Hmx::Object *mOwner; // 0xc
@@ -94,18 +98,25 @@ public:
             virtual ~FacingBones() {}
             virtual void ReallocateInternal();
 
-            void Set(bool);
+            void Set(bool rotAndPos);
 
             Vector3 mDeltaPos; // 0x54
             float mDeltaAng; // 0x64
         };
 
         FacingSet() : mFullRot(-1), mFullPos(-1), mFacingBones(nullptr), mWeight(1) {}
-        void ListBones(std::list<CharBones::Bone> &);
-        void Set(CharBonesSamples &);
+        void ListBones(std::list<CharBones::Bone> &bones);
+        void Set(CharBonesSamples &full);
         void ScaleDown(CharBones &, float);
-        void
-        ScaleAddSample(CharBonesSamples &, CharBones &, float, int, float, int, float);
+        void ScaleAddSample(
+            CharBonesSamples &full,
+            CharBones &bones,
+            float weight,
+            int sample,
+            float frac,
+            int lastSample,
+            float lastFrac
+        );
 
         static void Init();
         static FacingBones sFacingPos;
@@ -132,7 +143,8 @@ public:
         kPlayNoLoop = 0x10,
         kPlayLoop = 0x20,
         kPlayGraphLoop = 0x30,
-        kPlayNodeLoop = 0x40
+        kPlayNodeLoop = 0x40,
+        kPlaySkipFirstDelta = 0x80,
     };
 
     /** "Time units/alignment, if any, for this clip" */
@@ -160,6 +172,7 @@ public:
     virtual void SetTypeDef(DataArray *);
 
     NEW_OBJ(CharClip)
+    REGISTER_OBJ(CharClip)
     static void Init();
     static void *operator new(unsigned int s) {
         static int _x = MemFindHeap("char");
@@ -179,28 +192,28 @@ public:
     float LengthBeats() const { return EndBeat() - StartBeat(); }
     /** "Number of original samples taken, pre-keyframe compression" */
     int NumFrames() const {
-        return Max<int>(Max<int>(1, mFull.NumSamples()), mFull.NumFrames());
+        return Max<int>(Max<int>(1, mFull.NumSamples()), mFull.Frames().size());
     }
     int Flags() const { return mFlags; }
     Transitions &GetTransitions() { return mTransitions; }
     int PlayFlags() const { return mPlayFlags; }
     CharClip *Relative() const { return mRelative; }
     float Range() const { return mRange; }
-    const std::vector<BeatEvent> &BeatEvents() { return mBeatEvents; }
+    std::vector<BeatEvent> &BeatEvents() { return mBeatEvents; }
     int NumBeatEvents() { return mBeatEvents.size(); }
     int NumSamples() const { return mSkeletonSamples.size(); }
-    RndAnimatable *GetAnim() { return mSyncAnim; }
+    RndAnimatable *GetAnim() { return mAnim; }
     float FramesPerSecond() { return mFramesPerSec; }
 
     int InGroups();
-    bool SharesGroups(CharClip *);
+    bool SharesGroups(CharClip *c);
     float LengthSeconds() const;
     float AverageBeatsPerSecond() const;
-    void SetFlags(int);
-    void SetPlayFlags(int);
-    void SetDefaultBlend(int);
-    void SetDefaultLoop(int);
-    void SetBeatAlignMode(int);
+    void SetFlags(int flags);
+    void SetPlayFlags(int playFlags);
+    void SetDefaultBlend(int blend);
+    void SetDefaultLoop(int loop);
+    void SetBeatAlignMode(int align);
     void SetRelative(CharClip *clip);
     void SortEvents();
     int AllocSize();
@@ -209,18 +222,27 @@ public:
     int GetContext() const;
     const CharGraphNode *FindFirstNode(CharClip *clip, float beat) const;
     const CharGraphNode *FindLastNode(CharClip *clip, float beat) const;
-    const CharGraphNode *FindNode(CharClip *clip, float beat, int flags, float) const;
+    const CharGraphNode *
+    FindNode(CharClip *clip, float beat, int playFlags, float blendWidth) const;
     void EvaluateChannel(void *dst, const void *data, int sample, float frac);
-    void ScaleAddSample(CharBones &bones, float, int, float, int, float);
+    void ScaleAddSample(
+        CharBones &bones,
+        float weight,
+        int sample,
+        float frac,
+        int lastSample,
+        float lastFrac
+    );
     float FrameToBeat(float frame) const;
     float BeatToFrame(float beat) const;
-    float DeltaSecondsToDeltaBeat(float, float beat);
-    int BeatToSample(float beat, float *fracPtr) const;
+    float DeltaSecondsToDeltaBeat(float dt, float beat);
+    int BeatToSample(float beat, float *frac) const;
     void EvaluateChannel(void *dst, const void *data, float beat);
     void RotateBy(CharBones &bones, float beat);
-    void RotateTo(CharBones &bones, float, float beat);
+    void RotateTo(CharBones &bones, float weight, float beat);
     void ScaleAdd(CharBones &bones, float weight, float beat, float dbeat);
-    void ApplyBlendedSkeletons(CharClip **, CharBones &, float beat, float frac);
+    void
+    ApplyBlendedSkeletons(CharClip **clips, CharBones &bones, float beat, float weight);
     void ListBones(std::list<CharBones::Bone> &bones);
     float SampleToBeat(int sample) const;
     void StuffBones(CharBones &bones);
@@ -228,19 +250,47 @@ public:
     CharBoneDir *GetResource() const;
     int GetBitmask() const { return mBitmask; } // bitmask, indexed by Difficulty
 
+    // float SecondsToBeat(float) const;
+    // bool ForceNoCompression() const;
+    // void PoseResource();
+    // bool IsKeyframeCompressed() const;
+    // bool BoneWeights();
+    // void SetWeights(float);
+    // void MakeMRU();
+    // bool InGroup(Hmx::Object *);
+    // bool MatchExact(int);
+    // void SetBeatTrack(const Keys<float, float> &, float);
+    // bool UseBlendedSkeletons();
+
+    CharBonesSamples &Full() { return mFull; }
+    CharBonesSamples &One() { return mOne; }
+    bool Dirty() const { return mDirty; }
+    void SetFramesPerSec(float fps) { mFramesPerSec = fps; }
+    const Keys<float, float> &BeatTrack() { return mBeatTrack; }
+    void SetRange(float r) { mRange = r; }
+    void ClearDirty() { mDirty = false; }
+    void SetDirty() { mDirty = true; }
+
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();
     static void LockAndDelete(CharClip **const deathRow, int count, int remaining);
 
-    static void SetDefaultBlendFlag(int &mask, int blendFlag) {
+    // static int PlayMode(int);
+    // static int LoopMode(int);
+    // static int BeatAlignMode(int);
+    // static int BeatAlign(int);
+    // static const char* BeatAlignString(int);
+
+    static void SetPlayMode(int &mask, int blendFlag) {
         mask = mask & 0xfffffff0 | blendFlag;
     }
-    static void SetDefaultLoopFlag(int &mask, int loopFlag) {
+    static void SetLoopMode(int &mask, int loopFlag) {
         mask = mask & 0xffffff0f | loopFlag;
     }
-    static void SetDefaultBeatAlignModeFlag(int &mask, int alignFlag) {
+    static void SetBeatAlignMode(int &mask, int alignFlag) {
         mask = mask & 0xffff09ff | alignFlag;
     }
+    // static void SetBeatAlign(int&, int);
 
 protected:
     CharClip();
@@ -249,6 +299,8 @@ protected:
     int TransitionVersion();
     DataNode OnGroups(DataArray *);
     DataNode OnHasGroup(DataArray *);
+
+    // void SetFacing();
 
     Transitions mTransitions; // 0x2c
     /** "Frames per second" */
@@ -271,7 +323,7 @@ protected:
     /** "Check this to prevent any compression from happening on this clip" */
     bool mDoNotCompress; // 0x80
     /** "An animatable, like a PropAnim, you'd like play in sync with this clip" */
-    ObjPtr<RndAnimatable> mSyncAnim; // 0x84
+    ObjPtr<RndAnimatable> mAnim; // 0x84
     CharBonesSamples mFull; // 0x98
     CharBonesSamples mOne; // 0x104
     FacingSet mFacing; // 0x170

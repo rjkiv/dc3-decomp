@@ -760,7 +760,7 @@ void Character::SetDebugDrawInterestObjects(bool b) { mDebugDrawInterestObjects 
 
 CharServoBone *Character::BoneServo() {
     if (mDriver)
-        return dynamic_cast<CharServoBone *>(mDriver->GetBones());
+        return dynamic_cast<CharServoBone *>(mDriver->Bones());
     else
         return nullptr;
 }

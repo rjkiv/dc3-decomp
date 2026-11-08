@@ -45,6 +45,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(CharBoneDir)
+    REGISTER_OBJ(CharBoneDir)
 
     DataNode GetContextFlags();
     void ListBones(std::list<CharBones::Bone> &, int, bool);

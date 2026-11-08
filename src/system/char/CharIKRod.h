@@ -29,6 +29,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(CharIKRod)
+    REGISTER_OBJ(CharIKRod)
 
     void SyncBones();
 

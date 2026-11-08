@@ -116,26 +116,26 @@ void CharLipSync::PlayBack::Set(CharLipSync *lipsync, ObjPtr<ObjectDir> clips) {
     mClips = clips;
     mLipSync = lipsync;
 
-    int numVisemes = mLipSync->mVisemes.size();
+    int numVisemes = mLipSync->Visemes().size();
     mWeights.resize(numVisemes);
 
     for (int i = 0; i < mWeights.size(); i++) {
         ObjPtr<CharClip> &clip = mWeights[i].clip;
-        clip = mClips->Find<CharClip>(mLipSync->mVisemes[i].c_str(), false);
+        clip = mClips->Find<CharClip>(mLipSync->Visemes()[i].c_str(), false);
         if (!clip) {
-            MILO_NOTIFY("could not find %s", mLipSync->mVisemes[i].c_str());
+            MILO_NOTIFY("could not find %s", mLipSync->Visemes()[i].c_str());
         }
     }
 
     static Message viseme_list("viseme_list");
     DataNode result = mLipSync->Handle(viseme_list, false);
     if (result.Type() == kDataArray) {
-        int newSize = numVisemes + result.Array()->Size();
-        if (mWeights.size() != newSize) {
-            mWeights.resize(newSize);
-            for (int i = 0; i + numVisemes < newSize; i++) {
-                Symbol visemeSym = result.Array()->Sym(i);
-                ObjPtr<CharClip> &clip = mWeights[i + numVisemes].clip;
+        int size = result.Array()->Size();
+        if (mWeights.size() != numVisemes + size) {
+            mWeights.resize(numVisemes + size);
+            for (int i = numVisemes; i < numVisemes + size; i++) {
+                Symbol visemeSym = result.Array()->Sym(i - numVisemes);
+                ObjPtr<CharClip> &clip = mWeights[i].clip;
                 clip = mClips->Find<CharClip>(visemeSym.Str(), false);
             }
         }
@@ -198,20 +198,18 @@ void CharLipSync::PlayBack::Poll(float frame) {
             }
             if (mFrame < i8) {
                 for (; mFrame < i8; mFrame++) {
-                    mOldIndex = mIndex++;
-                    unsigned char count = lipsync->mData[mOldIndex];
-                    for (int j = 0; j != count; j++) {
+                    for (int j = lipsync->mData[mOldIndex = mIndex++]; j != 0; j--) {
                         Weight &cur = mWeights[lipsync->mData[mIndex++]];
                         cur.last = cur.next;
-                        cur.next = (float)lipsync->mData[mIndex++] * 0.003921569f;
+                        cur.next = (float)lipsync->mData[mIndex++] / 255.0f;
                         cur.current = Interp(cur.last, cur.next, f14);
                     }
                 }
             } else if (mFrame >= 0 && mFrame == i8) {
                 int idx = mOldIndex;
                 unsigned char count = lipsync->mData[idx++];
-                for (int i = 0; i != count; i++) {
-                    Weight &cur = mWeights[lipsync->mData[idx++]];
+                for (int i = count; i != 0; i--, idx += 2) {
+                    Weight &cur = mWeights[lipsync->mData[idx]];
                     cur.current = Interp(cur.last, cur.next, f14);
                 }
             }

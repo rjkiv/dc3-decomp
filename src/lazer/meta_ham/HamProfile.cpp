@@ -1026,50 +1026,51 @@ void HamProfile::UpdateBattleScore(
 
 void HamProfile::UpdateScore(
     int songID,
-    HamPlayerData const *playerdata,
+    HamPlayerData const *pPlayerData,
     Difficulty diff,
     int score,
-    int i3,
+    int coopScore,
     int stars,
-    int numNices,
-    int numPerfects,
-    int percentPassed,
-    int i8,
-    bool b1,
-    bool b2
+    int numNice,
+    int numPerfect,
+    int movesPercent,
+    int players,
+    bool alreadyUploaded,
+    bool noFlashcards
 ) {
     if (IsOkToUpdateProfile()) {
-        if (playerdata) {
-            mRank->UpdateScore(songID, playerdata, mScores, score, stars);
+        if (pPlayerData) {
+            mRank->UpdateScore(songID, pPlayerData, mScores, score, stars);
             mDirty = mDirty || mRank->Dirty();
         }
         bool updateSong = mScores->UpdateSong(
             songID,
             score,
-            i3,
+            coopScore,
             diff,
-            i8,
+            players,
             stars,
-            numNices,
-            numPerfects,
-            percentPassed,
-            b1,
-            b2,
+            numNice,
+            numPerfect,
+            movesPercent,
+            alreadyUploaded,
+            noFlashcards,
             false
         ); // i hated this so much why didnt it go in order
         mDirty = mDirty || updateSong;
 
         static Symbol challenge("challenge");
         if (TheGameMode->InMode(challenge)) {
-            bool updateFlaunt = mScores->UpdateFlaunt(songID, score, diff, b1);
+            bool updateFlaunt =
+                mScores->UpdateFlaunt(songID, score, diff, alreadyUploaded);
             mDirty = mDirty || updateFlaunt;
         }
 
-        if (!b1 && TheLeaderboards) {
+        if (!alreadyUploaded && TheLeaderboards) {
             TheLeaderboards->UploadScores(this);
         }
 
-        if (!b1) {
+        if (!alreadyUploaded) {
             TheFitnessGoalMgr->UpdateFitnessGoal(this);
         }
     }

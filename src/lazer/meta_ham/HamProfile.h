@@ -119,7 +119,18 @@ public:
     bool IsDifficultyUnlockedForProfile(Symbol, Symbol);
     void UpdateBattleScore(int, const HamPlayerData *, int, bool);
     void UpdateScore(
-        int, HamPlayerData const *, Difficulty, int, int, int, int, int, int, int, bool, bool
+        int songID,
+        HamPlayerData const *pPlayerData,
+        Difficulty diff,
+        int score,
+        int coopScore,
+        int stars,
+        int numNice,
+        int numPerfect,
+        int movesPercent,
+        int players,
+        bool alreadyUploaded,
+        bool noFlashcards
     );
 
     void IncrementSkippedSongCount() { mSkippedSongCount++; }

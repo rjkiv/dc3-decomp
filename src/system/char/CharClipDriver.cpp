@@ -25,11 +25,11 @@ CharClipDriver::CharClipDriver(
       mAdvanceBeat(0), mClip(owner, clip), mNext(next), mNextEvent(-1),
       mPlayMultipleClips(playMultiple) {
     if (playFlags & 0xF0U)
-        CharClip::SetDefaultLoopFlag(mPlayFlags, playFlags & 0xF0U);
+        CharClip::SetLoopMode(mPlayFlags, playFlags & 0xF0U);
     if (playFlags & 0xFU)
-        CharClip::SetDefaultBlendFlag(mPlayFlags, playFlags & 0xFU);
+        CharClip::SetPlayMode(mPlayFlags, playFlags & 0xFU);
     if (playFlags & 0xF600)
-        CharClip::SetDefaultBeatAlignModeFlag(mPlayFlags, playFlags & 0xF600U);
+        CharClip::SetBeatAlignMode(mPlayFlags, playFlags & 0xF600U);
     while (mNext && mNext->mBlendFrac == 0) {
         mNext = mNext->Exit(false);
     }
@@ -253,38 +253,41 @@ CharClipDriver *CharClipDriver::PreEvaluate(float beat, float dbeat, float dt) {
     if (mNext) {
         mNext = mNext->PreEvaluate(beat, dbeat, dt);
     }
-    bool flag9 = (mPlayFlags >> 9) & 1;
-    bool flag10 = (mPlayFlags >> 10) & 1;
-    float f12;
-    if (!mPlayMultipleClips && mNext) {
-        f12 = mNext->mAdvanceBeat;
-    } else if (flag9) {
-        f12 = dt;
+    bool realtime = mPlayFlags & CharClip::kPlayRealTime;
+    bool usertime = mPlayFlags & CharClip::kPlayUserTime;
+    float delta;
+    if (!mPlayMultipleClips) {
+        if (mNext) {
+            delta = mNext->mAdvanceBeat;
+        } else if (realtime) {
+            delta = dt;
+        } else {
+            delta = dbeat;
+        }
+    } else if (realtime) {
+        delta = dt;
     } else {
-        f12 = dbeat;
+        delta = dbeat;
     }
-    if (mRampIn > 0 || f12 > 0) {
-        mRampIn -= f12;
+    if (mRampIn > 0 || delta > 0) {
+        mRampIn -= delta;
     }
     if (mRampIn >= 0) {
         mDBeat = 0;
-        mBlendFrac = 0;
+        mAdvanceBeat = 0;
     } else {
         float oldBeat = mBeat;
-        float f8 = dbeat;
-        if (mPlayFlags & 0x80) {
+        if (mPlayFlags & CharClip::kPlaySkipFirstDelta) {
             mDBeat = 0;
-            mPlayFlags &= 0xFFFFFF7F;
-        } else if (!flag10) {
-            if (flag9) {
-                dbeat = mClip->DeltaSecondsToDeltaBeat(dt, mBeat);
-            }
-            mDBeat = mTimeScale * dbeat;
+            mPlayFlags &= ~CharClip::kPlaySkipFirstDelta;
+        } else if (!usertime) {
+            mDBeat = mTimeScale
+                * (realtime ? mClip->DeltaSecondsToDeltaBeat(dt, mBeat) : dbeat);
         }
         mBeat += mDBeat;
         float align = AlignToBeat(beat);
         mBeat += align;
-        mAdvanceBeat += align;
+        mAdvanceBeat = mDBeat + align;
         PlayEvents(oldBeat);
         RndAnimatable *anim = mClip->GetAnim();
         if (anim) {
@@ -292,10 +295,7 @@ CharClipDriver *CharClipDriver::PreEvaluate(float beat, float dbeat, float dt) {
         }
         if (mBlendFrac < 1) {
             if (mBlendWidth > 0) {
-                if (!flag10) {
-                    f8 = mDBeat;
-                }
-                float f9 = f8 / mBlendWidth;
+                float f9 = (usertime ? dbeat : mDBeat) / mBlendWidth;
                 if (f9 > 0) {
                     mBlendFrac += f9;
                 }

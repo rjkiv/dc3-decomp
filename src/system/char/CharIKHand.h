@@ -37,6 +37,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(CharIKHand)
+    REGISTER_OBJ(CharIKHand)
 
     void SetHand(RndTransformable *);
     void MeasureLengths();

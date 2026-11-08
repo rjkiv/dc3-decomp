@@ -22,6 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(CharIKScale)
+    REGISTER_OBJ(CharIKScale)
 
     /** "Call after posing normally, captures data with which to auto compute scale" */
     void CaptureBefore();

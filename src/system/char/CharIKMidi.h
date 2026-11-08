@@ -28,6 +28,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(CharIKMidi)
+    REGISTER_OBJ(CharIKMidi)
 
     void NewSpot(RndTransformable *, float);
     float Frac() const { return mFrac; }

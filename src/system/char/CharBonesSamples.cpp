@@ -57,13 +57,13 @@ void CharBonesSamples::Save(BinStream &bs) {
     for (int i = 0; i < mNumSamples; i++) {
         SetSamplePointers(i);
         if (mCompression >= kCompressVects) {
-            ShortVector3 *vecEnd = (ShortVector3 *)QuatOffset();
-            for (ShortVector3 *it = (ShortVector3 *)VecOffset(); it < vecEnd; ++it) {
+            ShortVector3 *vecEnd = (ShortVector3 *)ScaleEnd();
+            for (ShortVector3 *it = GetShortPos(); it < vecEnd; ++it) {
                 bs << it->x << it->y << it->z;
             }
         } else {
-            Vector3 *vecEnd = (Vector3 *)QuatOffset();
-            for (Vector3 *it = (Vector3 *)VecOffset(); it < vecEnd; ++it) {
+            Vector3 *vecEnd = ScaleEnd();
+            for (Vector3 *it = GetPos(); it < vecEnd; ++it) {
                 bs << *it;
                 if (check) {
                     bs << 0.0f;
@@ -71,27 +71,27 @@ void CharBonesSamples::Save(BinStream &bs) {
             }
         }
         if (mCompression >= kCompressQuats) {
-            ByteQuat *quatEnd = (ByteQuat *)RotOffset();
-            for (ByteQuat *it = (ByteQuat *)QuatOffset(); it < quatEnd; ++it) {
+            ByteQuat *quatEnd = (ByteQuat *)QuatEnd();
+            for (ByteQuat *it = GetByteQuat(); it < quatEnd; ++it) {
                 bs << it->x << it->y << it->z << it->w;
             }
         } else if (mCompression != kCompressNone) {
-            ShortQuat *quatEnd = (ShortQuat *)RotOffset();
-            for (ShortQuat *it = (ShortQuat *)QuatOffset(); it < quatEnd; ++it) {
+            ShortQuat *quatEnd = (ShortQuat *)QuatEnd();
+            for (ShortQuat *it = GetShortQuat(); it < quatEnd; ++it) {
                 bs << it->x << it->y << it->z << it->w;
             }
         } else {
-            Hmx::Quat *quatEnd = (Hmx::Quat *)RotOffset();
-            for (Hmx::Quat *it = QuatOffset(); it < quatEnd; ++it) {
+            Hmx::Quat *quatEnd = QuatEnd();
+            for (Hmx::Quat *it = GetQuat(); it < quatEnd; ++it) {
                 bs << *it;
             }
         }
         if (mCompression != kCompressNone) {
-            for (short *it = (short *)RotOffset(); it < (short *)EndOffset(); ++it) {
+            for (short *it = GetShortRotX(); it < (short *)GetEnd(); ++it) {
                 bs << *it;
             }
         } else {
-            for (float *it = RotOffset(); it < (float *)EndOffset(); ++it) {
+            for (float *it = GetRotX(); it < GetEnd(); ++it) {
                 bs << *it;
             }
         }
@@ -202,41 +202,40 @@ void CharBonesSamples::LoadData(BinStreamRev &d) {
                 d.Read(mStart, mOffsets[TYPE_END] - mOffsets[TYPE_POS]);
             } else {
                 if (mCompression >= kCompressVects) {
-                    ShortVector3 *vecEnd = (ShortVector3 *)QuatOffset();
-                    for (ShortVector3 *it = (ShortVector3 *)VecOffset(); it < vecEnd;
-                         ++it) {
+                    ShortVector3 *vecEnd = (ShortVector3 *)ScaleEnd();
+                    for (ShortVector3 *it = GetShortPos(); it < vecEnd; ++it) {
                         d >> it->x >> it->y >> it->z;
                     }
                 } else {
-                    Vector3 *vecEnd = (Vector3 *)QuatOffset();
-                    for (Vector3 *it = (Vector3 *)VecOffset(); it < vecEnd; ++it) {
+                    Vector3 *vecEnd = ScaleEnd();
+                    for (Vector3 *it = GetPos(); it < vecEnd; ++it) {
                         d >> *it;
                     }
                 }
                 if (mCompression >= kCompressQuats) {
-                    ByteQuat *quatEnd = (ByteQuat *)RotOffset();
-                    for (ByteQuat *it = (ByteQuat *)QuatOffset(); it < quatEnd; ++it) {
+                    ByteQuat *quatEnd = (ByteQuat *)QuatEnd();
+                    for (ByteQuat *it = GetByteQuat(); it < quatEnd; ++it) {
                         d >> it->x >> it->y >> it->z >> it->w;
                     }
                 } else if (mCompression != kCompressNone) {
-                    ShortQuat *quatEnd = (ShortQuat *)RotOffset();
-                    for (ShortQuat *it = (ShortQuat *)QuatOffset(); it < quatEnd; ++it) {
+                    ShortQuat *quatEnd = (ShortQuat *)QuatEnd();
+                    for (ShortQuat *it = GetShortQuat(); it < quatEnd; ++it) {
                         d >> it->x >> it->y >> it->z >> it->w;
                     }
                 } else {
-                    Hmx::Quat *quatEnd = (Hmx::Quat *)RotOffset();
-                    for (Hmx::Quat *it = QuatOffset(); it < quatEnd; ++it) {
+                    Hmx::Quat *quatEnd = QuatEnd();
+                    for (Hmx::Quat *it = GetQuat(); it < quatEnd; ++it) {
                         d >> *it;
                     }
                 }
                 if (mCompression != kCompressNone) {
-                    short *rotEnd = (short *)EndOffset();
-                    for (short *it = (short *)RotOffset(); it < rotEnd; ++it) {
+                    short *rotEnd = (short *)GetEnd();
+                    for (short *it = GetShortRotX(); it < rotEnd; ++it) {
                         d >> *it;
                     }
                 } else {
-                    float *rotEnd = (float *)EndOffset();
-                    for (float *it = RotOffset(); it < rotEnd; ++it) {
+                    float *rotEnd = GetEnd();
+                    for (float *it = GetRotX(); it < rotEnd; ++it) {
                         d >> *it;
                     }
                 }
@@ -317,7 +316,7 @@ void CharBonesSamples::Print() {
         mNumSamples,
         AllocateSize(),
         (int)mRawData,
-        GetCompression()
+        Compression()
     );
     if (mNumSamples == 0) {
         TheDebug << "Bones:\n";
@@ -337,19 +336,8 @@ void CharBonesSamples::Relativize(CharClip *clip) {
         for (int i = mNumSamples - 1; i >= 0; i--) {
             Bone *myBoneItr = &mBones[0];
             SetSamplePointers(i);
-            if (mCompression < kCompressVects) {
-                for (Vector3 *it = (Vector3 *)VecOffset(); it < (Vector3 *)QuatOffset();
-                     ++it) {
-                    Vector3 v;
-                    clip->EvaluateChannel(
-                        &v, clip->GetChannel(myBoneItr->name), clip->StartBeat()
-                    );
-                    *it -= v;
-                    myBoneItr++;
-                }
-            } else {
-                for (ShortVector3 *it = (ShortVector3 *)VecOffset();
-                     it < (ShortVector3 *)QuatOffset();
+            if (mCompression >= kCompressVects) {
+                for (ShortVector3 *it = GetShortPos(); it < (ShortVector3 *)ScaleEnd();
                      ++it) {
                     Vector3 eval;
                     clip->EvaluateChannel(
@@ -357,69 +345,77 @@ void CharBonesSamples::Relativize(CharClip *clip) {
                     );
                     Vector3 v;
                     it->ToVector3(v);
-                    v -= eval;
-                    it->Set(v);
-                    myBoneItr++;
-                }
-            }
-            if (mCompression >= 3) {
-                for (ByteQuat *it = (ByteQuat *)QuatOffset();
-                     it < (ByteQuat *)RotOffset();
-                     ++it) {
-                    Hmx::Quat eval;
-                    clip->EvaluateChannel(
-                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
-                    );
-                    Hmx::Matrix3 mtx;
-                    MakeRotMatrix(eval, mtx);
-                    FastInvert(mtx, mtx);
-                    Hmx::Quat q;
-                    it->ToQuat(q);
-                    Hmx::Matrix3 mtx2;
-                    MakeRotMatrix(q, mtx2);
-                    Multiply(mtx2, mtx, mtx2);
-                    q.Set(mtx2);
-                    it->Set(q);
-                    myBoneItr++;
-                }
-                for (short *it = (short *)RotOffset(); it < (short *)EndOffset(); ++it) {
-                    float eval;
-                    clip->EvaluateChannel(
-                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
-                    );
-                    *it = MakeShortAng(LimitAng(*it * 0.00061035156f - eval));
-                    myBoneItr++;
-                }
-            } else if (mCompression != 0) {
-                for (ShortQuat *it = (ShortQuat *)QuatOffset();
-                     it < (ShortQuat *)RotOffset();
-                     ++it) {
-                    Hmx::Quat eval;
-                    clip->EvaluateChannel(
-                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
-                    );
-                    Hmx::Matrix3 mtx;
-                    MakeRotMatrix(eval, mtx);
-                    FastInvert(mtx, mtx);
-                    Hmx::Quat q;
-                    it->ToQuat(q);
-                    Hmx::Matrix3 mtx2;
-                    MakeRotMatrix(q, mtx2);
-                    Multiply(mtx2, mtx, mtx2);
-                    q.Set(mtx2);
-                    it->Set(q);
-                    myBoneItr++;
-                }
-                for (short *it = (short *)RotOffset(); it < (short *)EndOffset(); ++it) {
-                    float eval;
-                    clip->EvaluateChannel(
-                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
-                    );
-                    *it = MakeShortAng(LimitAng(*it * 0.00061035156f - eval));
+                    Vector3 res;
+                    Subtract(v, eval, res);
+                    it->Set(res);
                     myBoneItr++;
                 }
             } else {
-                for (Hmx::Quat *it = QuatOffset(); it < (Hmx::Quat *)RotOffset(); ++it) {
+                for (Vector3 *it = GetPos(); it < ScaleEnd(); ++it) {
+                    Vector3 v;
+                    clip->EvaluateChannel(
+                        &v, clip->GetChannel(myBoneItr->name), clip->StartBeat()
+                    );
+                    *it -= v;
+                    myBoneItr++;
+                }
+            }
+            if (mCompression >= kCompressQuats) {
+                for (ByteQuat *it = GetByteQuat(); it < (ByteQuat *)QuatEnd(); ++it) {
+                    Hmx::Quat eval;
+                    clip->EvaluateChannel(
+                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
+                    );
+                    Hmx::Matrix3 mtx;
+                    MakeRotMatrix(eval, mtx);
+                    FastInvert(mtx, mtx);
+                    Hmx::Quat q;
+                    it->ToQuat(q);
+                    Hmx::Matrix3 mtx2;
+                    MakeRotMatrix(q, mtx2);
+                    Multiply(mtx2, mtx, mtx2);
+                    q.Set(mtx2);
+                    it->Set(q);
+                    myBoneItr++;
+                }
+                for (short *it = GetShortRotX(); it < (short *)GetEnd(); ++it) {
+                    float eval;
+                    clip->EvaluateChannel(
+                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
+                    );
+                    float val = *it * 0.00061035156f;
+                    *it = MakeShortAng(LimitAng(val - eval));
+                    myBoneItr++;
+                }
+            } else if (mCompression != kCompressNone) {
+                for (ShortQuat *it = GetShortQuat(); it < (ShortQuat *)QuatEnd(); ++it) {
+                    Hmx::Quat eval;
+                    clip->EvaluateChannel(
+                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
+                    );
+                    Hmx::Matrix3 mtx;
+                    MakeRotMatrix(eval, mtx);
+                    FastInvert(mtx, mtx);
+                    Hmx::Quat q;
+                    it->ToQuat(q);
+                    Hmx::Matrix3 mtx2;
+                    MakeRotMatrix(q, mtx2);
+                    Multiply(mtx2, mtx, mtx2);
+                    q.Set(mtx2);
+                    it->Set(q);
+                    myBoneItr++;
+                }
+                for (short *it = GetShortRotX(); it < (short *)GetEnd(); ++it) {
+                    float eval;
+                    clip->EvaluateChannel(
+                        &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
+                    );
+                    float val = *it * 0.00061035156f;
+                    *it = MakeShortAng(LimitAng(val - eval));
+                    myBoneItr++;
+                }
+            } else {
+                for (Hmx::Quat *it = GetQuat(); it < QuatEnd(); ++it) {
                     Hmx::Quat eval;
                     clip->EvaluateChannel(
                         &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()
@@ -433,7 +429,7 @@ void CharBonesSamples::Relativize(CharClip *clip) {
                     it->Set(mtx2);
                     myBoneItr++;
                 }
-                for (float *it = RotOffset(); it < (float *)EndOffset(); ++it) {
+                for (float *it = GetRotX(); it < GetEnd(); ++it) {
                     float eval;
                     clip->EvaluateChannel(
                         &eval, clip->GetChannel(myBoneItr->name), clip->StartBeat()

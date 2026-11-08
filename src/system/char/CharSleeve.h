@@ -29,6 +29,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(CharSleeve)
+    REGISTER_OBJ(CharSleeve)
 
 protected:
     CharSleeve();

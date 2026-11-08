@@ -2936,7 +2936,7 @@ void HamDirector::OnPopulateMoves() {
                     FileMerger::Merger fm(mMoveMerger);
                     fm.name = transition_charclips;
                     fm.dir = clipDir;
-                    fm.subdirs = MergeFilter::kAllSubdirs;
+                    fm.subdirs = MergeFilter::kMergeAll;
                     fm.preclear = true;
                     fm.Select(fp, true);
                     mMoveMerger->Mergers().push_back(fm);
@@ -2948,7 +2948,7 @@ void HamDirector::OnPopulateMoves() {
                 FileMerger::Merger fm(mMoveMerger);
                 fm.name = charclips;
                 fm.dir = clipDir;
-                fm.subdirs = MergeFilter::kAllSubdirs;
+                fm.subdirs = MergeFilter::kMergeAll;
                 fm.preclear = true;
                 fm.Select(fp, true);
                 mMoveMerger->Mergers().push_back(fm);
@@ -2963,7 +2963,7 @@ void HamDirector::OnPopulateMoves() {
                 FileMerger::Merger fm(mMoveMerger);
                 fm.name = hammoves;
                 fm.dir = moveDir;
-                fm.subdirs = MergeFilter::kAllSubdirs;
+                fm.subdirs = MergeFilter::kMergeAll;
                 fm.preclear = true;
                 fm.Select(fp, true);
                 mMoveMerger->Mergers().push_back(fm);

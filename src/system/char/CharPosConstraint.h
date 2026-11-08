@@ -23,6 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18)
     NEW_OBJ(CharPosConstraint)
+    REGISTER_OBJ(CharPosConstraint)
 
 protected:
     CharPosConstraint();

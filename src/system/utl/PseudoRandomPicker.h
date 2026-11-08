@@ -4,19 +4,27 @@
 #include <list>
 #include <vector>
 
+enum RandomType {
+    NOT_RANDOM = 0x0000,
+    PARTITIONED_RANDOM = 0x0001,
+    JUKEBOX_RANDOM = 0x0002,
+    FULL_RANDOM = 0x0003
+};
+
 template <class T>
 class PseudoRandomPicker {
 public:
-    PseudoRandomPicker() : mMode(1), mSeed(0.5), mNumGets(0) {}
+    PseudoRandomPicker() : mRandomType(PARTITIONED_RANDOM), mTopPct(0.5), mNumPicked(0) {}
     ~PseudoRandomPicker() {}
 
-    void SetMode(int mode) { mMode = mode; }
+    void SetType(RandomType type) { mRandomType = type; }
     void AddItem(const T item) { mItems.push_back(item); }
-    void SetNumGets(int i) { mNumGets = i; }
+    void SetNumPicked(int i) { mNumPicked = i; }
+    void SetTopPct(float f) { mTopPct = f; }
 
     void ResetModes() {
-        mNumGets = 0;
-        mMode = 2;
+        mNumPicked = 0;
+        mRandomType = JUKEBOX_RANDOM;
     }
 
     void AddItems(const std::vector<T> &itemVec) {
@@ -48,6 +56,7 @@ public:
 
     int Size() const { return mItems.size(); }
     void Clear() { mItems.resize(0); }
+    void Resize(int size) { mItems.resize(size); }
 
     const T GetItem(int idx) {
         if (idx >= 0) {
@@ -71,29 +80,30 @@ public:
     const T GetNext() {
         MILO_ASSERT(Size() > 0, 0x52);
         int idx;
-        switch (mMode) {
-        case 0:
+        switch (mRandomType) {
+        case NOT_RANDOM:
             idx = 0;
             break;
-        case 2:
-            // this is the only wrong case
-            idx = rand() % (mNumGets % Size());
-            break;
-        case 3:
+        case FULL_RANDOM:
             idx = rand() % Size();
             break;
+        case JUKEBOX_RANDOM: {
+            int size = Size();
+            idx = (size - (mNumPicked % size));
+            idx = rand() % idx;
+        } break;
         default:
-            int i1 = mSeed * (float)Size() + 1.01f;
+            int i1 = mTopPct * (float)Size() + 1.01f;
             idx = rand() % i1;
             break;
         }
-        mNumGets++;
+        mNumPicked++;
         return GetItem(idx);
     }
 
 private:
-    std::list<T> mItems; // 0x0 - items?
-    int mMode; // 0x8
-    float mSeed; // 0xc
-    int mNumGets; // 0x10
+    std::list<T> mItems; // 0x0
+    RandomType mRandomType; // 0x8
+    float mTopPct; // 0xc
+    int mNumPicked; // 0x10
 };

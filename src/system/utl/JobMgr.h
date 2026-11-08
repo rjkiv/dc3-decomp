@@ -125,19 +125,22 @@ private:
 #include "obj/Msg.h"
 
 DECLARE_MESSAGE(SingleItemEnumCompleteMsg, "single_item_enum_complete")
-SingleItemEnumCompleteMsg(bool success, bool hasOffer, const String &id)
-    : Message(Type(), success, hasOffer, id) {}
+SingleItemEnumCompleteMsg(bool success, bool purchaseMade, const String &offerID)
+    : Message(Type(), success, purchaseMade, offerID) {}
 void SetSuccess(bool success) { mData->Node(2) = success; }
 void SetPurchaseMade(bool made) { mData->Node(3) = made; }
 void SetOfferID(const String &id) { mData->Node(4) = id; }
 bool Success() const { return mData->Int(2); }
-bool HasOfferID() const { return mData->Int(3); }
+bool PurchaseMade() const { return mData->Int(3); }
 QWORD OfferID() const;
 END_MESSAGE
 
 DECLARE_MESSAGE(MultipleItemsEnumCompleteMsg, "multiple_items_enum_complete")
-MultipleItemsEnumCompleteMsg(bool success, bool hasOffer, int numOffers, const String &str)
-    : Message(Type(), success, hasOffer, numOffers, DataArrayPtr(), DataArrayPtr()) {}
+MultipleItemsEnumCompleteMsg(
+    bool success, bool purchaseMade, int numOfferIDs, const String &offerID
+)
+    : Message(Type(), success, purchaseMade, numOfferIDs, DataArrayPtr(), DataArrayPtr()) {
+}
 void SetSuccess(bool success) { mData->Node(2) = success; }
 void SetPurchaseMade(bool made) { mData->Node(3) = made; }
 void SetNumOfferIDs(int num) {

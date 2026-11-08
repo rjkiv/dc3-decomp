@@ -18,11 +18,11 @@
     once they are fully blended in." */
 class CharDriver : public RndHighlightable, public CharWeightable, public CharPollable {
 public:
-    enum ApplyMode { // from RB3 decomp
-        kApplyBlend,
-        kApplyAdd,
-        kApplyRotateTo,
-        kApplyBlendWeights
+    enum ApplyMode {
+        kApplyBlend = 0,
+        kApplyAdd = 1,
+        kApplyRotateTo = 2,
+        kApplyBlendWeights = 3
     };
 
     // Hmx::Object
@@ -45,38 +45,71 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(CharDriver);
+    REGISTER_OBJ(CharDriver);
 
-    ObjectDir *ClipDir() const { return mClips; }
-    CharBonesObject *GetBones() const { return mBones; }
-    CharClipDriver *First() { return mFirst; }
-    float Beat() const { return mOldBeat; }
-    CharClipGroup *LastPlayedGroup() const { return mLastPlayedGroup; }
-    void SetBlendWidth(float w) { mBlendWidth = w; }
-    CharClip *FirstClip();
-    CharClipDriver *FirstPlaying();
-    CharClipDriver *Last();
-    CharClipDriver *Before(CharClipDriver *);
-    void Clear();
-    void SetBeatScale(float, bool);
-    float EvaluateFlags(int);
-    CharClip *FirstPlayingClip();
-    void SetClips(ObjectDir *);
+    void SetClips(ObjectDir *c);
+    void SetBones(CharBonesObject *bones);
+    ObjectDir *Clips() const { return mClips; }
+    CharBonesObject *Bones() const { return mBones; }
+    void SetBeatScale(float newScale, bool realign);
+    // float BeatScale();
+    CharClip *FindClip(const DataNode &, bool notify = true);
+    CharClipDriver *
+    Play(CharClip *c, int playFlags, float blendWidth, float startFrame, float deltaStart);
+    CharClipDriver *Play(
+        const DataNode &n,
+        int playFlags,
+        float blendWidth,
+        float startFrame,
+        float deltaStart
+    );
+    CharClipDriver *PlayGroup(
+        CharClipGroup *g,
+        int playFlags,
+        float blendWidth,
+        float startFrame,
+        float deltaStart
+    );
+    CharClipDriver *PlayGroup(
+        const char *groupName,
+        int playFlags,
+        float blendWidth,
+        float startFrame,
+        float deltaStart
+    );
+    float Beat() { return mOldBeat; }
     float TopClipFrame();
-    void Transfer(CharDriver const &);
-    void SetBones(CharBonesObject *);
-    CharClipDriver *Play(CharClip *, int, float, float, float);
-    CharClipDriver *Play(const DataNode &, int, float, float, float);
-    CharClipDriver *PlayGroup(CharClipGroup *, int, float, float, float);
-    CharClipDriver *PlayGroup(const char *, int, float, float, float);
+    void SetStarved(Symbol);
+    CharClipDriver *First() { return mFirst; }
+    CharClipDriver *Last();
+    CharClipDriver *Before(CharClipDriver *cur);
+    CharClipDriver *FirstPlaying();
+    // CharClipDriver *MostPlaying();
+    CharClip *FirstClip();
+    // CharClip *LastClip();
+    CharClip *FirstPlayingClip();
+    // CharClip *MostPlayingClip();
+    // CharClipDriver *FindClipDriver(CharClip *);
+    CharClipGroup *LastGroup() const { return mLastGroup; }
+    void Offset(float, float);
+    bool Starved();
+    void SetBlendWidth(float w) { mBlendWidth = w; }
+    float EvaluateFlags(int flags);
+    // void ExitUnplaying();
+    void Transfer(const CharDriver &cd);
+    void Clear();
+
+    void SetClipType(Symbol);
+    void SetApply(ApplyMode);
+    Symbol GetClipType() const { return mClipType; }
     void SetClipWeightMap();
-    CharClip *FindClip(DataNode const &, bool notify = true);
-    const std::map<CharClip *, float> &ClipWeights() const { return mClipWeightMap; }
+    const std::map<CharClip *, float> &ClipMap() { return mCurrentClipWeights; }
 
 protected:
     CharDriver();
 
     DataNode OnSetFirstBeatOffset(DataArray *);
-    DataNode OnPrint(DataArray const *);
+    DataNode OnPrint(const DataArray *);
     DataNode OnPlayGroup(const DataArray *);
     DataNode OnPlayGroupFlags(const DataArray *);
     DataNode OnGetClipOrGroupList(DataArray *);
@@ -86,11 +119,7 @@ protected:
     DataNode OnGetFirstFlags(const DataArray *);
 
     void SyncInternalBones();
-    float Display(float);
-    void SetClipType(Symbol);
-    void SetApply(ApplyMode);
-    void SetStarved(Symbol);
-    void Offset(float, float);
+    float Display(float top);
 
     /** "The CharBones object to add or blend into." */
     ObjPtr<CharBonesObject> mBones; // 0x30 / -0xb4
@@ -100,8 +129,8 @@ protected:
     /** "Pick a clip to play" */
     ObjPtr<CharClip> mTestClip; // 0x5c / -0x88
     /** "Clip or Group played on enter by default" */
-    ObjPtr<Hmx::Object> mDefaultClip; // 0x70
-    ObjPtr<CharClipGroup> mLastPlayedGroup; // 0x84
+    ObjPtr<Hmx::Object> mDefaultClipOrGroup; // 0x70
+    ObjPtr<CharClipGroup> mLastGroup; // 0x84
     /** "If true, plays the default_clip_or_group whenever starved" */
     bool mDefaultPlayStarved; // 0x98 / -0x74
     Symbol mStarvedHandler; // 0x9c
@@ -120,5 +149,5 @@ protected:
     CharBonesAlloc *mInternalBones; // 0xc0
     /** "Turn on to set this driver to play multiple clips" */
     bool mPlayMultipleClips; // 0xc4 / -0x20
-    std::map<CharClip *, float> mClipWeightMap; // 0xc8
+    std::map<CharClip *, float> mCurrentClipWeights; // 0xc8
 };

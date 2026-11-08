@@ -142,56 +142,63 @@ void ListProperties(std::list<Symbol> &, Symbol, Symbol, std::list<Symbol> *, bo
 class MergeFilter {
 public:
     enum Action {
+        kMerge = 0,
+        kReplace = 1,
+        kKeep = 2,
+        kIgnore = 3
     };
     enum SubdirAction {
-        kMergeMerge,
-        kMergeReplace,
-        kMergeKeep,
-        kMergeIgnore
+        kSubdirRecurse = 0,
+        kSubdirMove = 1,
+        kSubdirIgnore = 2
     };
     enum Subdirs {
         /** "don't merge subdir contents over" */
-        kNoSubdirs,
+        kNoSubdirs = 0,
         /** "merge all subdir contents" */
-        kAllSubdirs,
+        kMergeAll = 1,
         /** "merge only inlined subdir contents, ignore shared subdirs" */
-        kInlineSubdirs,
+        kMergeInlined = 2,
         /** "move all subdirs over into the dst" */
-        kMoveAllSubdirs,
+        kMoveAll = 3,
         /** "merge contents of inlined subdirs, move shared ones." */
-        kMergeInlinedMoveSharedSubdirs
+        kMergeInlinedMoveShared = 4
     };
 
-    MergeFilter() : mAction((Action)0), mSubdirs(kNoSubdirs) {}
+    MergeFilter() : mAction(kMerge), mSubdirs(kNoSubdirs) {}
     MergeFilter(Action a, Subdirs s) : mAction(a), mSubdirs(s) {}
     virtual ~MergeFilter() {}
-    virtual Action Filter(Hmx::Object *, Hmx::Object *, class ObjectDir *) {
+    virtual Action Filter(Hmx::Object *from, Hmx::Object *to, class ObjectDir *toDir) {
         return mAction;
     }
-    virtual SubdirAction FilterSubdir(class ObjectDir *o1, class ObjectDir *) {
-        return DefaultSubdirAction(o1, mSubdirs);
+    virtual SubdirAction FilterSubdir(class ObjectDir *subdir, class ObjectDir *toDir) {
+        return DefaultSubdirAction(subdir, mSubdirs);
     }
 
-    static SubdirAction DefaultSubdirAction(class ObjectDir *, Subdirs);
+    static SubdirAction DefaultSubdirAction(class ObjectDir *subdir, Subdirs sd);
 
 protected:
-    Action mAction;
-    Subdirs mSubdirs;
+    Action mAction; // 0x4
+    Subdirs mSubdirs; // 0x8
 };
 
 class DataMergeFilter : public MergeFilter {
 public:
-    DataMergeFilter(const DataNode &, Subdirs);
+    DataMergeFilter(const DataNode &n, Subdirs s);
     virtual ~DataMergeFilter() {}
     virtual Action Filter(Hmx::Object *, Hmx::Object *, class ObjectDir *);
 
-    DataType mType;
-    DataFunc *mFunc;
-    Hmx::Object *mObj;
-    int mInt;
+private:
+    DataType mType; // 0xc
+    DataFunc *mFunc; // 0x10
+    Hmx::Object *mObj; // 0x14
+    Action mAction; // 0x18
 };
 
-void MergeObject(Hmx::Object *, Hmx::Object *, ObjectDir *, MergeFilter::Action);
-void MergeObject(Hmx::Object *, Hmx::Object *, ObjectDir *, MergeFilter &);
-void MergeObjectsRecurse(ObjectDir *, ObjectDir *, MergeFilter &, bool);
-void MergeDirs(ObjectDir *, ObjectDir *, MergeFilter &);
+void MergeObject(
+    Hmx::Object *from, Hmx::Object *to, ObjectDir *toDir, MergeFilter::Action action
+);
+void MergeObjectsRecurse(
+    ObjectDir *fromDir, ObjectDir *toDir, MergeFilter &filter, bool first
+);
+void MergeDirs(ObjectDir *fromDir, ObjectDir *toDir, MergeFilter &filter);

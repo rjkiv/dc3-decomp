@@ -23,7 +23,7 @@ public:
     void Save(BinStream &);
     void Load(BinStream &);
 
-    ObjectDir *Clips() const { return mDriver ? mDriver->ClipDir() : nullptr; }
+    ObjectDir *Clips() const { return mDriver ? mDriver->Clips() : nullptr; }
     bool MovingSelf() const;
     void SetMoveSelf(bool);
     void TeleportTo(Waypoint *);

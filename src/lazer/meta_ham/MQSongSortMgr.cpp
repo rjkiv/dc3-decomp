@@ -72,7 +72,7 @@ void MQSongSortMgr::UpdateList() {
     m_vSongs.clear();
     Symbol mqCrew = TheCampaign->GetMasterQuestCrew();
     m_songsPerCharacter.clear();
-    const std::vector<int> &rankedSongs = TheHamSongMgr.RankedSongs((SongType)1);
+    const std::vector<int> &rankedSongs = TheHamSongMgr.RankedSongs(kSongCoreOnly);
     FOREACH_CONST (it, rankedSongs) {
         const HamSongMetadata *metadata = TheHamSongMgr.Data(*it);
         const Symbol &character = GetOutfitCharacter(metadata->Outfit());

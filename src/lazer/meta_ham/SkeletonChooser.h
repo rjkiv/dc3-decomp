@@ -68,17 +68,23 @@ private:
     void SetPlayerSkeletonWarningData(int, int);
     void ChoosePlayerSides();
 
+    // inlines + functions found in PDB
     bool StandingStillRaisedEnough() {
         return mStandingStillFilter[0]->RaisedMs() > 0.0f;
     }
     bool HandRaisedRaisedEnough() { return mHandRaiseFilter[0]->RaisedMs() > 0.0f; }
+    int EnrollmentRoundRobin();
+    void UpdateTrackedSkeletonsAutomatic();
+    void CancelActivePlayerSwitch();
+    void UpdateRecoveredSkeletonID(int, int);
+    bool IsMultiPlayerUpdateMode() const;
 
 private:
     DirectionGestureFilterSingleUser *mRightHandUp; // 0x2c
     DirectionGestureFilterSingleUser *mLeftHandUp; // 0x30
     bool mDrawDebug; // 0x34
     int mQueuedActivePlayerIndex; // 0x38
-    int mActivePlayerIndex; // 0x3c - current player index?
+    int mActivePlayerIndex; // 0x3c
     float mSwitchTimer; // 0x40
     float mSwitchDelay; // 0x44
     bool mSkeletonUpdateAutomatic; // 0x48

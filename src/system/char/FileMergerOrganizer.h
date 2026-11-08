@@ -49,6 +49,8 @@ public:
     void StartLoad();
     void AddFileMerger(FileMerger *);
 
+    bool Has(FileMerger *);
+
 protected:
     FileMergerOrganizer();
 

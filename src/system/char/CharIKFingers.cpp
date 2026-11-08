@@ -2,6 +2,7 @@
 #include "char/CharWeightable.h"
 #include "math/Mtx.h"
 #include "math/Rot.h"
+#include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
 #include "rndobj/Rnd.h"
@@ -353,11 +354,11 @@ void CharIKFingers::MeasureLengths() {
         mInv2ab = 2;
         mAAPlusBB = 0;
         float len = Length(mHand->LocalXfm().v);
-        mInv2ab *= len;
         mAAPlusBB += len * len;
-        float parentLen = Length(mHand->TransParent()->LocalXfm().v);
-        mInv2ab = 1.0f / (mInv2ab * parentLen);
-        mAAPlusBB += parentLen * parentLen;
+        mInv2ab *= len;
+        len = Length(mHand->TransParent()->LocalXfm().v);
+        mAAPlusBB += len * len;
+        mInv2ab = 1.0f / (mInv2ab * len);
     }
 }
 
@@ -465,36 +466,37 @@ void CharIKFingers::CalculateFingerDest(FingerNum num) {
                 Multiply(cur.mBone3->LocalXfm(), tfd8, tf108);
                 Multiply(cur.mBoneTip->LocalXfm(), tf108, tf138);
                 Vector3 v1e4;
-                if (Distance(tf138.v, cur.mSecondDestPos)
-                    < Distance(tf138.v, cur.mDestPos)) {
+                if (Distance(tf138.v, cur.mDestPos)
+                    < Distance(tf138.v, cur.mSecondDestPos)) {
                     v1e4 = cur.mDestPos;
                 } else {
                     v1e4 = cur.mSecondDestPos;
                 }
 
-                Hmx::Matrix3 m190;
-                Vector3 v1f0 = tfa8.m.y;
                 Vector3 v1fc = tfa8.m.x;
-                Vector3 v208 = tfa8.m.z;
-                Vector3 v214 = tfa8.v;
+                Vector3 v208;
+                v208 = tfa8.m.z;
                 Vector3 v220;
-                Subtract(v1e4, v214, v220);
+                Subtract(v1e4, tfa8.v, v220);
 
                 float len5 = Length(cur.mBone2->LocalXfm().v);
                 float len6 = Length(cur.mBoneTip->LocalXfm().v);
                 float len7 = Length(cur.mBone3->LocalXfm().v);
                 float len8 = Length(v220);
-                float f9 = std::acos(
-                    -((len8 - len7) * (len8 - len7) - (len5 * len5 + len6 * len6))
+                float f9 = acosf(
+                    ((len5 * len5 + len6 * len6) - (len8 - len7) * (len8 - len7))
                     / (len5 * 2.0f * len6)
                 );
                 if (f9 < 0.87f)
                     f9 = 0.87f;
                 float f5 = f9 / 2.0f + (PI / 2);
+                if (IsNaN(f5)) {
+                    f5 = 2.96f;
+                }
                 cur.mBone2DestAngle = PI - f5;
                 cur.mBone3DestAngle = PI - f5;
                 Hmx::Quat q230;
-                q230.Set(v208, -(f5 * 2.0f - 2 * PI) / 2.0f);
+                q230.Set(v208, (2 * PI - f5 * 2) / 2.0f);
                 Multiply(v1fc, q230, v1fc);
                 Hmx::Quat q240;
                 MakeRotQuat(v1fc, v220, q240);
@@ -537,7 +539,7 @@ void CharIKFingers::CalculateHandDest(int i1, int i2) {
                 if (curDesc.mIsControlled) {
                     Add(curDesc.mDestPos, v194, v194);
                     Vector3 v1ac;
-                    Scale(v1a0, i - 2.0, v1ac);
+                    Scale(v1a0, i - 2.0f, v1ac);
                     Add(v1ac, v194, v194);
                     if (i == 0) {
                         Hmx::Matrix3 m158;

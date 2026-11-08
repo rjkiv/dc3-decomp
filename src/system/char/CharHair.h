@@ -104,6 +104,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(CharHair)
+    REGISTER_OBJ(CharHair)
 
     void FreezePoseRaw();
     void Hookup(ObjPtrList<CharCollide> &);

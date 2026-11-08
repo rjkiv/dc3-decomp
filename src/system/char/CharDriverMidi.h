@@ -23,6 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(CharDriverMidi);
+    REGISTER_OBJ(CharDriverMidi);
 
     bool mActive; // unsure why this is here, its def size 0x1
     Symbol mParser; // 0xe4

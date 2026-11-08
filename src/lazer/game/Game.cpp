@@ -41,6 +41,7 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
+#include "stl/_vector.h"
 #include "synth/Faders.h"
 #include "synth/Sequence.h"
 #include "synth/Synth.h"
@@ -845,6 +846,34 @@ DataNode OnCycleAutoplay(DataArray *a) {
     return autoplay;
 }
 
+DataNode OnCycleTestDancer(DataArray *a) {
+    HamPlayerData *player_data = TheGameData->Player(0);
+    MILO_ASSERT(player_data, 0xaf);
+    String dancer(player_data->GetCurrentTestDancer());
+    std::vector<String> &testDancers = player_data->GetTestDancers();
+
+    if (!testDancers.empty()) {
+        int i;
+        for (i = 0; i < testDancers.size(); i++) {
+            if (testDancers[i] == dancer) {
+                break;
+            }
+        }
+
+        int size = testDancers.size();
+        if (i != 0) {
+            i = (i + 1) % size;
+            if (i < 0) {
+                i += size;
+            }
+        }
+        dancer = testDancers[i];
+    }
+
+    player_data->SetCurrentTestDancer(dancer);
+    return dancer;
+}
+
 DataNode OnToggleCharFeedback(DataArray *a) {
     ReserveFrames();
     return CharFeedback::sEnabled = !CharFeedback::sEnabled;
@@ -861,8 +890,6 @@ DataNode OnToggleSongRecordDouble(DataArray *a) {
     MoveDir::sGameRecord = MoveDir::sGameRecord2Player;
     return MoveDir::sGameRecord;
 }
-
-DataNode OnCycleTestDancer(DataArray *);
 
 DataNode OnDumpMoves(DataArray *) {
     std::vector<HamMoveKey> keys;

@@ -751,7 +751,7 @@ ObjectDir *HamCharacter::GetNeutralSkeleton() {
             if (firstPlayingClip) {
                 mSkeletonBones->Zero();
                 mDriver->SetClipWeightMap();
-                auto weights = mDriver->ClipWeights();
+                auto weights = mDriver->ClipMap();
                 FOREACH (it, weights) {
                     CharClip *first = it->first;
                     float second = it->second;

@@ -30,7 +30,7 @@ public:
         };
 
         Merger(Hmx::Object *o)
-            : proxy(0), preclear(0), subdirs(MergeFilter::kMergeInlinedMoveSharedSubdirs),
+            : proxy(0), preclear(0), subdirs(MergeFilter::kMergeInlinedMoveShared),
               dir(o), loadedObjects(o), loadedSubdirs(o) {}
         Merger(const Merger &m)
             : dir(m.dir.Owner()), loadedObjects(m.loadedObjects.Owner()),
@@ -113,17 +113,18 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(FileMerger);
+    REGISTER_OBJ(FileMerger);
 
     static FileMerger *sFmDeleting;
 
-    Merger *FindMerger(Symbol, bool);
-    int FindMergerIndex(Symbol, bool);
-    bool StartLoad(bool);
+    Merger *FindMerger(Symbol name, bool notify);
+    int FindMergerIndex(Symbol name, bool notify);
+    bool StartLoad(bool async);
     void Clear();
     void ClearSelections();
-    Action MergeAction(Hmx::Object *, Hmx::Object *, ObjectDir *);
-    void Select(Symbol, const FilePath &, bool);
-    Merger *InMerger(Hmx::Object *);
+    Action MergeAction(Hmx::Object *from, Hmx::Object *to, ObjectDir *toDir);
+    void Select(Symbol name, const FilePath &file, bool force);
+    Merger *InMerger(Hmx::Object *o);
     bool AsyncLoad() const { return mAsyncLoad; }
     bool HasPendingFiles() const { return !mFilesPending.empty(); }
     std::vector<Merger> &Mergers() { return mMergers; }
@@ -139,12 +140,12 @@ protected:
     virtual SubdirAction FilterSubdir(ObjectDir *o1, ObjectDir *);
 
     void DeleteCurLoader();
-    bool StartLoadInternal(bool, bool);
-    Merger *NotifyFileLoaded(Loader *, DirLoader *);
-    void PostMerge(Merger *, DirLoader *, bool);
-    bool NeedsLoading(Merger &);
+    bool StartLoadInternal(bool async, bool loading);
+    Merger *NotifyFileLoaded(Loader *l, DirLoader *dl);
+    void PostMerge(Merger *merger, DirLoader *dl, bool success);
+    bool NeedsLoading(Merger &merger);
     void LaunchNextLoader();
-    void AppendLoader(Merger &);
+    void AppendLoader(Merger &merger);
 
     DataNode OnSelect(const DataArray *);
     DataNode OnStartLoad(const DataArray *);

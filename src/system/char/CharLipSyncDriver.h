@@ -33,6 +33,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(CharLipSyncDriver)
+    REGISTER_OBJ(CharLipSyncDriver)
 
     void Sync();
     void ClearLipSync();
@@ -42,7 +43,8 @@ public:
     void BlendInOverrideClip(CharClip *, float, float);
     void BlendInOverrides(float);
     void BlendOutOverrides(float);
-    void ScaleAddViseme(CharClip *, float);
+    void ScaleAddViseme(CharClip *clip, float weight);
+
     void SetSongOffset(float offset) { mSongOffset = offset; }
     void SetOverrideClipWeight(float weight) { mOverrideWeight = weight; }
     float GetOverrideClipWeight() const { return mOverrideWeight; }
@@ -52,6 +54,9 @@ public:
     ObjectDir *GetOverrideOptions() const { return mOverrideOptions; }
     ObjectDir *GetClips() const { return mClips; }
     CharLipSync::PlayBack *GetSongPlayer() const { return mSongPlayer; }
+    void SetSongOwner(CharLipSyncDriver *owner) { mSongOwner = owner; }
+    void SetApplyOverrideAdditively(bool b) { mApplyOverrideAdditively = b; }
+    bool GetApplyOverrideAdditively() const { return mApplyOverrideAdditively; }
 
 protected:
     CharLipSyncDriver();

@@ -300,7 +300,7 @@ void HamWardrobe::UpdateOverlay() {
                     *mOverlay << "\n";
                     continue;
                 }
-                CharClipGroup *grp = driver->LastPlayedGroup();
+                CharClipGroup *grp = driver->LastGroup();
                 if (!grp) {
                     *mOverlay << "\n";
                     continue;

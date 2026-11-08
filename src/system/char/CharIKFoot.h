@@ -31,6 +31,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(CharIKFoot)
+    REGISTER_OBJ(CharIKFoot)
 
     RndTransformable *GetData() const { return mData; }
     int GetDataIndex() const { return mDataIndex; }
@@ -41,7 +42,7 @@ protected:
     void DoFSM(Character *, Transform &);
 
     ObjPtr<RndTransformable> mDummy; // 0xb0
-    State mState; // 0xc4, PDB says CharIKFoot::State
+    State mState; // 0xc4
     ObjPtr<RndTransformable> mData; // 0xc8
     int mDataIndex; // 0xdc
     Vector3 mFreezePos; // 0xe0

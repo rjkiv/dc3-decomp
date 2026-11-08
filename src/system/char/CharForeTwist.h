@@ -26,6 +26,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1D)
     NEW_OBJ(CharForeTwist)
+    REGISTER_OBJ(CharForeTwist)
 
 protected:
     CharForeTwist();

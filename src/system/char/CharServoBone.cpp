@@ -167,7 +167,8 @@ void CharServoBone::SetMoveSelf(bool b) {
 void CharServoBone::MoveToDeltaFacing(Transform &tf) {
     Vector3 v18;
     Multiply(*mFacingPosDelta, tf.m, v18);
-    tf.v += v18;
+    const Vector3 &bullshit = v18;
+    tf.v += bullshit;
     if (mFacingRotDelta) {
         RotateAboutZ(tf.m, *mFacingRotDelta, tf.m);
         Normalize(tf.m, tf.m);

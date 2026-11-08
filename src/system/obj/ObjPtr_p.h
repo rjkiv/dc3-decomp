@@ -272,6 +272,15 @@ typename ObjPtrVec<T1, T2>::iterator ObjPtrVec<T1, T2>::FindRef(ObjRef *ref) {
 }
 
 template <class T1, class T2>
+void ObjPtrVec<T1, T2>::swap(int idx1, int idx2) {
+    iterator it1 = begin() + idx1;
+    iterator it2 = begin() + idx2;
+    T1 *obj = *it1;
+    Set(it1, *it2);
+    Set(it2, obj);
+}
+
+template <class T1, class T2>
 template <typename Cmp>
 void ObjPtrVec<T1, T2>::sort(const Cmp &cmp) {
     MemDoTempAllocations tmp;
@@ -340,8 +349,9 @@ BinStream &operator<<(BinStream &bs, const ObjPtrVec<T1, ObjectDir> &c) {
     bs << c.size();
     MILO_ASSERT(c.Owner(), 0x525);
     for (auto it = c.begin(); it != c.end(); ++it) {
-        if (*it) {
-            bs << (*it)->Name();
+        T1 *obj = *it;
+        if (obj) {
+            bs << obj->Name();
         } else {
             bs << "";
         }

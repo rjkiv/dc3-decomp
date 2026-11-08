@@ -27,6 +27,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(CharIKSliderMidi)
+    REGISTER_OBJ(CharIKSliderMidi)
 
     void SetFraction(float, float);
     void SetupTransforms();
