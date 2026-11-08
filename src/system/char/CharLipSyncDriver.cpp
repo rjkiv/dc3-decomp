@@ -133,179 +133,185 @@ END_LOADS
 
 void CharLipSyncDriver::Poll() {
     START_AUTO_TIMER("lipsyncdriver");
-    if (mClips && mBones) {
-        if (mTestClip && TheLoadMgr.EditMode()) {
-            if (mTestClip->Relative() && mTestWeight >= 0) {
-                mBones->ScaleAdd(mTestClip, mTestWeight, mTestClip->StartBeat(), 0);
-            }
+
+    if (!mClips || !mBones) {
+        return;
+    }
+
+    if (mTestClip && TheLoadMgr.EditMode()) {
+        if (mTestClip->Relative() && mTestWeight >= 0) {
+            mBones->ScaleAdd(mTestClip, mTestWeight, mTestClip->StartBeat(), 0);
             return;
         } else {
-            float f15 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000;
-            if (mInitOverallOverrideBlending) {
-                mOverallOverrideBlendStartTime = f15;
-                mInitOverallOverrideBlending = false;
-            }
-            if (mOverallOverrideBlendIn) {
-                if (f15 > mOverallOverrideBlendMs + mOverallOverrideBlendStartTime) {
-                    mOverallOverrideWeight = 1;
-                    mOverallOverrideBlendIn = false;
-                } else {
-                    float f11 = Clamp(
-                        0.0f,
-                        1.0f,
-                        (f15 - mOverallOverrideBlendStartTime) / mOverallOverrideBlendMs
-                    );
-                    if (f11 > mOverallOverrideWeight) {
-                        mOverallOverrideWeight = f11;
-                    }
-                }
-            } else if (mOverallOverrideBlendOut) {
-                if (f15 > mOverallOverrideBlendMs + mOverallOverrideBlendStartTime) {
-                    mOverallOverrideWeight = 1;
-                    mOverallOverrideBlendOut = false;
-                } else {
-                    float f11 = 1.0f
-                        - Clamp(0.0f,
-                                1.0f,
-                                (f15 - mOverallOverrideBlendStartTime)
-                                    / mOverallOverrideBlendMs);
-                    if (f11 < mOverallOverrideWeight) {
-                        mOverallOverrideWeight = f11;
-                    }
+            return;
+        }
+    } else {
+        float ms = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000;
+        if (mInitOverallOverrideBlending) {
+            mOverallOverrideBlendStartTime = ms;
+            mInitOverallOverrideBlending = false;
+        }
+        if (mOverallOverrideBlendIn) {
+            if (ms > mOverallOverrideBlendMs + mOverallOverrideBlendStartTime) {
+                mOverallOverrideWeight = 1;
+                mOverallOverrideBlendIn = false;
+            } else {
+                float weight = Clamp(
+                    0.0f,
+                    1.0f,
+                    (ms - mOverallOverrideBlendStartTime) / mOverallOverrideBlendMs
+                );
+                if (weight > mOverallOverrideWeight) {
+                    mOverallOverrideWeight = weight;
                 }
             }
-            if (mBlendInOverrideWeight > 0) {
-                if (mInitOverrideBlending) {
-                    mBlendStartTime = f15;
-                    mInitOverrideBlending = false;
+        } else if (mOverallOverrideBlendOut) {
+            if (ms > mOverallOverrideBlendMs + mOverallOverrideBlendStartTime) {
+                mOverallOverrideWeight = 0;
+                mOverallOverrideBlendOut = false;
+            } else {
+                float weight = 1.0f
+                    - Clamp(0.0f,
+                            1.0f,
+                            (ms - mOverallOverrideBlendStartTime)
+                                / mOverallOverrideBlendMs);
+                if (weight < mOverallOverrideWeight) {
+                    mOverallOverrideWeight = weight;
                 }
-                if (f15 > mOverrideClipBlendMs + mBlendStartTime) {
-                    mOverrideClip = mBlendInOverrideClip;
-                    mOverrideWeight = mBlendInOverrideWeight;
-                    mBlendInOverrideWeight = 0;
-                } else if (mSongPlayer) {
-                    float pct =
-                        Clamp(0.0f, 1.0f, (f15 - mBlendStartTime) / mOverrideClipBlendMs);
-                    if (mOverrideClip) {
-                        if (mOverrideWeight > 0) {
-                            float f11 =
-                                (1.0f - pct) * mOverrideWeight * mOverallOverrideWeight;
-                            if (f11 < 0) {
-                                MILO_ASSERT_FMT(
-                                    mOverallOverrideWeight >= 0,
-                                    "mOverallOverrideWeight = %f",
-                                    mOverallOverrideWeight
-                                );
-                                MILO_ASSERT_FMT(
-                                    mOverrideWeight >= 0,
-                                    "mOverrideWeight = %f",
-                                    mOverrideWeight
-                                );
-                                MILO_ASSERT_FMT(pct <= 1, "pct = %f", pct);
-                                f11 = 0;
-                            }
-                            ScaleAddViseme(mOverrideClip, f11);
+            }
+        }
+
+        if (mBlendInOverrideWeight > 0) {
+            if (mInitOverrideBlending) {
+                mBlendStartTime = ms;
+                mInitOverrideBlending = false;
+            }
+            if (ms > mOverrideClipBlendMs + mBlendStartTime) {
+                mOverrideClip = mBlendInOverrideClip;
+                mOverrideWeight = mBlendInOverrideWeight;
+                mBlendInOverrideWeight = 0;
+            } else if (mSongPlayer) {
+                float pct =
+                    Clamp(0.0f, 1.0f, (ms - mBlendStartTime) / mOverrideClipBlendMs);
+                if (mOverrideClip) {
+                    if (mOverrideWeight > 0) {
+                        float weight =
+                            (1.0f - pct) * mOverrideWeight * mOverallOverrideWeight;
+                        if (weight < 0) {
+                            MILO_ASSERT_FMT(
+                                mOverallOverrideWeight >= 0,
+                                "mOverallOverrideWeight = %f",
+                                mOverallOverrideWeight
+                            );
+                            MILO_ASSERT_FMT(
+                                mOverrideWeight >= 0,
+                                "mOverrideWeight = %f",
+                                mOverrideWeight
+                            );
+                            MILO_ASSERT_FMT(pct <= 1, "pct = %f", pct);
+                            weight = 0;
                         }
+                        ScaleAddViseme(mOverrideClip, weight);
                     }
-                    if (mBlendInOverrideClip && mOverrideWeight > 0) {
-                        float f11 = mOverrideWeight * mOverallOverrideWeight;
+                }
+                if (mBlendInOverrideClip && mBlendInOverrideWeight > 0) {
+                    float weight = mBlendInOverrideWeight * mOverallOverrideWeight * pct;
+                    if (weight < 0) {
                         MILO_ASSERT_FMT(
                             mOverallOverrideWeight >= 0,
                             "mOverallOverrideWeight = %f",
                             mOverallOverrideWeight
                         );
                         MILO_ASSERT_FMT(
-                            mOverrideWeight >= f11,
+                            mBlendInOverrideWeight >= 0,
                             "mOverrideWeight = %f",
-                            mOverrideWeight
+                            mBlendInOverrideWeight
                         );
-                        MILO_ASSERT_FMT(pct >= f11, "pct = %f", pct);
-                        ScaleAddViseme(mBlendInOverrideClip, f11);
+                        MILO_ASSERT_FMT(pct >= 0, "pct = %f", pct);
+                        weight = 0;
                     }
-                    if (mOverallOverrideWeight >= 1) {
-                        ApplyBlinks();
-                        return;
-                    }
+                    ScaleAddViseme(mBlendInOverrideClip, weight);
+                }
+                if (mOverallOverrideWeight >= 1) {
+                    ApplyBlinks();
+                    return;
                 }
             }
-            if (mOverallOverrideWeight <= 0) {
-                if (mOverrideClip && mOverrideWeight * mOverallOverrideWeight > 0) {
-                    ScaleAddViseme(
-                        mOverrideClip, mOverrideWeight * mOverallOverrideWeight
-                    );
-                    if (mOverallOverrideWeight >= 1) {
-                        ApplyBlinks();
-                        return;
-                    }
-                }
-            }
+        }
 
-            float f11 = 1.0f - mOverallOverrideWeight;
-            if (f11 <= 0) {
-                return;
-            } else {
-                UpdatePlayback(mSongPlayer, unk90 * f11, mSongOffset);
-                if (!unk8c && mSongPlayer) {
-                    if (mSongPlayer->mLipSync
-                        && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + mSongOffset
-                            >= mSongPlayer->mLipSync->Duration()) {
-                        MILO_LOG(
-                            "CharLipSyncDriver::Poll() - Triggering VO Lip Sync FadeOut - Name:%s\n",
-                            mSongPlayer->mLipSync ? mSongPlayer->mLipSync->Name() : ""
-                        );
-                        unk8c = true;
-                    }
+        if (mBlendInOverrideWeight <= 0) {
+            if (mOverrideClip && mOverrideWeight * mOverallOverrideWeight > 0) {
+                ScaleAddViseme(mOverrideClip, mOverrideWeight * mOverallOverrideWeight);
+                if (mOverallOverrideWeight >= 1) {
+                    ApplyBlinks();
+                    return;
                 }
-                if (unk8c) {
-                    if (unk90 < 0.001f) {
-                        MILO_LOG(
-                            "CharLipSyncDriver::Poll() - Deleting VO Lip Sync track because it finished and faded out - Name:%s\n",
-                            mSongPlayer->mLipSync ? mSongPlayer->mLipSync->Name() : ""
-                        );
-                        RELEASE(mSongPlayer);
-                        mLipSync = nullptr;
-                        unk90 = 1;
-                        unk8c = false;
-                    } else {
-                        unk90 *= 0.99f;
-                    }
-                }
-                CamShot *shot = nullptr;
-                if (TheWorld) {
-                    CameraManager *mgr = TheWorld->GetCameraManager();
-                    if (mgr) {
-                        shot = mgr->GetCurrentShot();
-                        if (!mgr->GetCurrentShot()) {
-                            shot = mgr->MiloCamera();
-                        }
-                    }
-                }
-                bool updated = mSongPlayer && mSongPlayer->mLipSync && shot
-                    && shot->Name() && strneq(shot->Name(), "battle_", 7);
-                if (!updated) {
-                    UpdatePlayback(mMainLipsyncPlayer, f11, 0);
-                }
-                if (mSongOwner && mSongOwner->mSongPlayer) {
-                    float f15 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)
-                        + mSongOwner->mSongOffset;
-                    if (unk8c) {
-                        f15 =
-                            Mod(f15,
-                                mSongOwner->mSongPlayer->mLipSync->Duration() - 0.001f);
-                    }
-                    mSongOwner->mSongPlayer->Poll(f15);
-                    auto &weights = mSongOwner->mSongPlayer->mWeights;
-                    for (int i = 0; i < weights.size(); i++) {
-                        CharLipSync::PlayBack::Weight &wt = weights[i];
-                        float cur = wt.current;
-                        CharClip *clip = wt.clip;
-                        if (cur != 0 && clip && clip != mSongOwner->mBlinkClip) {
-                            ScaleAddViseme(mClips->Find<CharClip>(clip->Name()), cur);
-                        }
-                    }
-                }
-                ApplyBlinks();
             }
+        }
+
+        float f11 = 1.0f - mOverallOverrideWeight;
+        if (f11 <= 0) {
+            return;
+        } else {
+            UpdatePlayback(mSongPlayer, unk90 * f11, mSongOffset);
+            if (!unk8c && mSongPlayer) {
+                if (mSongPlayer->mLipSync
+                    && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + mSongOffset
+                        >= mSongPlayer->mLipSync->Duration()) {
+                    MILO_LOG(
+                        "CharLipSyncDriver::Poll() - Triggering VO Lip Sync FadeOut - Name:%s\n",
+                        mSongPlayer->mLipSync ? mSongPlayer->mLipSync->Name() : ""
+                    );
+                    unk8c = true;
+                }
+            }
+            if (unk8c) {
+                if (unk90 < 0.001f) {
+                    MILO_LOG(
+                        "CharLipSyncDriver::Poll() - Deleting VO Lip Sync track because it finished and faded out - Name:%s\n",
+                        mSongPlayer->mLipSync ? mSongPlayer->mLipSync->Name() : ""
+                    );
+                    RELEASE(mSongPlayer);
+                    mLipSync = nullptr;
+                    unk90 = 1;
+                    unk8c = false;
+                } else {
+                    unk90 *= 0.99f;
+                }
+            }
+            CamShot *shot = nullptr;
+            if (TheWorld) {
+                CameraManager *mgr = TheWorld->GetCameraManager();
+                if (mgr) {
+                    shot = mgr->GetCurrentShot();
+                    if (!mgr->GetCurrentShot()) {
+                        shot = mgr->MiloCamera();
+                    }
+                }
+            }
+            bool updated = mSongPlayer && mSongPlayer->mLipSync && shot && shot->Name()
+                && strneq(shot->Name(), "battle_", 7);
+            if (!updated) {
+                UpdatePlayback(mMainLipsyncPlayer, f11, 0);
+            }
+            if (mSongOwner && mSongOwner->mSongPlayer) {
+                float f15 =
+                    TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + mSongOwner->mSongOffset;
+                if (mLoop) {
+                    f15 =
+                        Mod(f15, mSongOwner->mSongPlayer->mLipSync->Duration() - 0.001f);
+                }
+                mSongOwner->mSongPlayer->Poll(f15);
+                CharLipSync::PlayBack *playback = mSongOwner->mSongPlayer;
+                for (int i = 0; i < playback->mWeights.size(); i++) {
+                    float cur = playback->mWeights[i].current * f11;
+                    CharClip *clip = playback->mWeights[i].clip;
+                    if (cur != 0 && clip && clip != mSongOwner->mBlinkClip) {
+                        ScaleAddViseme(mClips->Find<CharClip>(clip->Name()), cur);
+                    }
+                }
+            }
+            ApplyBlinks();
         }
     }
 }
