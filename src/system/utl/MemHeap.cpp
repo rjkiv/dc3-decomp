@@ -126,19 +126,33 @@ void MemHeap::Init(
     }
 }
 
-void MemHeap::FirstFit(int size, int align, FreeBlockInfo &blockinfo) {
+void MemHeap::FirstFit(int iSizeWords, int iWordAlignShift, FreeBlockInfo &oBlock) {
+    FreeBlock *block = mFreeBlockChain;
     FreeBlock *prev = nullptr;
-    for (auto block = mFreeBlockChain; block != nullptr; block = block->NextBlock()) {
-        int start = ((int)block >> 2) + 1;
-        int alignment = start + (1 << align) - 1 >> (1 << align);
-        int pad = alignment - start;
-        if ((int)block->SizeWords() >= pad + size) {
-            blockinfo.mSizeWords = block->SizeWords();
-            blockinfo.mPadWords = pad;
-            blockinfo.mBlock = block;
-            blockinfo.mPrevBlock = prev;
+
+    if (block == nullptr) {
+        return;
+    }
+
+    for (; block != nullptr;) {
+        unsigned int alignment = 1U << iWordAlignShift;
+        int wordOffset = (int)block >> 2;
+        int sizeWords = block->SizeWords();
+        wordOffset++;
+
+        unsigned int rounded = (alignment - 1U) + wordOffset;
+        rounded = (rounded >> iWordAlignShift) << iWordAlignShift;
+        int padWords = (rounded - wordOffset);
+
+        if (sizeWords >= padWords + iSizeWords) {
+            oBlock.mSizeWords = sizeWords;
+            oBlock.mPadWords = padWords;
+            oBlock.mBlock = block;
+            oBlock.mPrevBlock = prev;
             return;
         }
+        prev = block;
+        block = block->NextBlock();
     }
 }
 
@@ -211,7 +225,6 @@ void MemHeap::BestFit(int iSizeWords, int iWordAlignShift, FreeBlockInfo &oBlock
 
         unsigned int rounded = (alignment - 1U) + wordOffset;
         rounded = (rounded >> iWordAlignShift) << iWordAlignShift;
-
         int padWords = (rounded - wordOffset);
 
         if (sizeWords >= padWords + iSizeWords && sizeWords < oBlock.mSizeWords) {
