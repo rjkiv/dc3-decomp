@@ -136,9 +136,7 @@ void CharLipSyncDriver::Poll() {
     if (mClips && mBones) {
         if (mTestClip && TheLoadMgr.EditMode()) {
             if (mTestClip->Relative() && mTestWeight >= 0) {
-                mBones->ScaleAdd(
-                    mTestClip->Relative(), mTestWeight, mTestClip->StartBeat(), 0
-                );
+                mBones->ScaleAdd(mTestClip, mTestWeight, mTestClip->StartBeat(), 0);
             }
             return;
         } else {
@@ -193,18 +191,18 @@ void CharLipSyncDriver::Poll() {
                             float f11 =
                                 (1.0f - pct) * mOverrideWeight * mOverallOverrideWeight;
                             if (f11 < 0) {
-                                f11 = 0;
                                 MILO_ASSERT_FMT(
                                     mOverallOverrideWeight >= 0,
                                     "mOverallOverrideWeight = %f",
                                     mOverallOverrideWeight
                                 );
                                 MILO_ASSERT_FMT(
-                                    mOverrideWeight >= f11,
+                                    mOverrideWeight >= 0,
                                     "mOverrideWeight = %f",
                                     mOverrideWeight
                                 );
                                 MILO_ASSERT_FMT(pct <= 1, "pct = %f", pct);
+                                f11 = 0;
                             }
                             ScaleAddViseme(mOverrideClip, f11);
                         }
@@ -432,14 +430,13 @@ void CharLipSyncDriver::Highlight() {
         float y = TheRnd.DrawString(MakeString("%s:", PathName(this)), v2, white, true).y;
         v2.y += y;
         if (mSongPlayer) {
-            TheRnd.DrawString(
-                MakeString("frame %d", mSongPlayer->mFrame), v2, white, true
-            );
+            int frame = mSongPlayer->mFrame;
+            TheRnd.DrawString(MakeString("frame %d", frame), v2, white, true);
             v2.y += y;
             std::vector<CharLipSync::PlayBack::Weight> &weights = mSongPlayer->mWeights;
             for (int i = 0; i < weights.size(); i++) {
                 CharLipSync::PlayBack::Weight &curWeight = weights[i];
-                float f14 = curWeight.last;
+                float f14 = curWeight.current;
                 CharClip *clip = curWeight.clip;
                 if (f14 != 0 && clip) {
                     TheRnd.DrawString(

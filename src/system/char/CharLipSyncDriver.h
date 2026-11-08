@@ -44,6 +44,7 @@ public:
     void BlendInOverrides(float);
     void BlendOutOverrides(float);
     void ScaleAddViseme(CharClip *, float);
+
     void SetSongOffset(float offset) { mSongOffset = offset; }
     void SetOverrideClipWeight(float weight) { mOverrideWeight = weight; }
     float GetOverrideClipWeight() const { return mOverrideWeight; }
@@ -53,6 +54,9 @@ public:
     ObjectDir *GetOverrideOptions() const { return mOverrideOptions; }
     ObjectDir *GetClips() const { return mClips; }
     CharLipSync::PlayBack *GetSongPlayer() const { return mSongPlayer; }
+    void SetSongOwner(CharLipSyncDriver *owner) { mSongOwner = owner; }
+    void SetApplyOverrideAdditively(bool b) { mApplyOverrideAdditively = b; }
+    bool GetApplyOverrideAdditively() const { return mApplyOverrideAdditively; }
 
 protected:
     CharLipSyncDriver();
