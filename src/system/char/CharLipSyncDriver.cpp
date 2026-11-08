@@ -345,7 +345,9 @@ bool CharLipSyncDriver::SetLipSync(CharLipSync *sync) {
         && (streq(sync->Name(), "player1_cam.lipsync")
             || streq(sync->Name(), "player2_cam.lipsync")
             || streq(sync->Name(), "dancer_face.lipsync"))) {
-        RELEASE(mMainLipsyncPlayer);
+        if (mMainLipsyncPlayer) {
+            RELEASE(mMainLipsyncPlayer);
+        }
         mMainLipsyncPlayer = new CharLipSync::PlayBack();
         mMainLipsyncPlayer->Set(sync, mClips);
         mMainLipsyncPlayer->Reset();

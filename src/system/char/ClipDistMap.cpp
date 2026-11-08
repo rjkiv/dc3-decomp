@@ -133,14 +133,12 @@ void ClipDistMap::FindNodes(float minErr, float maxDist, float endDist) {
 }
 
 int ClipDistMap::CalcWidth() {
-    float clipAStartBeat = mClipA->StartBeat();
     float div = 1.0f / (float)mSamplesPerBeat;
-    mAStart = clipAStartBeat - Mod(clipAStartBeat, div);
+    mAStart = mClipA->StartBeat() - Mod(mClipA->StartBeat(), div);
     if (mAStart < mClipA->StartBeat()) {
         mAStart += div;
     }
-    float clipAEndBeat = mClipA->EndBeat();
-    mAEnd = clipAEndBeat - Mod(clipAEndBeat, div);
+    mAEnd = mClipA->EndBeat() - Mod(mClipA->EndBeat(), div);
     if (mAEnd + div <= mClipA->EndBeat()) {
         mAEnd += div;
     }
