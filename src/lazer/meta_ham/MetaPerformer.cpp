@@ -1281,7 +1281,7 @@ void MetaPerformer::HandleGameplayEnded(const EndGameResult &egr) {
 
 void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) {
     static Symbol score("score");
-    int count = 0;
+    int numPlayers = 0;
     for (int i = 0; i < 2; i++) {
         HamPlayerData *pPlayerData = TheGameData->Player(i);
         MILO_ASSERT(pPlayerData, 0x189);
@@ -1290,20 +1290,18 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
         const DataNode *pScoreNode = pPlayerProvider->Property(score);
         MILO_ASSERT(pScoreNode, 0x18f);
         if (0 < pScoreNode->Int()) {
-            count++;
+            numPlayers++;
         }
     }
-    if (0 < count) {
-        if (count <= 1) {
-            totalScore = 0;
-        }
+    if (0 < numPlayers) {
+        totalScore = (1 < numPlayers) ? totalScore : 0;
         static Symbol p1("p1");
         static Symbol p2("p2");
         static Symbol alert_highscore_solo("alert_highscore_solo");
         static Symbol alert_highscore_coop("alert_highscore_coop");
 
         HamProfile *pCriticalProfile = TheProfileMgr.GetCriticalProfile();
-        Difficulty easiestDiff = EasiestDifficulty();
+        Difficulty eHighDifficulty = EasiestDifficulty();
         int songID = mSongMgr.GetSongIDFromShortName(song);
 
         for (int i = 0; i < 2; i++) {
@@ -1313,29 +1311,28 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
             MILO_ASSERT(pPlayerProvider, 0x1af);
 
             Symbol name = (i == 0) ? p1 : p2;
-            Difficulty diff = pPlayerData->GetDifficulty();
-            if (IsHarderDifficulty(diff, easiestDiff)) {
-                easiestDiff = diff;
+            Difficulty am_i_harder = pPlayerData->GetDifficulty();
+            if (IsHarderDifficulty(am_i_harder, eHighDifficulty)) {
+                eHighDifficulty = am_i_harder;
             }
             int padnum = pPlayerData->PadNum();
             HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(padnum);
             if (pProfile && !TheAccomplishmentMgr->GetProfileChanged(padnum)) {
-                if (pProfile == pCriticalProfile) {
-                    pCriticalProfile = nullptr;
-                }
+                pCriticalProfile =
+                    pProfile == pCriticalProfile ? nullptr : pCriticalProfile;
 
                 SongStatusMgr *songStatusMgr = pProfile->GetSongStatusMgr();
                 MILO_ASSERT(songStatusMgr, 0x1c1);
 
                 static Symbol score("score");
                 const DataNode *pScoreNode = pPlayerProvider->Property(score);
-                int playerScore = pScoreNode->Int();
-                if (playerScore != 0 || totalScore != 0) {
+                int score_00 = pScoreNode->Int();
+                if (score_00 != 0 || totalScore != 0) {
                     int coopScore = songStatusMgr->GetCoopScore(songID);
-                    bool noFlashcards;
-                    int baseScore = songStatusMgr->GetScore(songID, noFlashcards);
+                    bool bNoFlashCards;
+                    int baseScore = songStatusMgr->GetScore(songID, bNoFlashCards);
 
-                    if (playerScore > baseScore) {
+                    if (score_00 > baseScore) {
                         ThePassiveMessenger->TriggerGenericMsg(
                             alert_highscore_solo,
                             name,
@@ -1355,6 +1352,8 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
                         );
                     }
 
+                    // something with these static variables are making the beginning of
+                    // the function upset
                     static Symbol expert("expert");
                     bool isExpertUnlocked =
                         pProfile->IsDifficultyUnlockedForProfile(song, expert);
@@ -1368,14 +1367,14 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
                     pProfile->UpdateScore(
                         songID,
                         pPlayerData,
-                        diff,
-                        playerScore,
+                        am_i_harder,
+                        score_00,
                         totalScore,
                         stars,
                         awesomeCount,
                         perfectCount,
                         GetMovesPassed(i),
-                        0,
+                        numPlayers,
                         false,
                         mCompletedSongWithNoFlashcards
                     );
@@ -1394,14 +1393,14 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
             pCriticalProfile->UpdateScore(
                 songID,
                 nullptr,
-                easiestDiff,
+                eHighDifficulty,
                 0,
                 totalScore,
                 stars,
                 0,
                 0,
                 0,
-                0,
+                numPlayers,
                 false,
                 mCompletedSongWithNoFlashcards
             );

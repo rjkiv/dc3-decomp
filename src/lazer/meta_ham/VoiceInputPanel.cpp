@@ -135,9 +135,9 @@ void VoiceInputPanel::LoadVoiceContexts() {
     }
 }
 
-void VoiceInputPanel::OnConfidenceChange(float conf) {
+void VoiceInputPanel::OnConfidenceChange(float delta) {
     if (mActiveVoiceContext) {
-        float newConf = conf + mActiveVoiceContext->mConfidenceThreshold;
+        float newConf = delta + mActiveVoiceContext->mConfidenceThreshold;
         mActiveVoiceContext->mConfidenceThreshold = Clamp(0.0f, 1.0f, newConf);
         if (TheSpeechMgr->Overlay()->Showing()) {
             TheSpeechMgr->Overlay()->Print(MakeString(

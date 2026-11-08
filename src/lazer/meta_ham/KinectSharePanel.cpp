@@ -171,36 +171,36 @@ void KinectSharePanel::ConvertImagesForLinkPost() {
         }
     }
     MILO_ASSERT(mTex.Ptr(), 0x8C);
-    RndBitmap bitmap70;
-    RndBitmap bitmap90;
-    mTex->LockBitmap(bitmap70, 3);
-    bitmap90.Create(bitmap70, 32, 0, nullptr);
-    EndianSwapBitmap(bitmap90);
-    bitmap90.PixelBytes();
+    RndBitmap srcBmp;
+    RndBitmap destBmp;
+    mTex->LockBitmap(srcBmp, 3);
+    destBmp.Create(srcBmp, 32, 0, nullptr);
+    EndianSwapBitmap(destBmp);
+    destBmp.PixelBytes();
     {
         static int _x = MemFindHeap("physical");
         MemHeapTracker mem(_x);
-        mLinkPostParams.PreviewImage.Pitch = bitmap90.RowBytes();
-        mLinkPostParams.PreviewImage.Width = bitmap90.Width();
-        mLinkPostParams.PreviewImage.Height = bitmap90.Height();
-        mLinkPostParams.PreviewImage.Format = TheDxRnd.D3DFormatForBitmap(bitmap90);
+        mLinkPostParams.PreviewImage.Pitch = destBmp.RowBytes();
+        mLinkPostParams.PreviewImage.Width = destBmp.Width();
+        mLinkPostParams.PreviewImage.Height = destBmp.Height();
+        mLinkPostParams.PreviewImage.Format = TheDxRnd.D3DFormatForBitmap(destBmp);
         if (mLinkPostParams.PreviewImage.Format == D3DFMT_A8R8G8B8) {
             mLinkPostParams.PreviewImage.Format = D3DFMT_LIN_A8R8G8B8;
         }
-        int mult = bitmap90.RowBytes() * bitmap90.Height();
+        int mult = destBmp.RowBytes() * destBmp.Height();
         mPreviewBuf = MemAlloc(mult, __FILE__, 0xA8, "FB_Preview");
         MILO_ASSERT(mPreviewBuf != NULL, 0xA9);
         if (mPreviewBuf) {
-            memcpy(mPreviewBuf, bitmap90.Pixels(), mult);
+            memcpy(mPreviewBuf, destBmp.Pixels(), mult);
         }
         mLinkPostParams.PreviewImage.pBytes = (BYTE *)mPreviewBuf;
         MILO_LOG(
             "KinectSharePanel: preview bitmap = 0x%08x %d %d %d 0x%08x\n",
             mPreviewBuf,
-            bitmap90.Width(),
-            bitmap90.Height(),
-            bitmap90.RowBytes(),
-            TheDxRnd.D3DFormatForBitmap(bitmap90)
+            destBmp.Width(),
+            destBmp.Height(),
+            destBmp.RowBytes(),
+            TheDxRnd.D3DFormatForBitmap(destBmp)
         );
     }
     mTex->UnlockBitmap();

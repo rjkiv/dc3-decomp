@@ -211,23 +211,23 @@ void BustAMovePanel::ResetScores() {
     TheGameData->Player(1)->Provider()->SetProperty(score, 0);
 }
 
-void BustAMovePanel::SetFlashcardName(int side, int index, int i3) {
-    int flashCardIdx = index;
-    Symbol s = gNullStr;
-    if (i3 >= 0) {
-        Symbol moveName = GetMoveNameData(i3)->Sym(1);
-        s = moveName;
+void BustAMovePanel::SetFlashcardName(int side, int i, int flashcard) {
+    int flashCardIdx = i;
+    Symbol name = gNullStr;
+    if (flashcard >= 0) {
+        Symbol moveName = GetMoveNameData(flashcard)->Sym(1);
+        name = moveName;
     }
     HamLabel *label = mPlayerColumn[side]->Find<HamLabel>(
         MakeString("flashcard_name_%d.lbl", flashCardIdx)
     );
-    label->SetTextToken(s);
+    label->SetTextToken(name);
     HamLabel *label2 = mPlayerColumn[side == 0]->Find<HamLabel>(
         MakeString("flashcard_name_%d.lbl", flashCardIdx)
     );
     if (mState == kBAMState_ShowMoveSequence
         || mState == kBAMState_ShowMoveSequenceSetup) {
-        label2->SetTextToken(s);
+        label2->SetTextToken(name);
     } else {
         label2->SetTextToken(gNullStr);
     }
@@ -1206,7 +1206,8 @@ void BustAMovePanel::OnBeat() {
                                 static Message failMessage("bustamove_fail_match");
                                 TheHamProvider->Handle(failMessage, false);
                             }
-                        } else if (mBustFailures[mRecordingPlayer] < mAllowedBustFailures) {
+                        } else if (mBustFailures[mRecordingPlayer]
+                                   < mAllowedBustFailures) {
                             mBustFailures[mRecordingPlayer]++;
                             mUsingMulligan = true;
                         }

@@ -164,14 +164,14 @@ PartyModeMgr::PartyModeMgr() : mFrameMotionSmoother() {
         vec[i - 1] = mGoodTitles->Sym(i);
     }
     mGoodTitlePicker.AddItems(vec);
-    mGoodTitlePicker.SetMode(0);
+    mGoodTitlePicker.SetType(NOT_RANDOM);
     int numBadTitles = mBadTitles->Size();
     vec.resize(numBadTitles);
     for (int i = 1; i < numBadTitles; i++) {
         vec[i - 1] = mBadTitles->Sym(i);
     }
     mBadTitlePicker.AddItems(vec);
-    mBadTitlePicker.SetMode(0);
+    mBadTitlePicker.SetType(NOT_RANDOM);
     int numARObjects = mARObjectsData->Size() - 1;
     for (int i = 1; i <= numARObjects; i++) {
         mRandomARObjectIndices.push_back(i);
@@ -1000,8 +1000,8 @@ void PartyModeMgr::AddPlayerToTeam(int team) {
 }
 
 void PartyModeMgr::ClearTeam(int team) {
-    switch (team) {
-    case 1: {
+    MILO_ASSERT(team == 1 || team == 2, 0x20F);
+    if (team == 1) {
         int i = mPlayersTeam1.size();
         while (i != 0) {
             i--;
@@ -1009,9 +1009,7 @@ void PartyModeMgr::ClearTeam(int team) {
             mPlayers.pop_back();
         }
         mPlayersTeam1.clear();
-        break;
-    }
-    case 2: {
+    } else if (team == 2) {
         int i = mPlayersTeam2.size();
         while (i != 0) {
             i--;
@@ -1019,11 +1017,6 @@ void PartyModeMgr::ClearTeam(int team) {
             mPlayers.pop_back();
         }
         mPlayersTeam2.clear();
-        break;
-    }
-    default:
-        MILO_ASSERT(team == 1 || team == 2, 0x20F);
-        break;
     }
 }
 
@@ -1054,15 +1047,16 @@ int PartyModeMgr::PickNextPlayer() {
     if (mLastTeamPickedFrom == 2) {
         ret = mPlayerTeam1Picker.GetNext();
         if (mPlaytestMode) {
-            ret = ret % mPlayersTeam1.size();
+            ret %= mPlayersTeam1.size();
         }
         mLastTeamPickedFrom = 1;
         if (mPlayerSequence) {
             DataArray *arr = mPlayerSequence->Array(mRoundsPlayed + 1);
-            int idx = 0;
-            if (mPlayersTeam1.size() > mPlayersTeam2.size())
-                idx = 1;
-            ret = arr->Int(idx);
+            if (mPlayersTeam1.size() <= mPlayersTeam2.size()) {
+                ret = arr->Int(0);
+            } else {
+                ret = arr->Int(1);
+            }
         }
     } else if (mLastTeamPickedFrom == 1) {
         ret = mPlayerTeam2Picker.GetNext();
@@ -1072,11 +1066,13 @@ int PartyModeMgr::PickNextPlayer() {
         mLastTeamPickedFrom = 2;
         if (mPlayerSequence) {
             DataArray *arr = mPlayerSequence->Array(mRoundsPlayed + 1);
-            int idx = 0;
-            if (mPlayersTeam1.size() > mPlayersTeam2.size())
-                idx = 1;
-            int x = arr->Int(idx);
-            ret = mPlayersTeam1.size() + x;
+            if (mPlayersTeam1.size() <= mPlayersTeam2.size()) {
+                ret = arr->Int(1);
+                ret += mPlayersTeam1.size();
+            } else {
+                ret = arr->Int(0);
+                ret += mPlayersTeam1.size();
+            }
         }
     }
     return ret;
@@ -1085,10 +1081,10 @@ int PartyModeMgr::PickNextPlayer() {
 void PartyModeMgr::ShufflePlaylist(bool b1) {
     MILO_ASSERT(IsUsingPlaylist(), 0x731);
     if (b1) {
-        mSongPicker.SetMode(2);
-        mSongPicker.SetNumGets(0);
+        mSongPicker.SetType(JUKEBOX_RANDOM);
+        mSongPicker.SetNumPicked(0);
     } else if (mPlaylistIsShuffled) {
-        mSongPicker.SetMode(0);
+        mSongPicker.SetType(NOT_RANDOM);
         SetSongsFromPlaylist();
     }
     mPlaylistIsShuffled = b1;
@@ -1158,10 +1154,10 @@ void PartyModeMgr::SetupInfinitePartyMode() {
     TheHamSongMgr.GetRandomlySelectableRankedSongs(mValidSongIDs);
     if (!mPlaylist) {
         ResetSongs();
-        mSongPicker.SetNumGets(0);
-        mSongPicker.SetMode(2);
+        mSongPicker.SetNumPicked(0);
+        mSongPicker.SetType(JUKEBOX_RANDOM);
     } else {
-        mSongPicker.SetMode(0);
+        mSongPicker.SetType(NOT_RANDOM);
     }
     ResetModes(true);
     ResetMicrogames();
@@ -1266,28 +1262,28 @@ void PartyModeMgr::SetSongAndDefaults(Symbol song, Symbol mode, bool force_crew_
 
 PartyModeMgr::SubMode *PartyModeMgr::CreateEventA() {
     Symbol mode;
-    Symbol submode;
-    DetermineSubMode(&mode, &submode);
-    int flags = 0;
+    Symbol microgame;
+    DetermineSubMode(&mode, &microgame);
+    int playerFlags = 0;
     int numPlayers = 0;
-    std::vector<int> vec;
-    DetermineSubModePlayers(mode, &flags, &numPlayers, &vec);
+    std::vector<int> players;
+    DetermineSubModePlayers(mode, &playerFlags, &numPlayers, &players);
     int songID = 0;
-    Symbol shortname;
-    DetermineSubModeSong(&shortname, &songID);
+    Symbol song;
+    DetermineSubModeSong(&song, &songID);
     SubMode *event = new SubMode();
     event->mode = mode;
-    event->microgame = submode;
-    event->song = shortname;
+    event->microgame = microgame;
+    event->song = song;
     event->songID = songID;
-    event->playerFlags = flags;
+    event->playerFlags = playerFlags;
     event->numPlayers = numPlayers;
-    event->players.insert(event->players.begin(), vec.begin(), vec.end());
-    DataArray *a = new DataArray(numPlayers);
+    event->players.insert(event->players.begin(), players.begin(), players.end());
+    DataArray *playersArray = new DataArray(numPlayers);
     for (int i = 0; i < numPlayers; i++) {
-        a->Node(i) = event->players[i];
+        playersArray->Node(i) = players[i];
     }
-    event->playersArray = a;
+    event->playersArray = playersArray;
     return event;
 }
 
@@ -1366,45 +1362,47 @@ DataNode PartyModeMgr::OnMsg(const SmartGlassMsg &msg) {
 
 void PartyModeMgr::FinalizePlaytestParty() {
     int numEvents = mPlaytestEvents->Size() - 1;
-    std::vector<Symbol> modeVec(numEvents, gNullStr);
-    std::vector<Symbol> subModeVec(numEvents, gNullStr);
-    std::vector<Symbol> songVec(numEvents, gNullStr);
-    std::vector<int> team1Players;
-    std::vector<int> team2Players;
+    std::vector<Symbol> modes(numEvents);
+    std::vector<Symbol> microgames(numEvents);
+    std::vector<Symbol> songs(numEvents);
+    std::vector<int> leftPlayers;
+    std::vector<int> rightPlayers;
 
     for (int i = 1; i <= numEvents; i++) {
         DataArray *eventArr = mPlaytestEvents->Array(i);
         Symbol mode = eventArr->Sym(0);
-        Symbol subMode = eventArr->Sym(1);
+        Symbol microgame = eventArr->Sym(1);
         Symbol song = eventArr->Sym(2);
         if (eventArr->Size() > 4) {
-            int team = eventArr->Int(3);
-            int playerIdx = eventArr->Int(4) + mPlayers.size();
-            team1Players.push_back(team);
-            team2Players.push_back(playerIdx);
+            int leftPlayer = eventArr->Int(3);
+            int rightPlayer = eventArr->Int(4) + mPlayersTeam1.size();
+            leftPlayers.push_back(leftPlayer);
+            rightPlayers.push_back(rightPlayer);
         }
-        modeVec[i - 1] = mode;
-        subModeVec[i - 1] = subMode;
-        songVec[i - 1] = song;
+        modes[i - 1] = mode;
+        microgames[i - 1] = microgame;
+        songs[i - 1] = song;
     }
 
-    mModePicker.Clear();
+    mModePicker.SetType(NOT_RANDOM);
     mSongPicker.Clear();
-    mModePicker.AddItems(modeVec);
-    mMicrogamePicker.Clear();
-    mMicrogamePicker.AddItems(subModeVec);
+    mModePicker.AddItems(modes);
+    mMicrogamePicker.SetType(NOT_RANDOM);
+    mMicrogamePicker.AddItems(microgames);
+    mSongPicker.SetType(NOT_RANDOM);
     mSongPicker.Clear();
-    mSongPicker.AddItems(songVec);
+    mSongPicker.AddItems(songs);
+    mPlayerTeam1Picker.SetType(NOT_RANDOM);
     mPlayerTeam1Picker.Clear();
-    mPlayerTeam1Picker.AddItems(team1Players);
+    mPlayerTeam1Picker.AddItems(leftPlayers);
+    mPlayerTeam2Picker.SetType(NOT_RANDOM);
     mPlayerTeam2Picker.Clear();
-    mPlayerTeam2Picker.AddItems(team2Players);
+    mPlayerTeam2Picker.AddItems(rightPlayers);
 
     mRoundsBetweenShowdowns = numEvents - 1;
     mRoundsUntilShowdown = numEvents - 1;
     mMaxPossibleEventPoints = (float)(numEvents - 1) + 1.0f;
-    static Symbol six_star_bonus("six_star_bonus");
-    mMaxPossibleStarBonus = mEventScoringData->FindArray(six_star_bonus)->Float(1);
+    mMaxPossibleStarBonus = mEventScoringData->FindArray("six_star_bonus")->Float(1);
     SetCurrEvent();
 }
 
@@ -1476,31 +1474,25 @@ void PartyModeMgr::PruneHistory() {
 void PartyModeMgr::FinalizeTeam(int team) {
     std::vector<PartyModePlayer *> *players;
     PseudoRandomPicker<int> *picker;
-    switch (team) {
-    case 1:
+    MILO_ASSERT(team == 1 || team == 2, 0x1ee);
+    if (team == 1) {
         players = &mPlayersTeam1;
         picker = &mPlayerTeam1Picker;
-        break;
-    case 2:
+    } else if (team == 2) {
         players = &mPlayersTeam2;
         picker = &mPlayerTeam2Picker;
-        break;
-
-    default:
-        MILO_ASSERT(team == 1 || team == 2, 0x1ee);
-        break;
     }
 
-    std::vector<int> vals;
+    std::vector<int> items;
     int numPlayers = players->size();
     int offset = mPlayers.size() - numPlayers;
-    vals.resize(numPlayers);
+    items.resize(numPlayers);
     for (int i = 0; i < numPlayers; i++) {
-        vals[i] = i + offset;
+        items[i] = i + offset;
     }
-    picker->AddItems(vals);
-    picker->SetNumGets(0);
-    picker->SetMode(2);
+    picker->AddItems(items);
+    picker->SetNumPicked(0);
+    picker->SetType(JUKEBOX_RANDOM);
 }
 
 DataNode PartyModeMgr::OnSetSongAndDefaults(DataArray *arr) {
@@ -1700,11 +1692,11 @@ void PartyModeMgr::ResetModes(bool b) {
 void PartyModeMgr::UpdateScores() {
     HamPlayerData *pPlayer1Data = TheGameData->Player(0);
     MILO_ASSERT(pPlayer1Data, 0x66c);
-    PropertyEventProvider *pPlayer1Provider = pPlayer1Data->Provider();
+    Hmx::Object *pPlayer1Provider = pPlayer1Data->Provider();
     MILO_ASSERT(pPlayer1Provider, 0x66f);
     HamPlayerData *pPlayer2Data = TheGameData->Player(1);
     MILO_ASSERT(pPlayer2Data, 0x672);
-    PropertyEventProvider *pPlayer2Provider = pPlayer2Data->Provider();
+    Hmx::Object *pPlayer2Provider = pPlayer2Data->Provider();
     MILO_ASSERT(pPlayer2Provider, 0x675);
     static Symbol score("score");
     int p1Score = pPlayer1Provider->Property(score)->Int();
@@ -1713,41 +1705,35 @@ void PartyModeMgr::UpdateScores() {
     int p1Side = pPlayer1Provider->Property(side)->Int();
     int p2Side = pPlayer2Provider->Property(side)->Int();
     if (p2Score < p1Score) {
-        mJustWonSide = p1Score;
-    } else if (p1Score < p2Score) {
-        mJustWonSide = p2Score;
+        mJustWonSide = p1Side;
+    } else if (p2Score > p1Score) {
+        mJustWonSide = p2Side;
     } else {
         mJustWonSide = 2;
     }
     switch (mJustWonSide) {
     case 0:
-        mLeftTeamPrevScore = mLeftTeamScore;
-        mLeftTeamScore += GetPointsForWin();
-        mRightTeamPrevScore = mRightTeamScore;
-        mRightTeamScore += GetPointsForLoss();
+        IncLeftTeamScore(GetPointsForWin());
+        IncRightTeamScore(GetPointsForLoss());
         break;
     case 1:
-        mLeftTeamPrevScore = mLeftTeamScore;
-        mLeftTeamScore += GetPointsForLoss();
-        mRightTeamPrevScore = mRightTeamScore;
-        mRightTeamScore += GetPointsForWin();
+        IncLeftTeamScore(GetPointsForLoss());
+        IncRightTeamScore(GetPointsForWin());
         break;
-    default:
-        mLeftTeamPrevScore = mLeftTeamScore;
-        mLeftTeamScore += GetPointsForWin();
-        mRightTeamPrevScore = mRightTeamScore;
-        mRightTeamScore += GetPointsForWin();
+    case 2:
+        IncLeftTeamScore(GetPointsForWin());
+        IncRightTeamScore(GetPointsForWin());
         break;
     }
     SetLeftTeamStarBonus();
     SetRightTeamStarBonus();
     float finalScore =
         (mLeftTeamStarBonus + mLeftTeamScore) - (mRightTeamStarBonus + mRightTeamScore);
-    if (finalScore < -0.001) {
+    if (finalScore < -0.001f) {
         mWinningSide = 1;
         return;
     }
-    if (0.001 < finalScore) {
+    if (0.001f < finalScore) {
         mWinningSide = 0;
         return;
     }
@@ -1758,31 +1744,24 @@ void PartyModeMgr::UpdateScores() {
         static Symbol random("random");
         switch (mWinningSide) {
         case 0:
-            mLeftTeamPrevScore = mLeftTeamScore;
-            mLeftTeamScore += GetPointsForWin();
+            IncLeftTeamScore(GetPointsForWin());
             SendDataPoint("crew_throwdown/tiebreaker", side, left, random, 0);
             break;
         case 1:
-            mRightTeamPrevScore = mRightTeamScore;
-            mRightTeamScore += GetPointsForWin();
+            IncRightTeamScore(GetPointsForWin());
             SendDataPoint("crew_throwdown/tiebreaker", side, right, random, 0);
             break;
-        default:
-            if (mWinningSide < 3) {
-                if (rand() % 2) {
-                    mWinningSide = 0;
-                    mLeftTeamPrevScore = mLeftTeamScore;
-                    mLeftTeamScore += GetPointsForWin();
-                    SendDataPoint("crew_throwdown/tierbreaker", side, left, random, 1);
-                } else {
-                    mWinningSide = 1;
-                    mRightTeamPrevScore = mRightTeamScore;
-                    mRightTeamScore += GetPointsForWin();
-                    SendDataPoint("crew_throwdown/tiebreaker", side, right, random, 1);
-                }
+        case 2: {
+            if (rand() % 2 != 0) {
+                mWinningSide = 0;
+                IncLeftTeamScore(GetPointsForWin());
+                SendDataPoint("crew_throwdown/tiebreaker", side, left, random, 1);
+            } else {
+                mWinningSide = 1;
+                IncRightTeamScore(GetPointsForWin());
+                SendDataPoint("crew_throwdown/tiebreaker", side, right, random, 1);
             }
-
-            break;
+        } break;
         }
     } else {
         mWinningSide = 2;
@@ -1837,7 +1816,7 @@ void PartyModeMgr::SetSongsFromPlaylist() {
             b = b && mCurrEvent && mCurrEvent->songID != songID;
         }
     }
-    mSongPicker.SetMode(0);
+    mSongPicker.SetType(NOT_RANDOM);
     if (b) {
         Symbol s;
         int songID;
@@ -1848,7 +1827,7 @@ void PartyModeMgr::SetSongsFromPlaylist() {
 }
 
 void PartyModeMgr::DetermineSubModePlayers(
-    Symbol mode, int *pPlayerFlags, int *pNumPlayers, std::vector<int> *vec
+    Symbol mode, int *pPlayerFlags, int *pNumPlayers, std::vector<int> *players
 ) {
     static Symbol showdown("showdown");
     if (mode != showdown) {
@@ -1858,22 +1837,20 @@ void PartyModeMgr::DetermineSubModePlayers(
         if (minplayers != 0) {
             totalplayers -= minplayers;
             maxplayers -= minplayers;
-            while (minplayers != 0) {
+
+            for (int n = minplayers; n != 0; n--) {
                 int player = PickNextPlayer();
                 *pPlayerFlags |= 1 << player;
-                vec->push_back(player);
-                minplayers--;
+                players->push_back(player);
                 ++*pNumPlayers;
             }
         }
-        if (0 < totalplayers && maxplayers != 0) {
-            while (maxplayers != 0) {
-                if (totalplayers == 0) {
-                    return;
-                }
+        // something up with this if block
+        if (0 < totalplayers) {
+            while (maxplayers != 0 && totalplayers != 0) {
                 int player = PickNextPlayer();
                 *pPlayerFlags |= 1 << player;
-                vec->push_back(player);
+                players->push_back(player);
                 maxplayers--;
                 totalplayers--;
                 ++*pNumPlayers;

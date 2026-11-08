@@ -188,6 +188,7 @@ public:
     RndTex *GetDefaultTex(int idx) { return mDefaultTex[idx]; }
     RndCubeTex *GetCubeTexWhite() const { return mCubeTex_White; }
     int GetDrawCount() const { return mDrawCount; }
+    float DrawMs() { return mDrawTimer.GetLastMs(); }
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();
