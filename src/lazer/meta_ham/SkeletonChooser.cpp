@@ -463,11 +463,15 @@ bool SkeletonChooser::ShouldWaitForRecovery() {
     int tracking_id_00 = TheGameData->Player(1)->GetSkeletonTrackingID();
     bool skel0 = true;
     if (tracking_id > 0) {
-        skel0 = TheGestureMgr->GetSkeletonByTrackingID(tracking_id);
+        if (TheGestureMgr->GetSkeletonByTrackingID(tracking_id) == 0) {
+            skel0 = false;
+        }
     }
     bool skel1 = true;
     if (tracking_id_00 > 0) {
-        skel1 = TheGestureMgr->GetSkeletonByTrackingID(tracking_id_00);
+        if (TheGestureMgr->GetSkeletonByTrackingID(tracking_id_00) == 0) {
+            skel1 = false;
+        }
     }
     if ((!skel0 || !skel1) && TheGestureMgr->GetSkeletonRecoverer().WaitingToRecover()) {
         return true;
