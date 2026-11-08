@@ -15,7 +15,6 @@ inline BinStream &operator>>(BinStream &bs, Hmx::Matrix3 &mtx) {
 }
 
 void Interp(const Hmx::Matrix3 &, const Hmx::Matrix3 &, float, Hmx::Matrix3 &);
-void Multiply(const Hmx::Matrix3 &, const Hmx::Matrix3 &, Hmx::Matrix3 &);
 
 inline void Normalize(const Hmx::Matrix3 &in, Hmx::Matrix3 &out) {
     Normalize(in.y, out.y);
@@ -49,6 +48,20 @@ inline void Multiply(const Vector3 &v, const Hmx::Matrix3 &m, Vector3 &vout) {
         m.x.y * v.x + m.y.y * v.y + m.z.y * v.z,
         m.x.z * v.x + m.y.z * v.y + m.z.z * v.z
     );
+}
+
+inline void Multiply(const Hmx::Matrix3 &a, const Hmx::Matrix3 &b, Hmx::Matrix3 &c) {
+    if (&b != &c) {
+        Multiply(a.x, b, c.x);
+        Multiply(a.y, b, c.y);
+        Multiply(a.z, b, c.z);
+    } else {
+        Vector3 x, y, z;
+        Multiply(a.x, b, x);
+        Multiply(a.y, b, y);
+        Multiply(a.z, b, z);
+        c.Set(x, y, z);
+    }
 }
 
 inline void Transpose(const Hmx::Matrix3 &in, Hmx::Matrix3 &out) {

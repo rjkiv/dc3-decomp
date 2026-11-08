@@ -451,15 +451,9 @@ void BSPFace::Set(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3) {
 void Multiply(const Plane &a, const Transform &b, Plane &c) {
     Hmx::Matrix3 m;
     FastInvert(b.m, m);
-    Vector3 v(a.a, a.b, a.c);
-
     Vector3 vmult;
-    Multiply(m, v, vmult);
-
-    Scale(v, -(a.d / LengthSquared(v)), v);
-
+    Multiply(m, a.AsVector4().AsVector3(), vmult);
     Vector3 on;
-    Multiply(v, b, on);
-
+    Multiply(a.On(), b, on);
     c.Set(on, vmult);
 }
