@@ -222,7 +222,7 @@ void ClipCollide::TestClips() {
     }
 }
 
-ObjectDir *ClipCollide::Clips() { return !mChar ? nullptr : mChar->Driver()->ClipDir(); }
+ObjectDir *ClipCollide::Clips() { return !mChar ? nullptr : mChar->Driver()->Clips(); }
 
 void ClipCollide::Collide() {
     bool valid = mChar && mWaypoint && mClip;
@@ -309,7 +309,7 @@ void ClipCollide::PickReport(const char *cc) {
         mCharPath = curReport.charPath;
         SyncChar();
         mWaypoint = curReport.waypoint;
-        mClip = mChar->Driver()->ClipDir()->Find<CharClip>(curReport.clip, true);
+        mClip = mChar->Driver()->Clips()->Find<CharClip>(curReport.clip, true);
         mPosition = curReport.position;
         Demonstrate();
     }

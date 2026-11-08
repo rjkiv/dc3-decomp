@@ -51,7 +51,7 @@ BEGIN_LOADS(CharDriverMidi)
     ASSERT_REVS(7, 0)
     LOAD_SUPERCLASS(CharDriver)
     if (d.rev < 7) {
-        mDefaultClip.Load(d, false, mClips);
+        mDefaultClipOrGroup.Load(d, false, mClips);
     }
     if (d.rev == 2) {
         String str;
@@ -100,8 +100,8 @@ void CharDriverMidi::Exit() {
 
 DataNode CharDriverMidi::OnMidiParser(DataArray *da) {
     CharClip *clip;
-    if (!mActive && mDefaultClip) {
-        clip = dynamic_cast<CharClip *>(mDefaultClip.Ptr());
+    if (!mActive && mDefaultClipOrGroup) {
+        clip = dynamic_cast<CharClip *>(mDefaultClipOrGroup.Ptr());
     } else {
         clip = FindClip(da->Node(2), false);
     }
@@ -135,8 +135,8 @@ DataNode CharDriverMidi::OnMidiParserGroup(DataArray *da) {
         return 0;
     } else {
         CharClip *clip;
-        if (!mActive && mDefaultClip) {
-            clip = dynamic_cast<CharClip *>(mDefaultClip.Ptr());
+        if (!mActive && mDefaultClipOrGroup) {
+            clip = dynamic_cast<CharClip *>(mDefaultClipOrGroup.Ptr());
         } else {
             clip = grp->GetClip(mClipFlags);
         }
