@@ -296,3 +296,11 @@ void MemHeap::LastFit(int iReqSize, int iAlignShift, FreeBlockInfo &oBlock) {
         block = block->NextBlock();
     }
 }
+
+int MemHeap::AllocSize(int *iMem) {
+    if (iMem >= mStart && iMem < mStart + mSizeWords) {
+        unsigned int header = iMem[-1];
+        return (((header >> 8) - ((header >> 4) & 0xF)) - 1) * 4;
+    }
+    return 0;
+}
