@@ -844,10 +844,9 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
 
     if (mLookingAtIndex >= 0) {
         Skeleton &skel = TheGestureMgr->GetSkeleton(mLookingAtIndex);
-        id = skel.TrackingID();
-        mHandRaiseFilter[0]->Update(
-            skel.TrackingID(), TheTaskMgr.DeltaUISeconds() * 1000.0f
-        );
+        int tracking_id = skel.TrackingID();
+        id = tracking_id;
+        mHandRaiseFilter[0]->Update(tracking_id, TheTaskMgr.DeltaUISeconds() * 1000.0f);
         if (mHandRaiseFilter[0]->HandRaised()) {
             static Symbol join_in_progress_complete("join_in_progress_complete");
             static Symbol none("none");
