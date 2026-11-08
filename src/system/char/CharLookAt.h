@@ -30,13 +30,16 @@ public:
     NEW_OBJ(CharLookAt)
     REGISTER_OBJ(CharLookAt)
 
+    RndTransformable *GetSource() const { return mSource ? mSource : mPivot; }
+    // RndTransformable* GetPivot() const;
+    RndTransformable *GetTarget() const { return mTarget; }
     void SetMinYaw(float);
     void SetMaxYaw(float);
     void SetMinPitch(float);
     void SetMaxPitch(float);
-    RndTransformable *GetSource() const { return mSource ? mSource : mPivot; }
-    RndTransformable *Target() const { return mTarget; }
-    bool Clamped() const { return mClamped; } // clamped?
+    void SetTarget(RndTransformable *t) { mTarget = t; }
+    bool Clamped() { return mClamped; }
+
     static void SetDisableJitter(bool disable) { sDisableJitter = disable; }
 
 protected:

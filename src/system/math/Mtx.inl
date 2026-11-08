@@ -36,14 +36,13 @@ inline void NormalizeAboutY(Hmx::Matrix3 &mtx) {
     Cross(mtx.y, mtx.z, mtx.x);
 }
 
+// per RB3, this version uses Dot products...
 inline void Multiply(const Hmx::Matrix3 &m, const Vector3 &v, Vector3 &vout) {
-    vout.Set(
-        m.x.x * v.x + m.y.x * v.y + m.z.x * v.z,
-        m.x.y * v.x + m.y.y * v.y + m.z.y * v.z,
-        m.x.z * v.x + m.y.z * v.y + m.z.z * v.z
-    );
+    vout.Set(Dot(m.x, v), Dot(m.y, v), Dot(m.z, v));
 }
 
+// but this version got the funny paired singles treatment
+// so idk what this version could be
 inline void Multiply(const Vector3 &v, const Hmx::Matrix3 &m, Vector3 &vout) {
     vout.Set(
         m.x.x * v.x + m.y.x * v.y + m.z.x * v.z,

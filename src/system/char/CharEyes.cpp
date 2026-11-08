@@ -608,7 +608,7 @@ RndTransformable *CharEyes::GetTarget() {
     if (mEyes.empty() || !mEyes[0].eye)
         return nullptr;
     else {
-        return mEyes[0].eye->Target();
+        return mEyes[0].eye->GetTarget();
     }
 }
 
