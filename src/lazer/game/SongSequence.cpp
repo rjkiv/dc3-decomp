@@ -296,14 +296,14 @@ void SongSequence::OnSongLoaded() {
             "Time to advance song sequence = %.3f\n",
             TheTaskMgr.UISeconds() - m_BeginLoadTime
         );
-        Entry &curEntry = m_Entries[m_Current];
+        Entry *curEntry = &m_Entries[m_Current];
         UIPanel *gamePanel = ObjectDir::Main()->Find<UIPanel>("game_panel");
-        bool hasIntro = TheGame->HasIntro();
+        int hasIntro = TheGame->HasIntro();
         Symbol gameMode = TheGameMode->Property(gameplay_mode)->Sym();
         bool inHollaback = gameMode == holla_back;
         bool inMindControl = gameMode == mind_control;
         TheHamDirector->SetProperty("disabled", false);
-        gamePanel->Handle(Message(set_type, curEntry.unk8), true);
+        gamePanel->Handle(Message(set_type, curEntry->unk8), true);
         gamePanel->Handle(Message(init), true);
         for (int i = 0; i < 2; i++) {
             HamPlayerData *hpd = TheGameData->Player(i);
@@ -324,16 +324,18 @@ void SongSequence::OnSongLoaded() {
             TheMaster->GetAudio()->ClearLoop();
         }
         TheHamDirector->SetProperty(freestyle_enabled, false);
-        if (curEntry.unkc >= 0 && curEntry.unk10 >= 0) {
-            TheMaster->GetAudio()->SetLoop(
-                BeatToMs(curEntry.unk10 * 4.0f), BeatToMs(curEntry.unkc * 4.0f)
-            );
+        if (curEntry->unkc >= 0 && curEntry->unk10 >= 0) {
+            float startBeat = curEntry->unkc * 4.0f;
+            float endBeat = curEntry->unk10 * 4.0f;
+            BeatToMs(startBeat);
+            BeatToMs(endBeat);
+            TheMaster->GetAudio()->SetLoop(endBeat, startBeat);
         }
-        if (curEntry.unk18 >= 0 && curEntry.unk1c >= 1) {
-            TheMaster->GetAudio()->SetLoop(curEntry.unk18 * 4.0f, curEntry.unk1c * 4.0f);
-            TheGame->Jump(curEntry.unk18 * 4.0f, true);
+        if (curEntry->unk18 >= 0 && curEntry->unk1c >= 1) {
+            TheMaster->GetAudio()->SetLoop(curEntry->unk18 * 4.0f, curEntry->unk1c * 4.0f);
+            TheGame->Jump(BeatToMs(curEntry->unk18 * 4.0f), true);
         }
-        if (curEntry.unk20) {
+        if (curEntry->unk20) {
             ObjectDir *hudPanel = DataVariable("hud_panel").Obj<ObjectDir>();
             hudPanel->Find<UILabel>("song_name.lbl")->SetPrelocalizedString(String(""));
             hudPanel->Find<UILabel>("song_artist.lbl")->SetPrelocalizedString(String(""));
@@ -343,14 +345,14 @@ void SongSequence::OnSongLoaded() {
             if (m_Current < m_Entries.size() - 1) {
                 char buffer[256];
                 sCache->StartSet(0);
-                Symbol s0 = m_Entries[m_Current + 1].unk0;
+                Symbol s0 = m_Entries[m_Current - 1].unk0;
                 int s0len = strlen(s0.Str());
-                strcpy(buffer, TheHamSongMgr.SongPath(s0, 0));
+                strcpy(buffer, TheHamSongMgr.SongPath(m_Entries[m_Current - 1].unk0, 0));
                 buffer[strlen(buffer) + s0len] = 0;
-                const char *milo = MakeString("%s%s.milo", buffer, s0.Str());
+                const char *milo = MakeString("%s%s.milo", buffer, s0);
                 const char *moves = MakeString("%s%s.milo", buffer, "moves");
                 const char *clips = MakeString("%s%s.milo", buffer, "clips");
-                const char *mogg = MakeString("%s%s.milo", buffer, s0);
+                const char *mogg = MakeString("%s%s.mogg", buffer, s0);
                 sCache->Add(milo, 1, milo);
                 sCache->Add(moves, 1, moves);
                 sCache->Add(clips, 1, clips);
@@ -359,7 +361,7 @@ void SongSequence::OnSongLoaded() {
             }
         }
         m_TimeSinceLoad = 0;
-        if (!curEntry.unk21) {
+        if (!curEntry->unk21) {
             TheHamDirector->StartStopVisualizer(false, 1);
             RndGroup *grp = TheHamDirector->GetVenueWorld()->Find<RndGroup>("bid.grp");
             if (grp) {
@@ -385,6 +387,7 @@ void SongSequence::OnSongLoaded() {
         if (!inHollaback) {
             if (inMindControl)
                 goto next;
+            TheHamDirector->PlayIntroShot();
             static Message songseq_intro("songseq_intro");
             TheHamProvider->Export(songseq_intro, true);
         }
