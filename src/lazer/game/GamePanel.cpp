@@ -26,6 +26,7 @@
 #include "obj/DataFile.h"
 #include "obj/DataUtl.h"
 #include "obj/Dir.h"
+#include "obj/DirLoader.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "obj/PropSync.h"
@@ -33,6 +34,7 @@
 #include "obj/Utl.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "os/Joypad.h"
 #include "os/System.h"
 #include "os/Timer.h"
 #include "rndobj/Anim.h"
@@ -45,16 +47,18 @@
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
 #include "ui/UIScreen.h"
+#include "utl/FilePath.h"
 #include "utl/MBT.h"
 #include "utl/MakeString.h"
 #include "utl/TimeConversion.h"
 #include "world/Dir.h"
+#include <cmath>
 
 GamePanel *TheGamePanel = nullptr;
 LoopVizCallback gLoopVizCallback;
 LatencyCallback gGamePanelCallback;
-static float sFloat1 = 0;
-static float sFloat2 = 0;
+static float sLastStreamMs = 0;
+static float sDeltaSeconds = 0;
 
 float LatencyCallback::UpdateOverlay(RndOverlay *o, float f2) {
     Hmx::Color color = mWhite ? Hmx::Color(1, 1, 1) : Hmx::Color(0, 0, 0);
@@ -158,7 +162,7 @@ GamePanel::GamePanel()
     mFitnessFilter[0].SetPlayerIndex(0);
     mFitnessFilter[1].SetPlayerIndex(1);
     mJitter.resize(32);
-    sFloat1 = sFloat2 = 0;
+    sLastStreamMs = sDeltaSeconds = 0;
     MILO_ASSERT(!TheGamePanel, 0x9E);
     TheGamePanel = this;
     SetType("none");
@@ -222,8 +226,8 @@ void GamePanel::Enter() {
     Reset();
     SetPaused(false);
     ThePresenceMgr.SetInGame(TheHamSongMgr.GetSongIDFromShortName(TheGameData->GetSong()));
-    sFloat1 = TheMaster->StreamMs();
-    sFloat2 = 0;
+    sLastStreamMs = TheMaster->StreamMs();
+    sDeltaSeconds = 0;
 }
 
 void GamePanel::Exit() {
@@ -301,10 +305,10 @@ void GamePanel::Poll() {
         }
         if (TheMaster) {
             float ms = TheMaster->StreamMs();
-            sFloat2 = (ms - sFloat1) / 1000.0f;
-            sFloat1 = ms;
+            sDeltaSeconds = (ms - sLastStreamMs) / 1000.0f;
+            sLastStreamMs = ms;
         } else {
-            sFloat2 = 0;
+            sDeltaSeconds = 0;
         }
     }
 }
@@ -414,21 +418,26 @@ void GamePanel::ReloadData() {
     ObjectDir *hudPanel = DataVariable("hud_panel").Obj<ObjectDir>();
     DataMacroWarning(false);
     DataArray *fileData = DataReadFile(SystemConfig()->File(), true);
-    DataArray *objArr = fileData->FindArray("objects");
-    ReloadObjectType(this, objArr);
+    DataArray *objectsConfig = fileData->FindArray("objects");
+    ReloadObjectType(this, objectsConfig);
     Hmx::Object *newObj = Hmx::Object::New<Hmx::Object>();
+
     newObj->SetType("point_value_chase");
-    ReloadObjectType(newObj, objArr);
+    ReloadObjectType(newObj, objectsConfig);
     delete newObj;
-    FilePath proxy = hudPanel->ProxyFile();
-    hudPanel->SetProxyFile(proxy, false);
-    ReloadObjectType(hudPanel, objArr);
+
+    FilePath path = hudPanel->ProxyFile();
+    hudPanel->SetProxyFile(path, false);
+    ReloadObjectType(hudPanel, objectsConfig);
     fileData->Release();
+
     DataMacroWarning(true);
+
     static Message entermsg("enter");
     hudPanel->HandleType(entermsg);
-    EndGameMsg msg((EndGameResult)0);
-    Handle(msg, true);
+
+    EndGameMsg endGame(kRestart);
+    Handle(endGame, true);
 }
 
 void GamePanel::Reset() {
@@ -601,13 +610,11 @@ DataNode GamePanel::OnMsg(const EndGameMsg &msg) {
         mState = kGameOver;
         mResult = msg.Result();
         switch (mResult) {
-        case kWon: {
-            Export(Message("game_won"), true);
-            break;
-        }
         case kWonFinale: {
             Export(Message("game_won_finale"), true);
-            break;
+        }
+        case kWon: {
+            Export(Message("game_won"), true);
         }
         case kQuit: {
             Export(Message("game_over"), true);
@@ -615,7 +622,6 @@ DataNode GamePanel::OnMsg(const EndGameMsg &msg) {
         }
         default:
             MILO_NOTIFY("bad game over state");
-            break;
         }
     }
     return 1;
@@ -666,36 +672,96 @@ void GamePanel::ClearDrawGlitch() {
 
 void GamePanel::UpdateNowBar() {
     MILO_ASSERT(mGame, 0x23d);
-    float seconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
+    float sec = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     float songDuration = TheSongDB->GetSongDurationMs();
-    float durVal = songDuration * 0.001f - seconds;
-    char operation = '-';
+    char sec_left_prefix = '-';
+    float durVal = (songDuration * 0.001f) - sec;
+    float val;
     if (durVal < 0.0f) {
         durVal = -durVal;
-        operation = '+';
+        sec_left_prefix = '+';
     }
-    int totalTick = TheTaskMgr.GetSongPos().mTotalTick;
-    float val;
+    int totalTick = TheTaskMgr.GetSongPos().GetTotalTick();
+
     if (0.0f < songDuration) {
         val = 100.0f;
-        float secondsval = seconds * 100.0f;
-        float eq = secondsval / songDuration * 0.001f;
+        float eq = (sec * 100.0f) / (songDuration / 1000.0f);
         if (eq <= 100.0f) {
             val = eq;
         }
     }
     *mNowBar << MakeString(
         "MBT %d:%d:%03d [%s %c%s %4.1f%%] (%.2fsec %dtk)\n",
-        TheTaskMgr.GetSongPos().mMeasure + 1,
-        TheTaskMgr.GetSongPos().mBeat + 1,
-        TheTaskMgr.GetSongPos().mTick,
-        FormatTimeMSH(seconds * 1000.0f),
-        operation,
+        TheTaskMgr.GetSongPos().GetMeasure() + 1,
+        TheTaskMgr.GetSongPos().GetBeat() + 1,
+        TheTaskMgr.GetSongPos().GetTick(),
+        FormatTimeMSH(sec * 1000.0f),
+        sec_left_prefix,
         FormatTimeMSH(durVal * 1000.0f),
         val,
-        seconds,
+        sec,
         totalTick
     );
+}
+
+void GamePanel::UpdateLatency() {
+    static Hmx::Object *beep;
+    static float frames[2] = { 0, 0 };
+    static int frame = 0;
+    static int count = 0;
+    static bool wasPressed = false;
+    static DataNode &latency_test = DataVariable("latency_test");
+    static DataNode &pad_button = DataVariable("pad_button");
+
+    if (latency_test.Int() == 0) {
+        mLatency->SetShowing(false);
+    } else {
+        bool isWhite = false;
+        bool justPressed = false;
+        int player = latency_test.Int() - 2;
+        if (player == -1) {
+            float floorBeat = floor(TheTaskMgr.Beat() * 2.0f);
+            float floorDeltaBeat =
+                floor((TheTaskMgr.Beat() - TheTaskMgr.DeltaBeat()) * 2.0f);
+            if (floorBeat != floorDeltaBeat) {
+                count = 3;
+            }
+            if (0 < count) {
+                count--;
+                isWhite = true;
+            }
+        } else {
+            JoypadData *data = JoypadGetPadData(player);
+            if (data) {
+                bool pressed = ((1 << pad_button.Int()) & data->mButtons) != 0;
+                // i got no idea what happens in the rest of this if statement
+                justPressed = pressed && !wasPressed;
+            }
+        }
+        gGamePanelCallback.mWhite = isWhite;
+        if (justPressed) {
+            if (!beep) {
+                ObjectDir *load =
+                    DirLoader::LoadObjects("test/latency.milo", nullptr, nullptr);
+                beep = load->Find<Hmx::Object>("beep.cue");
+            }
+            static Message playMsg("play");
+            beep->Handle(playMsg);
+        }
+        int idx = frame;
+        frame = 1 - frame;
+        frames[idx] = TheRnd.DrawMs();
+        mLatency->SetShowing(false);
+        mLatency->Clear();
+        *mLatency << MakeString(
+            "Joy %d Beat %.3f\nms %.2f last %.2f",
+            player,
+            TheTaskMgr.Beat(),
+            frames[0],
+            frames[1]
+        );
+        mLatency->SetCallback(&gGamePanelCallback);
+    }
 }
 
 #pragma endregion

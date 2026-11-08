@@ -205,7 +205,7 @@ String RecordClipName(const char *mode, int player) {
     }
     unsigned int dtCode = dt.ToCode();
     Symbol song = TheGameData->GetSong();
-    const String &x = TheGameData->Player(0)->Unk2c();
+    const String &x = TheGameData->Player(0)->GetCurrentTestDancer();
     String ret(MakeString("%s%d~%s~%c~%s~%s", prefix, dtCode, song, diff, x, mode));
     if (ret.length() > 38) {
         ret.resize(38);

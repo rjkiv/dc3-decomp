@@ -47,8 +47,8 @@ public:
     void SetUnk48(Symbol s) { mPreferredCharacter = s; }
     Symbol Unk48() const { return mPreferredCharacter; }
     void SetAutoplay(Symbol s) { mAutoplayRating = s; }
-    const String &Unk2c() const { return mCurTestDancer; }
-    void SetUnk2C(String &s) { mCurTestDancer = s; }
+    const String &GetCurrentTestDancer() const { return mCurTestDancer; }
+    void SetCurrentTestDancer(String &s) { mCurTestDancer = s; }
     int Unk40() const { return mPlayerIdx; }
     std::vector<String> &GetTestDancers() { return mTestDancers; }
 

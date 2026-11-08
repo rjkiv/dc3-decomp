@@ -29,7 +29,7 @@ void CursorPanel::Poll() {
     static Symbol ui_crown_player("ui_crown_player");
     const DataNode *pCrownPlayerNode = TheHamProvider->Property(ui_crown_player);
     MILO_ASSERT(pCrownPlayerNode, 0x1f);
-    int crownPlayer = pCrownPlayerNode->Int();
+    int iPlayerSide = pCrownPlayerNode->Int();
     for (int i = 0; i < 2; i++) {
         SkeletonSide side = TheGameData->Player(i)->Side();
         static Symbol player_present("player_present");
@@ -51,30 +51,30 @@ void CursorPanel::Poll() {
         Transform trans = pMat->TexXfm();
         int skeletonID = TheGestureMgr->GetPlayerSkeletonID(i);
         Skeleton *skeleton;
-        bool check = present && side == crownPlayer && skeletonID >= 0
+        bool check = present && side == iPlayerSide && skeletonID >= 0
             && (skeleton = TheGestureMgr->GetSkeletonByTrackingID(skeletonID), skeleton);
-        static int sCrownPlayerIndex = -1;
-        if (check && sCrownPlayerIndex == -1) {
-            sCrownPlayerIndex = i;
+        static int _prevCrownedPlayer_ = -1;
+        if (check && _prevCrownedPlayer_ == -1) {
+            _prevCrownedPlayer_ = i;
         }
-        if ((i == sCrownPlayerIndex && !check) || check) {
-            MILO_LOG("player %d lost his crown\n", sCrownPlayerIndex);
-            sCrownPlayerIndex = -1;
+        if ((i == _prevCrownedPlayer_ && !check) || check) {
+            MILO_LOG("player %d lost his crown\n", _prevCrownedPlayer_);
+            _prevCrownedPlayer_ = -1;
             TheHamProvider->SetProperty(ui_crown_player, -1);
             check = false;
         }
         if (check) {
-            Vector2 v120;
-            skeleton->ScreenPos(kJointHead, v120);
-            Vector2 v128;
-            skeleton->ScreenPos(kJointShoulderCenter, v128);
-            trans.v.x = v120.x;
-            trans.v.y = -v120.y;
-            v128.x = v120.x - v128.x;
-            v128.y = v120.y - v128.y;
-            float tanned = atan2(v128.y, v128.x);
-            Vector3 v110(0, 0, tanned + (PI / 2));
-            MakeRotMatrix(v110, trans.m, true);
+            Vector2 hpos;
+            skeleton->ScreenPos(kJointHead, hpos);
+            Vector2 npos;
+            skeleton->ScreenPos(kJointShoulderCenter, npos);
+            trans.v.x = hpos.x;
+            trans.v.y = -hpos.y;
+            npos.x = hpos.x - npos.x;
+            npos.y = hpos.y - npos.y;
+            float tanned = atan2(npos.y, npos.x);
+            Vector3 e(0, 0, tanned + (PI / 2));
+            MakeRotMatrix(e, trans.m, true);
             trans.m.x *= 4;
             trans.m.y *= 4;
             trans.m.z *= 4;

@@ -824,7 +824,7 @@ int SkeletonChooser::RoundRobinForStandingStill(int i) {
 }
 
 int SkeletonChooser::RoundRobinForHandRaised(int i) {
-    int id = -1;
+    int trackingID = -1;
     int numValidSkeletonChoices = GetNumValidSkeletonChoices();
     if (numValidSkeletonChoices > mLastValidSkeletonCount) {
         mHandRaiseMsgTimer = 2.0f;
@@ -840,7 +840,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
 
     if (mLookingAtIndex >= 0) {
         Skeleton &skel = TheGestureMgr->GetSkeleton(mLookingAtIndex);
-        id = skel.TrackingID();
+        trackingID = skel.TrackingID();
         mHandRaiseFilter[0]->Update(
             skel.TrackingID(), TheTaskMgr.DeltaUISeconds() * 1000.0f
         );
@@ -856,7 +856,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
                 mElectiveCheckTimer = 0.08f;
             } else {
                 mElectiveCheckTimer -= TheTaskMgr.DeltaUISeconds();
-                if (0 <= id && mHandRaiseMsgCount < 2) {
+                if (0 <= trackingID && mHandRaiseMsgCount < 2) {
                     mHandRaiseMsgTimer -= TheTaskMgr.DeltaUISeconds();
                     mHandRaiseMsgSpamTimer -= TheTaskMgr.DeltaUISeconds();
                     if (mHandRaiseMsgTimer <= 0.0f && mHandRaiseMsgSpamTimer <= 0.0f
@@ -890,7 +890,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
         mHandRaiseMsgTimer = 2.0f;
         mHandRaiseMsgSpamTimer = 0.0f;
     }
-    return id;
+    return trackingID;
 }
 
 void SkeletonChooser::CheckToSwitchActivePlayer() {

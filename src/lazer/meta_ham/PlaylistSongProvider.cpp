@@ -19,17 +19,6 @@ int PlaylistSongProvider::NumData() const {
     return m_pPlaylist->GetNumSongs();
 }
 
-Symbol PlaylistSongProvider::DataSymbol(int i) const {
-    MILO_ASSERT(m_pPlaylist, 0x6d);
-    if (i >= 0 && i < NumData() && m_pPlaylist && m_pPlaylist->IsValidSong(i)) {
-        int songID = m_pPlaylist->GetSong(i);
-        Symbol shortName = TheHamSongMgr.GetShortNameFromSongID(songID);
-        return shortName;
-    } else {
-        return gNullStr;
-    }
-}
-
 void PlaylistSongProvider::Text(
     int, int i_iData, UIListLabel *uiListLabel, UILabel *uiLabel
 ) const {
@@ -67,6 +56,18 @@ void PlaylistSongProvider::Text(
         }
     } else {
         uiLabel->SetTextToken(gNullStr);
+    }
+}
+
+Symbol PlaylistSongProvider::DataSymbol(int i_iData) const {
+    MILO_ASSERT(m_pPlaylist, 0x6d);
+    if (i_iData >= 0 && i_iData < NumData() && m_pPlaylist
+        && m_pPlaylist->IsValidSong(i_iData)) {
+        int songID = m_pPlaylist->GetSong(i_iData);
+        Symbol shortName = TheHamSongMgr.GetShortNameFromSongID(songID);
+        return shortName;
+    } else {
+        return gNullStr;
     }
 }
 

@@ -46,6 +46,7 @@ public:
 
     DataNode OnMsg(const SpeechRecoMessage &);
     void CreateSongSelectGrammar(Symbol) const;
+    void CreateArtistSelectGrammar() const;
     void CreatePlaylistEditorGrammar() const;
     void ToggleBlacklight(bool);
 
