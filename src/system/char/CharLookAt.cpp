@@ -2,24 +2,25 @@
 #include "char/CharWeightable.h"
 #include "math/Rand.h"
 #include "math/Rot.h"
+#include "math/Trig.h"
 #include "math/Utl.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "rndobj/Graph.h"
 #include "rndobj/Poll.h"
 
-const float sMaxThreshold = 80;
+const float kMaxAng = 80;
 bool CharLookAt::sDisableJitter = false;
 
 void DrawBounds(Vector3, const Hmx::Matrix3 &, const Vector3 &, RndGraph *);
 
 CharLookAt::CharLookAt()
     : mSource(this), mPivot(this), mTarget(this), mHalfTime(0), mMinYaw(-80), mMaxYaw(80),
-      mMinPitch(-80), mMaxPitch(sMaxThreshold), mMinWeightYaw(-1), mMaxWeightYaw(-1),
-      mWeightYawSpeed(10000), mLastLocal(kHugeFloat, 0, 0), mLastYawWeight(1), mSourceRadius(0),
-      mSourceFilter(0, 0, 0), mShowRange(false), mTestRange(false), mTestRangePitch(0.5),
-      mTestRangeYaw(0.5), mAllowRoll(true), mClamped(false), mEnableJitter(false),
-      mYawJitterLimit(0), mPitchJitterLimit(0) {
+      mMinPitch(-80), mMaxPitch(kMaxAng), mMinWeightYaw(-1), mMaxWeightYaw(-1),
+      mWeightYawSpeed(10000), mLastLocal(kHugeFloat, 0, 0), mLastYawWeight(1),
+      mSourceRadius(0), mSourceFilter(0, 0, 0), mShowRange(false), mTestRange(false),
+      mTestRangePitch(0.5), mTestRangeYaw(0.5), mAllowRoll(true), mClamped(false),
+      mEnableJitter(false), mYawJitterLimit(0), mPitchJitterLimit(0) {
     SyncLimits();
 }
 
@@ -147,11 +148,11 @@ void CharLookAt::Highlight() {
             GetSource()->WorldXfm().v, mTarget->WorldXfm().v, Hmx::Color(1, 0, 0), false
         );
         Hmx::Matrix3 pivotMtx = mPivot->TransParent()->WorldXfm().m;
-        Vector3 pivotVec = mPivot->WorldXfm().v;
+        const Vector3 &pivotVec = mPivot->WorldXfm().v;
         DrawBounds(Vector3(mBounds.mMin.x, mBounds.mMin.y, 0), pivotMtx, pivotVec, graph);
         DrawBounds(Vector3(mBounds.mMax.x, mBounds.mMin.y, 0), pivotMtx, pivotVec, graph);
-        DrawBounds(Vector3(mBounds.mMin.y, mBounds.mMin.z, 0), pivotMtx, pivotVec, graph);
-        DrawBounds(Vector3(mBounds.mMin.y, mBounds.mMax.z, 0), pivotMtx, pivotVec, graph);
+        DrawBounds(Vector3(0, mBounds.mMin.y, mBounds.mMin.z), pivotMtx, pivotVec, graph);
+        DrawBounds(Vector3(0, mBounds.mMin.y, mBounds.mMax.z), pivotMtx, pivotVec, graph);
     }
 }
 
@@ -173,10 +174,9 @@ void CharLookAt::Poll() {
                 vf0.z = 0;
                 float times = Dot(vf0, vfc);
                 float clamped = Clamp(-1.0f, 1.0f, times / (Length(vf0) * Length(vfc)));
+                float acosed = acosf(clamped) * RAD2DEG;
                 float clamped2 = Clamp<float>(
-                    0.0f,
-                    1.0f,
-                    mMaxWeightYaw - (std::acos(clamped) / (mMaxWeightYaw - mMinWeightYaw))
+                    0.0f, 1.0f, (mMaxWeightYaw - acosed) / (mMaxWeightYaw - mMinWeightYaw)
                 );
                 float loc13c = (clamped2 - mLastYawWeight) / deltasecs;
                 if (MinEq(loc13c, mWeightYawSpeed)) {
@@ -189,13 +189,15 @@ void CharLookAt::Poll() {
                 Vector3 v108(0.0f, 0.0f, 0.0f);
                 if (mSourceRadius > 0.0f) {
                     if (TheTaskMgr.DeltaSeconds() > 0.0f) {
-                        Interp(mSourceFilter, srcTrans->WorldXfm().m.y, 0.1f, mSourceFilter);
+                        Interp(
+                            mSourceFilter, srcTrans->WorldXfm().m.y, 0.1f, mSourceFilter
+                        );
                     }
                     Subtract(srcTrans->WorldXfm().m.y, mSourceFilter, v108);
                     float v108sq = LengthSquared(v108);
                     float srcrad = mSourceRadius * DEG2RAD;
-                    if (srcrad * srcrad < v108sq) {
-                        v108 *= srcrad / std::sqrt(v108sq);
+                    if (v108sq > srcrad * srcrad) {
+                        v108 *= srcrad / sqrtf(v108sq);
                     }
                 }
                 if (srcTrans != mPivot) {
@@ -210,8 +212,9 @@ void CharLookAt::Poll() {
                     MakeRotQuat(srcTrans->WorldXfm().m.y, ve4, q118);
                     MakeRotMatrix(q118, mb4);
                     Multiply(tf90.m.y, mb4, ve4);
-                } else
+                } else {
                     Normalize(ve4, ve4);
+                }
                 Multiply(mPivot->TransParent()->WorldXfm().m, ve4, ve4);
                 Normalize(ve4, ve4);
                 mClamped = mBounds.Clamp(ve4);
@@ -232,7 +235,7 @@ void CharLookAt::Poll() {
                         ve4.Set(mBounds.mMin.x, mBounds.mMin.y, mBounds.mMin.z);
                         break;
                     case 1:
-                        ve4.Set(0.0f, mBounds.mMin.z, mBounds.mMax.x);
+                        ve4.Set(0.0f, mBounds.mMin.y, mBounds.mMin.z);
                         break;
                     case 2:
                         ve4.Set(mBounds.mMax.x, mBounds.mMin.y, mBounds.mMin.z);
@@ -258,13 +261,9 @@ void CharLookAt::Poll() {
                 }
                 static DataNode &disable = DataVariable("cheat.disable_eye_jitter");
                 if (mEnableJitter && !sDisableJitter && !disable && deltasecs > 0.0f) {
-                    ve4.Set(
-                        ve4[0]
-                            + RandomFloat(-mPitchJitterLimit, mPitchJitterLimit)
-                                * DEG2RAD,
-                        ve4[1],
-                        ve4[2] + RandomFloat(-mYawJitterLimit, mYawJitterLimit) * DEG2RAD
-                    );
+                    float randZ = RandomFloat(-mYawJitterLimit, mYawJitterLimit);
+                    float randX = RandomFloat(-mPitchJitterLimit, mPitchJitterLimit);
+                    ve4.Set(ve4[0] + randX * DEG2RAD, ve4[1], ve4[2] + randZ * DEG2RAD);
                 }
                 if (mSourceRadius > 0.0f) {
                     Multiply(mPivot->TransParent()->WorldXfm().m, v108, v108);
@@ -276,7 +275,7 @@ void CharLookAt::Poll() {
                     FastInterp(Hmx::Quat(0, 0, 0, 1.0f), q128, charweight, q128);
                     Hmx::Matrix3 md8;
                     MakeRotMatrix(q128, md8);
-                    if (md8.x.x < -2.0f || md8.x.x > 2.0f) {
+                    if (md8.x.x < -2.0f || md8.x.x > 2.0f || IsNaN(md8.x.x)) {
                         MILO_NOTIFY_ONCE(
                             "%s has m.x.x %g, character or target scaled or NAN",
                             PathName(this),
@@ -293,7 +292,8 @@ void CharLookAt::Poll() {
                     Cross(temp_dirty.y, temp_dirty.z, temp_dirty.x);
                     Normalize(temp_dirty.x, temp_dirty.x);
                     Cross(temp_dirty.x, temp_dirty.y, temp_dirty.z);
-                    if (temp_dirty.x.x < -2.0f || temp_dirty.x.x > 2.0f) {
+                    if (temp_dirty.x.x < -2.0f || temp_dirty.x.x > 2.0f
+                        || IsNaN(temp_dirty.x.x)) {
                         MILO_NOTIFY_ONCE(
                             "%s has m.x.x %g, character or target scaled or NAN",
                             PathName(this),
@@ -344,10 +344,10 @@ void CharLookAt::SetMaxPitch(float pitch) {
 }
 
 void CharLookAt::SyncLimits() {
-    ClampEq(mMinYaw, -sMaxThreshold, sMaxThreshold);
-    ClampEq(mMaxYaw, -sMaxThreshold, sMaxThreshold);
-    ClampEq(mMinPitch, -sMaxThreshold, sMaxThreshold);
-    ClampEq(mMaxPitch, -sMaxThreshold, sMaxThreshold);
+    ClampEq(mMinYaw, -kMaxAng, kMaxAng);
+    ClampEq(mMaxYaw, -kMaxAng, kMaxAng);
+    ClampEq(mMinPitch, -kMaxAng, kMaxAng);
+    ClampEq(mMaxPitch, -kMaxAng, kMaxAng);
     float yaw = Max<float>(fabsf(mMinYaw), fabsf(mMaxYaw));
     float pitch = Max<float>(fabsf(mMinPitch), fabsf(mMaxPitch));
     mBounds.mMin.y = (float)std::cos(Max<float>(yaw, pitch) * DEG2RAD);
