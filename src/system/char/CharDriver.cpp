@@ -222,33 +222,24 @@ void CharDriver::Poll() {
     float beat = TheTaskMgr.Beat() * mBeatScale;
     float deltaBeat = TheTaskMgr.DeltaBeat() * mBeatScale;
     if (mRealign && beat > 0) {
-        float f22 = (float)TheTaskMgr.GetSongPos().mTick / 480
-            + (float)TheTaskMgr.GetSongPos().mBeat * mBeatScale;
+        const SongPos &pos = TheTaskMgr.GetSongPos();
+        beat = (float)pos.mTick / 480 + (float)pos.mBeat;
+        beat *= mBeatScale;
         if (mOldBeat == kHugeFloat) {
-            mOldBeat = f22;
+            mOldBeat = beat;
         }
-        float oldFloor = floorf(mOldBeat);
-        float newFloor = floorf(mBeatScale);
-        if (oldFloor != newFloor && mFirst) {
-            CharClipDriver *it;
-            for (it = mFirst; it != nullptr; it = it->Next()) {
-                if (it->mBlendFrac != 0) {
-                    break;
-                }
-            }
+        if (floorf(mOldBeat) != floorf(beat)) {
+            CharClipDriver *it = FirstPlaying();
             if (it) {
                 int curFlags = (it->mPlayFlags >> 0xC) & 0xF;
+                int flags = curFlags;
                 for (CharClipDriver *d = it->Next(); d != nullptr; d = d->Next()) {
-                    int dFlags = (d->mPlayFlags >> 0xC) & 0xF;
-                    if (curFlags < dFlags) {
-                        curFlags = dFlags;
-                    }
+                    MaxEq(flags, (d->mPlayFlags >> 0xC) & 0xF);
                 }
-                if (curFlags - 1 > 0) {
-                    int beatFloor = floorf(beat);
-                    int oldBeatFloor = floorf(mOldBeat);
-                    int i10 = oldBeatFloor + 1 ^ beatFloor;
-                    if (i10 & curFlags - 1) {
+                flags--;
+                if (flags > 0) {
+                    int i10 = (int)floorf(beat) ^ (int)floorf(mOldBeat) + 1;
+                    if (i10 & flags) {
                         for (CharClipDriver *d = it; d != nullptr; d = d->Next()) {
                             d->mPlayFlags &= 0xffff0fff;
                         }
@@ -263,27 +254,21 @@ void CharDriver::Poll() {
     }
     mOldBeat = beat;
 
-    bool b4 = mFirst && !mFirst->Next() && (mFirst->mPlayFlags & 0xF0) != 0x10;
-    if (b4 && !mStarvedHandler.Null()) {
-        Handle(Message(mStarvedHandler), true);
+    if (Starved() && !mStarvedHandler.Null()) {
+        Dir()->Handle(Message(mStarvedHandler), true);
     }
 
-    b4 = mFirst && !mFirst->Next() && (mFirst->mPlayFlags & 0xF0) != 0x10;
-    if (b4 && mFirst && (mFirst->mPlayFlags & 0xF0) == 0x30) {
+    if (Starved() && mFirst && (mFirst->mPlayFlags & 0xF0) == 0x30) {
         Play(mFirst->Clip(), mFirst->mPlayFlags & 0xfffffff0 | 4, -1, kHugeFloat, 0);
     }
 
-    b4 = mFirst && !mFirst->Next() && (mFirst->mPlayFlags & 0xF0) != 0x10;
-    if (b4 && mFirst && (mFirst->mPlayFlags & 0xF0) == 0x40) {
+    if (Starved() && mFirst && (mFirst->mPlayFlags & 0xF0) == 0x40) {
         Play(mLastNode, 0x44, -1, kHugeFloat, 0);
     }
 
-    b4 = mFirst && !mFirst->Next() && (mFirst->mPlayFlags & 0xF0) != 0x10;
-    if (b4) {
-        if (mDefaultClipOrGroup && mDefaultPlayStarved) {
-            DataNode n = mDefaultClipOrGroup;
-            Play(n, 0x44, -1, kHugeFloat, 0);
-        }
+    if (Starved() && mDefaultClipOrGroup && mDefaultPlayStarved) {
+        DataNode n = mDefaultClipOrGroup;
+        Play(n, 0x44, -1, kHugeFloat, 0);
     }
 
     if (mFirst) {
@@ -298,26 +283,20 @@ void CharDriver::Poll() {
             f15 = weight;
         }
         if (mBones) {
-            switch (mApply) {
-            case kApplyBlend:
-            case kApplyBlendWeights:
+            if (mApply == kApplyBlend || mApply == kApplyBlendWeights) {
                 if (mInternalBones) {
-                    mInternalBones->Zero();
-                    mInternalBones->SetWeights(0);
+                    mInternalBones->ZeroOut();
                     mFirst->ScaleAdd(*mInternalBones, weight);
                     mInternalBones->Blend(*mBones);
                 } else {
                     mFirst->Clip()->ScaleDown(*mBones, f15);
                     mFirst->ScaleAdd(*mBones, weight);
                 }
-                break;
-            case kApplyAdd:
+            } else if (mApply == kApplyAdd) {
                 mFirst->ScaleAdd(*mBones, weight);
-                break;
-            default:
+            } else {
                 MILO_ASSERT(mApply == kApplyRotateTo, 0x232);
                 mFirst->RotateTo(*mBones, weight);
-                break;
             }
         }
     }
@@ -564,6 +543,14 @@ CharClip *CharDriver::FindClip(const DataNode &n, bool notify) {
         MILO_NOTIFY_ONCE("%s: missing \"%s\" in %s", PathName(this), str, mClips->Name());
     }
     return clip;
+}
+
+bool CharDriver::Starved() {
+    if (!mFirst) {
+        return true;
+    } else {
+        return !mFirst->Next() && (mFirst->mPlayFlags & 0xF0) != 0x10;
+    }
 }
 
 float CharDriver::Display(float top) {

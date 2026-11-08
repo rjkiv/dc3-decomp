@@ -198,7 +198,7 @@
             "system/char/CharClipSet.cpp": "Matching",
             "system/char/CharCollide.cpp": "Matching",
             "system/char/CharCuff.cpp": "NonMatching",
-            "system/char/CharDriver.cpp": "NonMatching",
+            "system/char/CharDriver.cpp": "Matching",
             "system/char/CharDriverMidi.cpp": "Matching",
             "system/char/CharEyeDartRuleset.cpp": "Matching",
             "system/char/CharEyes.cpp": "NonMatching",

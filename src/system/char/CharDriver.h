@@ -92,7 +92,7 @@ public:
     // CharClipDriver *FindClipDriver(CharClip *);
     CharClipGroup *LastGroup() const { return mLastGroup; }
     void Offset(float, float);
-    // bool Starved();
+    bool Starved();
     void SetBlendWidth(float w) { mBlendWidth = w; }
     float EvaluateFlags(int flags);
     // void ExitUnplaying();
