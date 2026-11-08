@@ -463,11 +463,15 @@ bool SkeletonChooser::ShouldWaitForRecovery() {
     int tracking_id_00 = TheGameData->Player(1)->GetSkeletonTrackingID();
     bool skel0 = true;
     if (tracking_id > 0) {
-        skel0 = TheGestureMgr->GetSkeletonByTrackingID(tracking_id);
+        if (TheGestureMgr->GetSkeletonByTrackingID(tracking_id) == 0) {
+            skel0 = false;
+        }
     }
     bool skel1 = true;
     if (tracking_id_00 > 0) {
-        skel1 = TheGestureMgr->GetSkeletonByTrackingID(tracking_id_00);
+        if (TheGestureMgr->GetSkeletonByTrackingID(tracking_id_00) == 0) {
+            skel1 = false;
+        }
     }
     if ((!skel0 || !skel1) && TheGestureMgr->GetSkeletonRecoverer().WaitingToRecover()) {
         return true;
@@ -824,7 +828,7 @@ int SkeletonChooser::RoundRobinForStandingStill(int i) {
 }
 
 int SkeletonChooser::RoundRobinForHandRaised(int i) {
-    int trackingID = -1;
+    int id = -1;
     int numValidSkeletonChoices = GetNumValidSkeletonChoices();
     if (numValidSkeletonChoices > mLastValidSkeletonCount) {
         mHandRaiseMsgTimer = 2.0f;
@@ -840,10 +844,9 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
 
     if (mLookingAtIndex >= 0) {
         Skeleton &skel = TheGestureMgr->GetSkeleton(mLookingAtIndex);
-        trackingID = skel.TrackingID();
-        mHandRaiseFilter[0]->Update(
-            skel.TrackingID(), TheTaskMgr.DeltaUISeconds() * 1000.0f
-        );
+        int tracking_id = skel.TrackingID();
+        id = tracking_id;
+        mHandRaiseFilter[0]->Update(tracking_id, TheTaskMgr.DeltaUISeconds() * 1000.0f);
         if (mHandRaiseFilter[0]->HandRaised()) {
             static Symbol join_in_progress_complete("join_in_progress_complete");
             static Symbol none("none");
@@ -856,7 +859,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
                 mElectiveCheckTimer = 0.08f;
             } else {
                 mElectiveCheckTimer -= TheTaskMgr.DeltaUISeconds();
-                if (0 <= trackingID && mHandRaiseMsgCount < 2) {
+                if (0 <= id && mHandRaiseMsgCount < 2) {
                     mHandRaiseMsgTimer -= TheTaskMgr.DeltaUISeconds();
                     mHandRaiseMsgSpamTimer -= TheTaskMgr.DeltaUISeconds();
                     if (mHandRaiseMsgTimer <= 0.0f && mHandRaiseMsgSpamTimer <= 0.0f
@@ -890,7 +893,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
         mHandRaiseMsgTimer = 2.0f;
         mHandRaiseMsgSpamTimer = 0.0f;
     }
-    return trackingID;
+    return id;
 }
 
 void SkeletonChooser::CheckToSwitchActivePlayer() {

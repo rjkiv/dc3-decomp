@@ -890,8 +890,9 @@ void MetagameRank::UpdateScore(
                                 AwardPointsForTask(new_era_completed_campaign_10s);
                             }
                         } else if (eraName == Symbol("era_tan_battle")) {
-                            switch (TheGameData->Player(playerData->Unk40())
-                                        ->GetDifficulty()) {
+                            switch (
+                                TheGameData->Player(playerData->Unk40())->GetDifficulty()
+                            ) {
                             case kDifficultyEasy:
                                 AwardPointsForTask(campaign_completed_on_easy_3);
                                 break;
@@ -1031,26 +1032,25 @@ void MetagameRank::AwardPointsForTask(Symbol task) {
     }
 }
 
-void MetagameRank::AwardForRankUp(int i1) {
+void MetagameRank::AwardForRankUp(int numRanksIncreased) {
     std::vector<const Unlockable *> unlocks;
-    auto it = unlocks.rbegin();
-    for (; i1 > 0; i1--) {
+    for (; numRanksIncreased > 0; numRanksIncreased--) {
         if (unlocks.empty()) {
             BuildUnlockablesList(mUnlocked, unlocks);
-            it = unlocks.rbegin();
             if (unlocks.empty()) {
                 return;
             }
         }
-        const Unlockable *cur = *++it;
+        const Unlockable *cur = unlocks.back();
+        unlocks.pop_back();
+
         DeferredAward award;
         if (mProfile && mProfile->GetHamUser()) {
             award.unk0 = mProfile->GetHamUser()->UserName();
         }
         award.unk8 = cur;
         mUnlocked[cur->unk0] = true;
-        char buffer[16];
-        memcpy(buffer, "no_unlock_", 11);
+        char buffer[] = "no_unlock_";
         if (strncmp(cur->unk4.Str(), buffer, strlen(buffer))) {
             gDeferredAwardQueue.push_back(award);
             FOREACH (sit, cur->unk14) {
@@ -1060,44 +1060,49 @@ void MetagameRank::AwardForRankUp(int i1) {
     }
 }
 
-int MetagameRank::ComputeRankNumber(bool b1) {
+int MetagameRank::ComputeRankNumber(bool init) {
     if (mFirstTime) {
         mCurrRank = 0;
         mPercentToNextRank = 0;
         return 0;
     } else {
         if (mAtMaxRank) {
+            mCurrRank = gRanksArray->Size() - 1;
             mPercentToNextRank = 0;
             mAtMaxRank = true;
-            mCurrRank = gRanksArray->Size() - 1;
         } else {
-            int i7 = 1;
+            int i7 = 0;
             int i6 = 0;
-            for (; i7 < gRanksArray->Size(); i7++) {
-                DataArray *curArr = gRanksArray->Array(i7);
-                int i5 = curArr->Int(0);
-                if (mPoints < i5) {
-                    i7--;
-                    if (i7 != -1) {
-                        mPercentToNextRank = (float)(mPoints - i6) / (float)(i5 - i6);
-                        goto next;
-                    }
+            int rank = -1;
+            for (int i = 1; i < gRanksArray->Size(); i++) {
+                i6 = i7;
+                DataArray *curArr = gRanksArray->Array(i);
+                i7 = curArr->Int(0);
+                if (i7 > mPoints) {
+                    rank = i - 1;
                     break;
                 }
-                i6 = i5;
             }
-            mAtMaxRank = true;
-            i7 = gRanksArray->Size() - 1;
-            mPercentToNextRank = 0;
-        next:
-            if (mCurrRank != i7) {
+            if (rank == -1) {
+                int maxRank = gRanksArray->Size() - 1;
+                mAtMaxRank = true;
+                rank = maxRank;
+                mPercentToNextRank = 0;
+            } else {
+                float i9 = i7 - i6;
+                float i10 = mPoints - i6;
+                i10 /= i9;
+                mPercentToNextRank = i10;
+            }
+
+            if (mCurrRank != rank) {
                 if (mAtMaxRank) {
                     mNewlyAtMaxRank = true;
                 }
-                if (!b1) {
-                    AwardForRankUp(i7 - mCurrRank);
+                if (!init) {
+                    AwardForRankUp(rank - mCurrRank);
                 }
-                mCurrRank = i7;
+                mCurrRank = rank;
             }
         }
         return mCurrRank;
