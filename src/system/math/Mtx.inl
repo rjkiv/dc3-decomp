@@ -111,11 +111,11 @@ inline void MultiplyTranspose(const Vector3 &v, const Transform &t, Vector3 &out
 
 inline void Multiply(const Vector3 &v, const Transform &t, Vector3 &out) {
     if (&t.v != &out) {
-        Multiply(t.m, v, out);
+        Multiply(v, t.m, out);
         Add(out, t.v, out);
     } else {
         Vector3 tmp;
-        Multiply(t.m, v, tmp);
+        Multiply(v, t.m, tmp);
         Add(tmp, t.v, out);
     }
 }
