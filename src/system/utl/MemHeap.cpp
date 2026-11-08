@@ -194,3 +194,33 @@ int *MemHeap::Alloc(int i1, int i2, int &i3) {
     }
     return alloc;
 }
+
+void MemHeap::BestFit(int iSizeWords, int iWordAlignShift, FreeBlockInfo &oBlock) {
+    FreeBlock *block = mFreeBlockChain;
+    FreeBlock *prev = nullptr;
+
+    if (block == nullptr) {
+        return;
+    }
+
+    for (; block != nullptr;) {
+        unsigned int alignment = 1U << iWordAlignShift;
+        int wordOffset = (int)block >> 2;
+        int sizeWords = block->SizeWords();
+        wordOffset++;
+
+        unsigned int rounded = (alignment - 1U) + wordOffset;
+        rounded = (rounded >> iWordAlignShift) << iWordAlignShift;
+
+        int padWords = (rounded - wordOffset);
+
+        if (sizeWords >= padWords + iSizeWords && sizeWords < oBlock.mSizeWords) {
+            oBlock.mSizeWords = sizeWords;
+            oBlock.mPadWords = padWords;
+            oBlock.mBlock = block;
+            oBlock.mPrevBlock = prev;
+        }
+        prev = block;
+        block = block->NextBlock();
+    }
+}
