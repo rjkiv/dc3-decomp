@@ -385,15 +385,15 @@ void UIListDir::BuildDrawState(
             int i16;
             if (!listState.Provider()->IsActive(i7)) {
                 i16 = 2;
-            } else if (selected != i9 || !draw_highlight) {
-                i16 = 0;
-            } else {
+            } else if (i9 == selected && draw_highlight) {
                 i16 = 1;
+            } else {
+                i16 = 0;
             }
             UIListWidgetState ws = listState.Provider()->ElementStateOverride(
-                selected, i7, (UIListWidgetState)i16
+                i9, i7, (UIListWidgetState)i16
             );
-            if (selected == i9) {
+            if (i9 == selected) {
                 drawState.mHighlightElementState = ws;
             }
             UIListProvider *prov = listState.Provider();
@@ -403,10 +403,9 @@ void UIListDir::BuildDrawState(
             newState.mAlpha = f22;
             newState.unk14.Set(1, 1, 1);
             newState.mElementState = ws;
-            newState.mComponentState =
-                prov->ComponentStateOverride(selected, i7, compState);
+            newState.mComponentState = prov->ComponentStateOverride(i9, i7, compState);
             newState.mDisplay = i15;
-            newState.mShowing = selected;
+            newState.mShowing = i9;
             newState.mData = i7;
             drawState.mElements.push_back(newState);
             f23 += f20;
