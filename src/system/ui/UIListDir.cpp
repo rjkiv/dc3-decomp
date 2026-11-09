@@ -283,8 +283,8 @@ void UIListDir::FillElements(UIListState const &state, std::vector<UIListWidget 
 }
 
 void UIListDir::ListEntered() {
-    static Message start("start");
-    Handle(start, false);
+    static Message msg("start");
+    Handle(msg, false);
 }
 
 void UIListDir::BuildDrawState(
