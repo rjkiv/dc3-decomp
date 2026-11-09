@@ -87,11 +87,13 @@ public:
     NEW_OBJ(CharEyes)
     REGISTER_OBJ(CharEyes)
 
-    void SetInterestFilterFlags(int i) { mCurInterestFilterFlags = i; }
+    void SetInterestFilterFlags(int i) {
+        mCurInterestFilterFlags = i;
+        mInterestFiltersChanged = true;
+    }
     void ClearInterestFilterFlags() {
         mCurInterestFilterFlags = mDefaultInterestFilterFlags;
     }
-    void SetInterestFiltersChanged(bool b) { mInterestFiltersChanged = b; }
 
     void ForceBlink();
     CharInterest *GetCurrentInterest();
@@ -104,6 +106,8 @@ public:
     CharInterest *GetInterest(int idx) {
         return idx >= mInterests.size() ? 0 : mInterests[idx].interest.Ptr();
     }
+    bool BlinksEnabled() const { return mBlinksEnabled; }
+    // bool ShowingDebugOverlay() const;
 
 protected:
     CharEyes();
@@ -119,6 +123,7 @@ protected:
     void NextLook();
     bool EitherEyeClamped();
     void LidTrackAndClampingUpdate(EyeDesc &, float);
+    // void LookAt(RndTransformable *);
 
     DataNode OnAddInterest(DataArray *);
     DataNode OnToggleForceFocus(DataArray *);

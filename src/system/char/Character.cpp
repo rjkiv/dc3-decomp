@@ -713,7 +713,6 @@ void Character::SetInterestFilterFlags(int i) {
     CharEyes *eyes = GetEyes();
     if (eyes) {
         eyes->SetInterestFilterFlags(i);
-        eyes->SetInterestFiltersChanged(true);
     }
 }
 
