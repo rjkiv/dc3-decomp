@@ -157,10 +157,17 @@ void MemHeap::FirstFit(int iSizeWords, int iWordAlignShift, FreeBlockInfo &oBloc
 }
 
 bool FreeBlock::AttemptMerge(FreeBlock *block, int i2) {
-    if (&this[mSizeWords] == block) {
-        mTimeStamp = Min(block->mTimeStamp, mTimeStamp);
-        mSizeWords += block->mSizeWords;
-        mNextBlock = block->mNextBlock;
+    if (reinterpret_cast<int *>(this) + mSizeWords == reinterpret_cast<int *>(block)) {
+        unsigned int timeStamp = Max(mTimeStamp, block->TimeStamp());
+        unsigned int sizeWords = block->SizeWords();
+        sizeWords += mSizeWords;
+
+        FreeBlock *next = block->NextBlock();
+
+        mTimeStamp = timeStamp;
+        mSizeWords = sizeWords;
+        mNextBlock = next;
+
         if (i2 >= 1) {
             for (int *theBlock = reinterpret_cast<int *>(block);
                  theBlock < reinterpret_cast<int *>(block + 1);
