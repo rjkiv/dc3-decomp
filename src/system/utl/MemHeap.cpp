@@ -311,3 +311,25 @@ int MemHeap::AllocSize(int *iMem) {
     }
     return 0;
 }
+
+int MemHeap::GetAlignWords(int iAlignBytes) {
+    if (iAlignBytes == 0) {
+        return 1;
+    }
+
+    int value = iAlignBytes;
+    int i1 = 0;
+    int i2 = 0;
+
+    if (iAlignBytes > 1) {
+        while (value > 1) {
+            if (value & 1) {
+                i2 = 1;
+            }
+            value >>= 1;
+            i1++;
+        }
+    }
+    int result = i1 + i2 - 2;
+    return Max(0, result);
+}
