@@ -10,25 +10,28 @@
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
 
-Vector3 DrawUtlVec3(0.5, 0.05, 0.4);
+struct ScreenSpaceValues {
+    float left;
+    float top;
+    float width;
+};
+ScreenSpaceValues gScreenSpace = { 0.5f, 0.05f, 0.4f };
 
 Hmx::Rect DrawUtlRect;
 
 namespace {
     void ScreenSpace(Hmx::Rect &rect) {
-        rect.x = DrawUtlVec3.x;
-        rect.y = DrawUtlVec3.y;
-        rect.h = DrawUtlVec3.z;
-        float scale = TheRnd.Width() / TheRnd.Height();
-        float rectW;
-        if (1.3333334f < scale) {
-            rectW = 1.3333334f / scale;
-            if (DrawUtlVec3.z - 1.3333334f / scale < 0.0) {
-                rectW = DrawUtlVec3.z;
-            }
-            rect.h = rectW;
+        float left = gScreenSpace.left;
+        float top = gScreenSpace.top;
+        float width = gScreenSpace.width;
+        rect.x = left;
+        rect.y = top;
+        rect.w = width;
+        float scale = (float)TheRnd.Width() / (float)TheRnd.Height();
+        if (scale > 1.3333334f) {
+            rect.w = Min(width, 1.3333334f / scale);
         }
-        rect.w = scale * 0.75f * rect.h;
+        rect.h = (scale * 0.75f) * rect.w;
     }
 
     void PixelSpace(Hmx::Rect &rect) {
@@ -87,7 +90,11 @@ void InitDrawUtl(const GestureMgr &gm) {
     DrawUtlRect = temp;
 }
 
-void SetDrawSpace(float x, float y, float z) { DrawUtlVec3.Set(x, y, z); }
+void SetDrawSpace(float x, float y, float z) {
+    gScreenSpace.left = x;
+    gScreenSpace.top = y;
+    gScreenSpace.width = z;
+}
 
 bool UpdateBufferTex(
     LiveCameraInput *cam, RndTex *tex, LiveCameraInput::BufferType bufType, GestureMgr *gm
