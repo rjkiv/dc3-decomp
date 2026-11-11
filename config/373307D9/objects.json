@@ -990,7 +990,7 @@
             "system/net/DingoSvr_Xbox.cpp": "Matching",
             "system/net/HttpGet.cpp": "NonMatching",
             "system/net/HttpReq.cpp": "Matching",
-            "system/net/HttpReqCurl.cpp": "NonMatching",
+            "system/net/HttpReqCurl.cpp": "Matching",
             "system/net/JsonMemory.cpp": "Matching",
             "system/net/JsonUtils.cpp": "Matching",
             "system/net/SessionJobs_Xbox.cpp": "Matching",

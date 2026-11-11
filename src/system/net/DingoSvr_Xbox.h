@@ -53,7 +53,7 @@ protected:
     virtual void OnAuthSuccess();
 
 private:
-    int GetValidLoginCandidate(char *, u64 &) const;
+    int GetValidLoginCandidate(char *nameBuffer, u64 &xuid) const;
     void CreateSession();
 
     XboxAuthStateT mState; // 0xb0
