@@ -69,13 +69,16 @@ bool WebSvcMgr::ResolveHostname(WebSvcRequest *req) {
     unsigned int ip = req->GetIPAddr();
     if (ip == 0) {
         NetAddress addr = ResolveHostname(req->GetHostName(), kHMXDomain, 0x50);
-        if (addr.GetIP() == 0) {
+        if (addr.GetIP() != 0) {
+            req->SetIPAddr(addr.GetIP());
+        } else {
             addr = ResolveHostname(req->GetHostName(), nullptr, 0x50);
             if (addr.GetIP() == 0) {
                 return false;
+            } else {
+                req->SetIPAddr(addr.GetIP());
             }
         }
-        req->SetIPAddr(addr.GetIP());
     }
     return true;
 }
@@ -83,18 +86,21 @@ bool WebSvcMgr::ResolveHostname(WebSvcRequest *req) {
 NetAddress
 WebSvcMgr::ResolveHostname(const char *hostname, const char *domain, unsigned short port) {
     NetAddress ret;
+    bool insert = false;
     String str(hostname);
     if (domain) {
         str += ".";
         str += domain;
     }
-    auto it = mHostCache.find(str.c_str());
-    if (it != mHostCache.end()) {
+    // bullshit
+    std::map<String, NetAddress>::iterator it;
+    if ((it = mHostCache.find(str.c_str())) != mHostCache.end()) {
         ret = it->second;
     } else {
         ret = NetworkSocket::SetIPPortFromHostPort(hostname, domain, port);
+        insert = true;
     }
-    if (ret.GetIP() != 0 && it == mHostCache.end()) {
+    if (ret.GetIP() != 0 && insert) {
         mHostCache.insert(std::make_pair(str, ret));
     }
     return ret;

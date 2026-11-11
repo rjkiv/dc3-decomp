@@ -994,7 +994,7 @@
             "system/net/JsonMemory.cpp": "Matching",
             "system/net/JsonUtils.cpp": "Matching",
             "system/net/SessionJobs_Xbox.cpp": "Matching",
-            "system/net/WebSvcMgr.cpp": "NonMatching",
+            "system/net/WebSvcMgr.cpp": "Matching",
             "system/net/WebSvcMgrCurl.cpp": "Matching",
             "system/net/WebSvcReq.cpp": "Matching",
             "system/net/XLSPConnection.cpp": "Matching",
