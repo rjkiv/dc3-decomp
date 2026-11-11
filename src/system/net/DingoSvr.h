@@ -31,14 +31,11 @@ public:
     virtual const char *GetHostName() const { return mHostName.c_str(); }
     virtual unsigned int GetIPAddr() { return mIPAddr; }
     virtual unsigned int GetPort() const { return mPort; }
-
-    // SSL vfunc positions are tentative
     virtual const char *GetSSLCertPath() { return ""; }
     virtual const char *GetSSLCertName() { return ""; }
     virtual unsigned short GetSSLVerifyPeer() { return 0; }
     virtual unsigned short GetSSLVerifyHost() { return 0; }
     virtual bool GetSSLEnable() const { return false; }
-
     virtual void SetLBView(unsigned int lb_id) {}
     virtual void SetLBScoreProperty(unsigned int prop_id) {}
     virtual void SetLoginName(const char *name) {}
@@ -92,7 +89,7 @@ protected:
     String mLocale; // 0x58
     String mLanguage; // 0x60
     String mUserAgent; // 0x68
-    int mPadLoggingIn; // 0x70 - padnum?
+    int mPadLoggingIn; // 0x70
     int mPadLoggedIn; // 0x74
     bool mPlayerLoginState[4]; // 0x78
     OnlineID mOnlineID; // 0x80
