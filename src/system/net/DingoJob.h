@@ -50,7 +50,7 @@ private:
     void ParseResponse(JsonConverter *reader, JsonObject **response, int *retVersion);
 
     DataPoint *mDataPoint; // 0x80
-    char *mParams;
+    char *mParams; // 0x84
     String mResponseStr; // 0x88
     JsonConverter mJsonConverter; // 0x90
     JsonObject *mJsonResponse; // 0xa4

@@ -144,7 +144,7 @@ void KinectShareConnection::Poll() {
             MILO_LOG(
                 "KinectShare::Poll: Upload failed, fail type: %d, prev state: %d\n",
                 mKinectShare->FailType(),
-                mKinectShare->PrevState()
+                mKinectShare->GetFailState()
             );
             mXLSPConnection.Disconnect();
             RELEASE(mKinectShare);
