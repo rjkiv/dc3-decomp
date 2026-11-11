@@ -12,8 +12,6 @@ public:
     virtual void Start();
 
     bool ParseResponse();
-    void SetSessionID(String id) { mSessionID = id; }
-
     const char *GetSessionID() { return mSessionID.c_str(); }
 
 private:

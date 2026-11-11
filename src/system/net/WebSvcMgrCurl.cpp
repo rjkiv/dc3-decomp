@@ -187,8 +187,10 @@ func:
     curl_multi_remove_handle(mCurlMultiHandle, handle);
     request->SetStatusCode(http_status);
     if (success) {
-        request->OnSuccess();
+        request->MarkSuccess();
+        request->OnReqSucceeded();
     } else {
-        request->OnFailure();
+        request->MarkFailure();
+        request->OnReqFailed();
     }
 }

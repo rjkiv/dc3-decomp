@@ -75,7 +75,7 @@ bool WebSvcMgr::ResolveHostname(WebSvcRequest *req) {
                 return false;
             }
         }
-        req->UpdateIP(addr.GetIP());
+        req->SetIPAddr(addr.GetIP());
     }
     return true;
 }
@@ -107,7 +107,7 @@ void WebSvcMgr::Poll() {
     while (it != mRequests.end()) {
         WebSvcRequest *req = *it;
         if (!b) {
-            if (req->GetState() == 0) {
+            if (req->IsNotStarted()) {
                 if (i >= 5) {
                     return;
                 }
@@ -116,18 +116,18 @@ void WebSvcMgr::Poll() {
             req->Poll();
         }
 
-        if (req->IsDeleteReady() || req->GetState() == 3) {
+        if (req->IsDeleteReady() || req->IsRemovalReady()) {
             it = mRequests.erase(it);
             if (req->IsDeleteReady()) {
                 OnReqFinished(req);
-            } else if (req->GetState() == 3) {
-                req->OnReset();
+            } else if (req->IsRemovalReady()) {
+                req->Reset();
             }
         } else {
             if (req->IsRunning() || req->IsFinished()) {
                 i++;
             }
-            if (req->MustFinish()) {
+            if (req->MustFinishBeforeNext()) {
                 b = true;
             }
             ++it;

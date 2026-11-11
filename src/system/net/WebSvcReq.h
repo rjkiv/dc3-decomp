@@ -1,12 +1,14 @@
 #pragma once
-#include "HttpReq.h"
-#include "obj/Dir.h"
+#include "net/HttpReq.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
-#include "os/NetworkSocket.h"
-#include "utl/Symbol.h"
 
 class WebSvcRequest : public Hmx::Object {
+    // i guess? both of these call protected virtual methods,
+    // but WebSvcRequest doesn't have any public getters for them
+    friend class WebSvcMgrCurl;
+    friend class WebSvcMgr;
+
 public:
     WebSvcRequest(const char *url, const char *additional_hdr, Hmx::Object *callback);
     virtual ~WebSvcRequest();
@@ -16,46 +18,39 @@ public:
     virtual unsigned int GetResponseStatusCode() { return mResponseStatusCode; }
     virtual bool IsWebSvcRequest() const { return true; }
 
-    void Cancel(bool send_callback);
+    void Poll();
     void Do();
+    bool IsInited() { return mHttpReq; } // guessing this is it
+    bool IsNotStarted() { return mState == kNotStarted; }
+    bool IsRunning() { return mState == kRunning; }
+    bool IsFinished() { return mState == kFinished; }
+    bool IsRemovalReady() { return mState == kReadyForRemoval; }
+    bool IsDeleteReady() { return mState == kReadyForDeletion; }
     bool HasFailed();
     bool HasSucceeded();
     void SetTimeout(unsigned int ms);
     void OnReqFailed();
     void OnReqSucceeded();
+    void Cancel(bool send_callback);
+    Hmx::Object *GetCallback() const { return mCallback; }
+    void SetCallback(Hmx::Object *cb) { mCallback = cb; }
     void *GetRequest();
+    //  public: char* DetachResponseData();
     void SetHttpReq(HttpReq *req);
-    void SetUserAgent(const char *agent);
-    void SetStatusCode(unsigned int code);
-    char const *GetHostName();
-    unsigned int GetIPAddr();
-    char const *GetURL();
-    void Poll();
     void SetCookies(const std::map<String, String> &cookies);
     const std::map<String, String> &GetCookies() const;
-    bool IsDeleteReady() const { return mState == kReadyForDeletion; }
-    bool IsNotStarted() const { return mState == kNotStarted; }
-    bool IsRunning() const { return mState == kRunning; }
-    bool IsFinished() const { return mState == kFinished; }
-    void UpdateIP(unsigned int ip) { SetIPAddr(ip); }
-    const char *GetBaseURL() const { return mBaseUrl.c_str(); }
-    HttpReq *GetHttpReq() const { return mHttpReq; }
-    bool HasHttpReq() const { return mHttpReq; }
-    Hmx::Object *GetCallback() const { return mCallback; }
-    int GetState() const { return mState; }
-
-    void OnSuccess() {
-        MarkSuccess();
-        OnReqSucceeded();
-    }
-
-    void OnFailure() {
-        MarkFailure();
-        OnReqFailed();
-    }
-
-    void OnReset() { Reset(); }
-    bool MustFinish() { return MustFinishBeforeNext(); }
+    //  public: void SetSSLCertPath(const char*);
+    //  public: void SetSSLCertName(const char*);
+    //  public: void SetSSLVerifyPeer(const uint16_t);
+    //  public: void SetSSLVerifyHost(const uint16_t);
+    void SetStatusCode(unsigned int code);
+    void SetUserAgent(const char *agent);
+    const char *GetHostName();
+    unsigned int GetIPAddr();
+    //  public: uint32_t GetPort();
+    const char *GetBaseURL() { return mBaseUrl.c_str(); }
+    const char *GetURL();
+    //  public: const char* GetAdditionalHeaders();
 
 protected:
     virtual void CleanUp(bool success);
@@ -63,6 +58,10 @@ protected:
     virtual bool CheckReqResult() { return true; }
     virtual void Reset();
     virtual bool MustFinishBeforeNext() { return false; }
+
+    // void SetHostName(const char *);
+    // void SetPort(unsigned int);
+    // void SetType(ReqType);
 
     void SetIPAddr(unsigned int ip);
     void SetURL(const char *url);
@@ -81,6 +80,7 @@ protected:
         kReadyForRemoval = 0x0003,
         kReadyForDeletion = 0x0004,
     } mState; // 0x54
+private:
     String mAdditionalHdr; // 0x58
     unsigned int mResponseStatusCode; // 0x60
     std::map<String, String> mCookies; // 0x64
@@ -88,4 +88,6 @@ protected:
 
 DECLARE_MESSAGE(WebReqCompleteMsg, "web_req_complete")
 WebReqCompleteMsg(WebSvcRequest *req, bool success) : Message(Type(), req, success) {}
+WebSvcRequest *GetReq() const { return mData->Obj<WebSvcRequest>(2); }
+bool Success() const { return mData->Int(3); }
 END_MESSAGE
