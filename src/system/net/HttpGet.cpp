@@ -10,87 +10,137 @@
 #include "utl/Str.h"
 #include <cstdlib>
 #include <cstring>
+#include <cctype>
 
 const float HttpGet::kDefaultTimeoutMs = 5000.0f;
 const int HttpGet::kMaxRetries = 3;
 const int HttpGet::kRecvBufSize = 0x1000;
 
 namespace {
-    bool ValidateHeader(char *c, int i1, int *i2, int *i3);
-    char *GetNextLine(char *c, int *i) {
-        if (c && i) {
-            int temp = *i;
+    bool ValidateHeader(char *pBuf, int len, int *pLastBytePos, int *pLineCount) {
+        bool b1 = false;
+        int lineCount = 0;
+        const char *p = pBuf;
+        while (len > 0) {
+            if (*pBuf == '\n') {
+                if (b1) {
+                    if (pLastBytePos) {
+                        *pLastBytePos = pBuf - p;
+                    }
+                    if (pLineCount) {
+                        *pLineCount = lineCount;
+                    }
+                    return true;
+                }
+                lineCount++;
+                b1 = true;
+            } else {
+                b1 = *pBuf == '\r' ? b1 : false;
+            }
+            len--;
+            pBuf++;
+        }
+        return false;
+    }
+    char *GetNextLine(char *pBuf, int *pLen) {
+        if (pBuf && pLen) {
+            int temp = *pLen;
             while (temp > 0) {
-                if (*c == '\r' || *c == '\n') {
+                if (*pBuf == '\r' || *pBuf == '\n') {
                     break;
                 }
                 temp--;
-                c++;
+                pBuf++;
             }
-            if (temp > 0 && *c == '\r') {
-                c++;
+            if (temp > 0 && *pBuf == '\r') {
+                pBuf++;
                 temp--;
             }
-            if (temp > 0 && *c == '\n') {
-                c++;
+            if (temp > 0 && *pBuf == '\n') {
+                pBuf++;
                 temp--;
             }
-            *i = temp;
-            return temp > 0 ? c : 0;
+            *pLen = temp;
+            return temp > 0 ? pBuf : 0;
         }
         return 0;
     }
-    int LineLength(char *pBuf, int i) {
+    int LineLength(char *pBuf, int len) {
         MILO_ASSERT(pBuf, 0x54);
         char *original = pBuf;
-        for (; i > 0; i--) {
+        for (; len > 0; len--) {
             if (*pBuf == '\r' || *pBuf == '\n')
                 break;
             pBuf++;
         }
         return pBuf - original;
     }
-    bool StrIStartsWith(String const &, const char *);
-    char *ParseHeader(char *c, int val, std::vector<String> *pHeader) {
+    bool StrIStartsWith(const String &strLong, const char *pShort) {
+        const char *str = strLong.c_str();
+        unsigned int shortLen = strlen(pShort);
+        if (shortLen > strlen(str)) {
+            return false;
+        } else if (shortLen != 0) {
+            int diff = str - pShort;
+            while (shortLen != 0) {
+                if (tolower(pShort[diff]) != tolower(*pShort)) {
+                    break;
+                }
+                shortLen--;
+                pShort++;
+            }
+        }
+        return shortLen == 0;
+    }
+    char *ParseHeader(char *pBuf, int len, std::vector<String> *pHeader) {
         MILO_ASSERT(pHeader, 0x83);
         int size = pHeader->size();
         if (size > 0) {
             for (int i = 0; size != 0; i++) {
-                int lineLen = LineLength(c, val);
+                int lineLen = LineLength(pBuf, len);
                 MILO_ASSERT(lineLen > 0, 0x8c);
                 (*pHeader)[i].resize(lineLen + 1);
-                strncpy((char *)(*pHeader)[i].c_str(), c, lineLen);
+                strncpy((char *)(*pHeader)[i].c_str(), pBuf, lineLen);
                 (*pHeader)[i].erase(lineLen);
-                c = GetNextLine(c, &val);
+                pBuf = GetNextLine(pBuf, &len);
                 size--;
             }
         }
 
-        return c;
+        return pBuf;
     }
-    unsigned int ParseStatusCode(std::vector<String> const &strings) {
-        String code;
-        if (StrIStartsWith(strings.front(), "HTTP/1.0")
-            || StrIStartsWith(strings.front(), "HTTP/1.1")) {
-            const char *str = strings[0].c_str() + 8;
-            while ((*str < '0' || '9' < *str) && (*str != '\0' && *str != '\n')) {
-                str++;
+    unsigned int ParseStatusCode(std::vector<String> const &header) {
+        String status_code_str;
+        if (StrIStartsWith(header.front(), "HTTP/1.0")
+            || StrIStartsWith(header.front(), "HTTP/1.1")) {
+            const char *p = header.front().c_str() + 8;
+            char c;
+            while (true) {
+                c = *p;
+                if (c >= '0' && c <= '9') {
+                    break;
+                } else if (c == '\0' || c == '\n') {
+                    break;
+                }
+                p++;
             }
-            while ('/' <= *str && (*str >= ':')) {
-                code += *str;
-                str++;
+            while (c >= '0' && c <= '9') {
+                status_code_str += c;
+                c = *++p;
             }
-            if (!code.empty()) {
-                return atoi(code.c_str());
+            if (status_code_str.empty()) {
+                return 0;
+            } else {
+                return atoi(status_code_str.c_str());
             }
-        } else
-            return 0;
+        }
+        return 0;
     }
-    int GetContentLength(std::vector<String> const &strings) {
-        int size = strings.size();
+    int GetContentLength(std::vector<String> const &header) {
+        int size = header.size();
         for (int i = 1; i < size; i++) {
-            if (StrIStartsWith(strings[i], "Content-Length")) {
-                const char *str = strings[i].c_str() + 0xe;
+            if (StrIStartsWith(header[i], "Content-Length")) {
+                const char *str = header[i].c_str() + 0xe;
                 while ((*str < '0' || '9' < *str) && (*str != '\0' && *str != '\n')) {
                     str++;
                 }
@@ -260,7 +310,7 @@ void HttpPost::SetContentLength(unsigned int len) {
 }
 
 bool HttpPost::CanRetry() {
-    if (GetRetryCount() < 3) {
+    if (HttpGet::CanRetry()) {
         mContentBytesLeftToSend = mContentLength;
         return true;
     } else {
@@ -353,6 +403,8 @@ void HttpGet::SetState(State s) {
         else
             SafeDisconnect();
         break;
+    default:
+        break;
     }
     if ((s == kS_Failure || s == kS_FailureRetry) && (mState != kS_Failure)
         && (mState != kS_FailureRetry)) {
@@ -385,5 +437,131 @@ void HttpGet::SetState(State s) {
             SetState(kS_Failure);
         }
         break;
+    default:
+        break;
+    }
+}
+
+void HttpGet::Poll() {
+    if (mState != kS_WaitToSend && mSocket) {
+        if (mSocket->Fail()) {
+            mFailType = kHttpGetFail_SocketError;
+            SetState(kS_FailureRetry);
+            return;
+        } else {
+            switch (mState) {
+            case kS_Connecting:
+                if (mSocket->CanSend()) {
+                    SetState(kS_StartSending);
+                } else if (HasTimedOut()) {
+                    mFailType = kHttpGetFail_TimeOut;
+                    SetState(kS_FailureRetry);
+                }
+                break;
+            case kS_Sending:
+                Sending();
+                break;
+            case kS_WaitToReceive:
+                if (mSocket->CanRead()) {
+                    if (mIgnoreResponse & 1) {
+                        SetState(kS_Done);
+                    } else {
+                        SetState(kS_Receiving);
+                    }
+                } else if (HasTimedOut()) {
+                    mFailType = kHttpGetFail_TimeOut;
+                    SetState(kS_FailureRetry);
+                }
+                break;
+            case kS_Receiving: {
+                int numRecv = mSocket->Recv(mRecvBuf + mRecvBufPos, 0x1000 - mRecvBufPos);
+                if (HasTimedOut()) {
+                    mFailType = kHttpGetFail_TimeOut;
+                    SetState(kS_FailureRetry);
+                } else {
+                    if (numRecv != 0) {
+                        mTimer.Restart();
+                        mRecvBufPos += numRecv;
+                        if (!mFileBuf) {
+                            int lastBytePos = 0;
+                            int lineCount = 0;
+                            if (ValidateHeader(
+                                    mRecvBuf, mRecvBufPos, &lastBytePos, &lineCount
+                                )) {
+                                std::vector<String> header;
+                                header.resize(lineCount);
+                                ParseHeader(mRecvBuf, lastBytePos, &header);
+                                int code = ParseStatusCode(header);
+                                mStatusCode = code;
+                                if (code != 200) {
+                                    bool err400 = code >= 400 && code <= 499;
+                                    if (err400) {
+                                        mFailType = kHttpGetFail_ClientError;
+                                    } else {
+                                        bool err500 = code >= 500 && code <= 599;
+                                        if (err500) {
+                                            mFailType = kHttpGetFail_ServerError;
+                                        } else {
+                                            mFailType = kHttpGetFail_Unknown;
+                                        }
+                                    }
+                                    SetState(kS_Failure);
+                                    return;
+                                } else {
+                                    if (mIgnoreResponse & 2) {
+                                        SetState(kS_Done);
+                                        return;
+                                    } else {
+                                        mFileBufSize = GetContentLength(header);
+                                        if (mFileBufSize < 0) {
+                                            mFailType = kHttpGetFail_Unknown;
+                                            SetState(kS_Failure);
+                                            return;
+                                        } else if (mFileBufSize == 0) {
+                                            SetState(kS_Done);
+                                            return;
+                                        } else {
+                                            mFileBuf = (char *)MemAlloc(
+                                                mFileBufSize, __FILE__, 699, "HttpGet"
+                                            );
+                                            MILO_ASSERT(mFileBuf, 700);
+                                            int i2 = lastBytePos + 1;
+                                            if (mRecvBufPos > i2) {
+                                                int len = mRecvBufPos - i2;
+                                                MILO_ASSERT(len <= mFileBufSize, 0x2C8);
+                                                memcpy(mFileBuf, mRecvBuf + i2, len);
+                                                mRecvBufPos = 0;
+                                                mFileBufRecvPos = len;
+                                                MILO_ASSERT(mFileBufRecvPos <= mFileBufSize, 0x2CE);
+                                                if (mFileBufRecvPos == mFileBufSize) {
+                                                    SetState(kS_Done);
+                                                }
+                                            } else {
+                                                mRecvBufPos = 0;
+                                                mFileBufRecvPos = 0;
+                                            }
+                                        }
+                                        return;
+                                    }
+                                }
+                            }
+                        } else {
+                            MILO_ASSERT(mFileBufSize >= mFileBufRecvPos + mRecvBufPos, 0x2E1);
+                            memcpy(mFileBuf + mFileBufRecvPos, mRecvBuf, mRecvBufPos);
+                            mFileBufRecvPos += mRecvBufPos;
+                            mRecvBufPos = 0;
+                            if (mFileBufRecvPos == mFileBufSize) {
+                                SetState(kS_Done);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            default:
+                MILO_FAIL("Bad State (%d) in HttpGet::Poll\n", mState);
+                break;
+            }
+        }
     }
 }

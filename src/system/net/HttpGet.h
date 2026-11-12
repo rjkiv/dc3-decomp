@@ -57,7 +57,6 @@ public:
     void SetTimeout(float ms);
     HttpGetFailType FailType() const { return mFailType; }
     State GetFailState() const { return mFailState; }
-    int GetRetryCount() { return mRetryCount; }
 
     MEM_OVERLOAD(HttpGet, 0x1C);
 
