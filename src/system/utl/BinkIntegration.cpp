@@ -157,13 +157,121 @@ static unsigned int BinkFileReadHeader(
     return bytes;
 }
 
-unsigned int BinkFileReadFrame(
+#define BINK_FILE_INFO ((BINKFILE *)pBinkIO->iodata)
+
+static unsigned int BinkFileReadFrame(
     struct BINKIO *pBinkIO,
     unsigned int iFrameNum,
     int iOffset,
     void *pDest,
     unsigned int iReadSize
-);
+) {
+    CritSecTracker t(&gCrit);
+    BINKFILE *pBinkFileInfo = BINK_FILE_INFO;
+    if (pBinkIO->ReadError != 0) {
+        return 0;
+    } else {
+        int i14 = (pBinkFileInfo->mEncryptionHeader.mSignature != 0 ? 56 : 0) + iOffset;
+        if (i14 + iReadSize > pBinkFileInfo->pFile->Size()) {
+            pBinkIO->ReadError = 1;
+            return 0;
+        } else {
+            unsigned int read1 = RADTimerRead();
+            if (i14 != -1 && i14 != BINK_FILE_INFO->iFileBufPos) {
+                unsigned int i4 = 0;
+                if (i14 > BINK_FILE_INFO->iFileBufPos
+                    && i14 <= pBinkFileInfo->pFile->Tell()) {
+                    unsigned int i6 = i14 - BINK_FILE_INFO->iFileBufPos;
+                    BINK_FILE_INFO->pBufPos += i6;
+                    if (BINK_FILE_INFO->pBufPos > BINK_FILE_INFO->pBufEnd) {
+                        BINK_FILE_INFO->pBufPos -= pBinkIO->BufSize;
+                    }
+                    BINK_FILE_INFO->iBufEmpty += i6;
+                    pBinkIO->CurBufUsed -= i6;
+                } else {
+                    while (pBinkIO->DoingARead) {
+                        ReadFunc(pBinkIO, false);
+                    }
+                    BINK_FILE_INFO->pBufPos = BINK_FILE_INFO->pBuffer;
+                    BINK_FILE_INFO->pBufBack = BINK_FILE_INFO->pBuffer;
+                    BINK_FILE_INFO->iBufEmpty = pBinkIO->BufSize;
+                    pBinkIO->CurBufUsed = 0;
+                    if (pBinkFileInfo->mEncryptionHeader.mVersion == 2) {
+                        unsigned int headerSize = pBinkFileInfo->iHeaderSize;
+                        unsigned int i7 = i14 - headerSize - 56;
+                        i4 = i7 & 0xF;
+                        BINK_FILE_INFO->pBufPos = (i7 & 0xF) + BINK_FILE_INFO->pBuffer;
+                        i14 = (i7 & 0xFFFFFFF0) + headerSize + 56;
+                        pBinkFileInfo->pXTEADecrypter->SetNonce(
+                            pBinkFileInfo->mEncryptionHeader.mNonce, i7 / 16
+                        );
+                    }
+                    pBinkFileInfo->pFile->Seek(i14, 0);
+                    pBinkIO->DoingARead = 0;
+                }
+                BINK_FILE_INFO->iFileBufPos = i14 + i4;
+            }
+            unsigned int ret = 0;
+            if (!BINK_FILE_INFO->pBuffer) {
+                unsigned int read2 = RADTimerRead();
+                unsigned int numRead = pBinkFileInfo->pFile->Read(pDest, iReadSize);
+                if (numRead < iReadSize) {
+                    pBinkIO->ReadError = 1;
+                }
+                ret = numRead;
+                pBinkIO->BytesRead += numRead;
+                BINK_FILE_INFO->iFileBufPos += numRead;
+                unsigned int read3 = RADTimerRead();
+                u32 value = pBinkIO->TotalTime;
+                u32 diffA = read3 - read2;
+                pBinkIO->TotalTime = value + diffA;
+                pBinkIO->TotalTime += read3 - read1;
+                EndianSwapBlock((unsigned int *)pDest, numRead / 4);
+            } else {
+                while (iReadSize != 0 && pBinkIO->ReadError == 0) {
+                    ReadFunc(pBinkIO, true);
+                    unsigned int u1 = pBinkIO->CurBufUsed;
+                    if (u1 > iReadSize) {
+                        u1 = iReadSize;
+                    }
+                    if (u1 != 0) {
+                        iReadSize -= u1;
+                        ret += u1;
+                        unsigned int u11 =
+                            BINK_FILE_INFO->pBufEnd - BINK_FILE_INFO->pBufPos;
+                        BINK_FILE_INFO->iFileBufPos += u1;
+                        if (u11 <= u1) {
+                            memcpy(pDest, BINK_FILE_INFO->pBufPos, u11);
+                            pDest = (char *)pDest + u11;
+                            u1 -= u11;
+                            BINK_FILE_INFO->iBufEmpty += u11;
+                            BINK_FILE_INFO->pBufPos = BINK_FILE_INFO->pBuffer;
+                            pBinkIO->CurBufUsed -= u11;
+                        }
+                        if (u1) {
+                            memcpy(pDest, BINK_FILE_INFO->pBufPos, u1);
+                            pDest = (char *)pDest + u1;
+                            BINK_FILE_INFO->pBufPos += u1;
+                            BINK_FILE_INFO->iBufEmpty += u1;
+                            pBinkIO->CurBufUsed -= u1;
+                        }
+                    }
+                }
+                pBinkIO->ForegroundTime += RADTimerRead() - read1;
+            }
+
+            unsigned int u7 = pBinkFileInfo->pFile->Size() - BINK_FILE_INFO->iFileBufPos;
+            if (u7 >= pBinkIO->BufSize) {
+                u7 = pBinkIO->BufSize;
+            }
+            pBinkIO->CurBufSize = u7;
+            if (pBinkIO->CurBufUsed + 0x8000 > pBinkIO->CurBufSize) {
+                pBinkIO->CurBufSize = pBinkIO->CurBufUsed;
+            }
+            return ret;
+        }
+    }
+}
 
 static unsigned int BinkFileGetBufferSize(struct BINKIO *, unsigned int size) {
     unsigned int ret = size + 0x7FFF & 0xFFFF8000;

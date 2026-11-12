@@ -34,7 +34,8 @@ DataNode GlitchFindScriptImpl(DataArray *a, int i2) {
         return n;
     } else {
         unsigned int MFTB = __mftb();
-        TheGlitchFinder.unk30058 = (TheGlitchFinder.unk30058 - prevMFTB) + MFTB;
+        TheGlitchFinder.mOverheadCycles =
+            (TheGlitchFinder.mOverheadCycles - prevMFTB) + MFTB;
         for (; i2 < a->Size(); i2++) {
             n = a->Command(i2)->Execute();
         }
@@ -122,10 +123,11 @@ void GlitchPoker::PrintNestedStartTimes(TextStream &stream, float f1) {
 void GlitchPoker::Dump(TextStream &stream, int indent) {
     if (mTime > smLastDumpTime + 0.005f) {
         PrintNestedStartTimes(stream, smLastDumpTime);
+        float dt = mTime - smLastDumpTime;
         if (!smDumpLeaves) {
-            stream << "TIME GAP (" << mTime - smLastDumpTime << ")\n";
-        } else if (mTime - smLastDumpTime > smThreshold) {
-            stream << "   TIME GAP (" << mTime - smLastDumpTime;
+            stream << "TIME GAP (" << dt << ")\n";
+        } else if (dt > smThreshold) {
+            stream << "   TIME GAP (" << dt;
             stream << ") before " << mName;
             for (GlitchPoker *it = mParent; it != nullptr; it = it->mParent) {
                 stream << " : " << it->mName;
@@ -215,8 +217,8 @@ void GlitchPoker::Dump(TextStream &stream, int indent) {
 
 GlitchFinder::GlitchFinder()
     : mFrameCount(0), mGlitchCount(0), mStop(true), mLastTime(0.0), mPokerIndex(-1),
-      mStartPoker(0), mCurPoker(0), unk30050(true), unk30051(false), unk30054(0.0),
-      unk30058(0) {
+      mStartPoker(0), mCurPoker(0), mActive(true), mDumpLeavesOnly(false),
+      mLeafThreshold(0.0), mOverheadCycles(0) {
     mTime.Start();
 }
 
@@ -277,14 +279,14 @@ void GlitchFinder::PokeStart(
         if (!mStartPoker) {
             mCurPoker = poker;
             mStartPoker = poker;
-            unk30054 = f2;
-            unk30058 = 0;
+            mLeafThreshold = f2;
+            mOverheadCycles = 0;
         } else {
             mCurPoker->mChildren.push_back(poker);
             mCurPoker = poker;
             if (ui) {
                 unsigned int mftb = __mftb();
-                unk30058 = unk30058 - ui + mftb;
+                mOverheadCycles = mOverheadCycles - ui + mftb;
             }
         }
     }
@@ -301,7 +303,7 @@ void GlitchFinder::PokeEnd(unsigned int ui) {
     }
     if (ui) {
         unsigned int mftb = __mftb();
-        unk30058 = unk30058 - ui + mftb;
+        mOverheadCycles = mOverheadCycles - ui + mftb;
     }
 }
 
@@ -313,18 +315,18 @@ void GlitchFinder::CheckDump() {
         if (sMFTB == 0) {
             sMFTB = __mftb();
         }
-        bool u7 = unk30050 && mStartPoker->OverBudget();
+        bool u7 = mActive && mStartPoker->OverBudget();
         mStartPoker->PollAveragesRecurse(u7);
         if (u7) {
-            GlitchPoker::smDumpLeaves = unk30054 > 0;
-            GlitchPoker::smThreshold = unk30054;
+            GlitchPoker::smDumpLeaves = mLeafThreshold > 0;
+            GlitchPoker::smThreshold = mLeafThreshold;
             GlitchPoker::smTotalLeafTime = 0;
             String str(0x2000, '\0');
             str << "-------- GLITCH #" << mGlitchCount << " -------- Frame "
                 << mFrameCount << " -----\n";
             GlitchPoker::smLastDumpTime = mStartPoker->mTime;
             mStartPoker->Dump(str, 0);
-            str << "Overhead: " << Timer::CyclesToMs(unk30058) << "\n";
+            str << "Overhead: " << Timer::CyclesToMs(mOverheadCycles) << "\n";
             str << "-------- GLITCH END --------\n";
             int len = str.length();
             if (len > 0x400) {
@@ -343,7 +345,7 @@ void GlitchFinder::CheckDump() {
             }
             mGlitchCount++;
         }
-        if (unk30050) {
+        if (mActive) {
             mFrameCount++;
         }
         mStartPoker = nullptr;

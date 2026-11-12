@@ -76,12 +76,10 @@ private:
     int mPokerIndex; // 0x30044
     GlitchPoker *mStartPoker; // 0x30048
     GlitchPoker *mCurPoker; // 0x3004c
-    bool unk30050; // 0x30050
-    bool unk30051; // 0x30051
-    float unk30054; // 0x30054
-    unsigned int unk30058; // 0x30058
-
-    // RBVR has bool mActive and int64_t mOverheadCycles
+    bool mActive; // 0x30050
+    bool mDumpLeavesOnly; // 0x30051
+    float mLeafThreshold; // 0x30054
+    unsigned int mOverheadCycles; // 0x30058
 };
 
 extern GlitchFinder TheGlitchFinder;

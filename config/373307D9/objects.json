@@ -778,7 +778,7 @@
             "system/utl/AllocInfo.cpp": "Matching",
             "system/utl/BeatMap.cpp": "Matching",
             "system/utl/BinStream.cpp": "Matching",
-            "system/utl/BinkIntegration.cpp": "NonMatching",
+            "system/utl/BinkIntegration.cpp": "Matching",
             "system/utl/BufStream.cpp": "Matching",
             "system/utl/Cache.cpp": "Matching",
             "system/utl/CacheMgr.cpp": "Matching",
