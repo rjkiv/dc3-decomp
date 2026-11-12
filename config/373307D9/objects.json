@@ -723,7 +723,7 @@
             "system/synth360/FxSendDistortion.cpp": "Matching",
             "system/synth360/FxSendEQ.cpp": "Matching",
             "system/synth360/FxSendFlanger.cpp": "Matching",
-            "system/synth360/FxSendMeterEffect.cpp": "NonMatching",
+            "system/synth360/FxSendMeterEffect.cpp": "Matching",
             "system/synth360/FxSendPitchShift.cpp": "Matching",
             "system/synth360/FxSendReverb.cpp": "Matching",
             "system/synth360/FxSendSynapse.cpp": "NonMatching",

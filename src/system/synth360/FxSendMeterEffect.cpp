@@ -39,7 +39,7 @@ void FxSendMeterEffect360::InitParams(IXAudio2SubmixVoice *voice, int numChannel
     RELEASE(mMeterParams);
     mMeterParams = new MeterEffectParams;
     mMeterParams->pLevelData = &mLevelData[0];
-    voice->SetEffectParameters(0, mMeterParams, sizeof(MeterEffectParams), 0);
+    voice->SetEffectParameters(0, &mMeterParams, sizeof(MeterEffectParams), 0);
 }
 
 IUnknown *FxSendMeterEffect360::CreateFx() {
