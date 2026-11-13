@@ -700,7 +700,7 @@
             "system/synth/Utl.cpp": "Matching",
             "system/synth/VorbisReader.cpp": "NonMatching",
             "system/synth/WavMgr.cpp": "Matching",
-            "system/synth/WavReader.cpp": "MISSING",
+            "system/synth/WavReader.cpp": "Matching",
             "system/synth360/synapse_apo/Biquad.cpp": "Matching",
             "system/synth360/synapse_apo/FFT.cpp": "Matching",
             "system/synth360/synapse_apo/FftIpp.cpp": "NonMatching",
