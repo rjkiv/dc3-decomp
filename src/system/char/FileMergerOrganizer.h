@@ -44,6 +44,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(FileMergerOrganizer)
+    REGISTER_OBJ(FileMergerOrganizer)
     static void Init();
 
     void StartLoad();

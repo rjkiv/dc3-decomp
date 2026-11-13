@@ -12,7 +12,7 @@ MovieSys::~MovieSys() {}
 void MovieSys::Init() {
     if (mInitialized == false) {
         mInitialized = true;
-        TexMovie::Init();
+        TexMovie::Register();
         TheDebug.AddExitCallback(Movie::Terminate);
     }
 }

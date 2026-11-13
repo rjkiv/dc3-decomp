@@ -20,6 +20,7 @@ public:
     bool HandsPotentiallyUp(); // ???
 
     NEW_OBJ(HandsUpGestureFilter)
+    REGISTER_OBJ(HandsUpGestureFilter)
 
 protected:
     HandsUpGestureFilter();

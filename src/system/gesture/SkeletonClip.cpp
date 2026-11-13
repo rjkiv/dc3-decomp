@@ -472,7 +472,7 @@ DataNode OnSkeletonClipRemapPaths(DataArray *a) {
 }
 
 void SkeletonClip::Init() {
-    REGISTER_OBJ_FACTORY(SkeletonClip);
+    SkeletonClip::Register();
     DataRegisterFunc("skeleton_clip_remap_paths", OnSkeletonClipRemapPaths);
 }
 

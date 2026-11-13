@@ -24,6 +24,7 @@ public:
     virtual void Exit();
 
     NEW_OBJ(ConnectionStatusPanel)
+    REGISTER_OBJ(ConnectionStatusPanel)
 
 protected:
     void CheckForLostConnection();

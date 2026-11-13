@@ -164,4 +164,5 @@ public:
     static std::list<MidiParser *> &GetParsers() { return sParsers; }
 
     NEW_OBJ(MidiParser);
+    REGISTER_OBJ(MidiParser)
 };

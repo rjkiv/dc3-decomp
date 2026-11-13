@@ -15,6 +15,7 @@ public:
     bool CheckSide(int i) { return i / 2; }
 
     NEW_OBJ(HighFiveGestureFilter)
+    REGISTER_OBJ(HighFiveGestureFilter)
 
 protected:
     HighFiveGestureFilter();

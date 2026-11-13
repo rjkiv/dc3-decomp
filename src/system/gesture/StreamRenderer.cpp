@@ -364,7 +364,7 @@ void StreamRenderer::UpdatePreClearState() {
 }
 
 void StreamRenderer::Init() {
-    REGISTER_OBJ_FACTORY(StreamRenderer)
+    StreamRenderer::Register();
     MILO_ASSERT(!mCam, 0xC9);
     mCam = ObjectDir::Main()->New<RndCam>("[stream renderer cam]");
     for (int i = 0; i < DIM(mBlurRT); i++) {

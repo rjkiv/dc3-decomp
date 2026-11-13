@@ -17,6 +17,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(HeldButtonPanel)
+    REGISTER_OBJ(HeldButtonPanel)
 
 private:
     DataNode OnMsg(const ProcessedButtonDownMsg &);

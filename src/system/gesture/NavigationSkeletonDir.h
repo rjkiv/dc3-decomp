@@ -21,6 +21,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x12)
     NEW_OBJ(NavigationSkeletonDir)
+    REGISTER_OBJ(NavigationSkeletonDir)
 
 protected:
     NavigationSkeletonDir();

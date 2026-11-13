@@ -51,6 +51,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x25);
     NEW_OBJ(StreamRenderer);
+    REGISTER_OBJ(StreamRenderer)
 
     void SetPinkPlayer(int player);
     void SetBluePlayer(int player);

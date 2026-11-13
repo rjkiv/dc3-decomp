@@ -76,6 +76,6 @@ BEGIN_LOADS(CharMeshHide)
     d >> mFlags >> mHides;
 END_LOADS
 
-void CharMeshHide::Init() { REGISTER_OBJ_FACTORY(CharMeshHide) }
+void CharMeshHide::Init() { CharMeshHide::Register(); }
 
 #pragma endregion CharMeshHide

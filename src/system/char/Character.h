@@ -101,6 +101,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x57)
     NEW_OBJ(Character)
+    REGISTER_OBJ(Character)
 
     void SetSphereBase(RndTransformable *);
     bool SetFocusInterest(Symbol, int);

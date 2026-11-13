@@ -45,6 +45,7 @@ public:
     OBJ_MEM_OVERLOAD(0x2F);
     static void Init();
     NEW_OBJ(DepthBuffer3D)
+    REGISTER_OBJ(DepthBuffer3D)
 
     void SetPlayerPalette(RndTex *newTex);
     void AddAttachment(const DepthBuffer3DAttachment &attachment);
