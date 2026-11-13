@@ -12,14 +12,11 @@ WavReader::WavReader(File *file, StandardStream *stream)
     mSampleRate = mInWaveFile->SamplesPerSec();
     mSamplesLeft = mInWaveFile->NumSamples();
     for (int i = 0; i < mInWaveFile->NumMarkers(); i++) {
-        WaveFileMarker &curWaveFileMarker = mInWaveFile->Markers()[i];
-        float pos =
-            (curWaveFileMarker.GetFrame() * 1000.0f) / mInWaveFile->SamplesPerSec();
-        Marker marker(
-            curWaveFileMarker.GetName(), curWaveFileMarker.GetFrame(), pos
-
-        );
-        stream->AddMarker(marker);
+        const WaveFileMarker &cur = mInWaveFile->GetMarker(i);
+        int frame = cur.GetFrame();
+        float samps = mInWaveFile->SamplesPerSec();
+        float pos = (frame * 1000.0f) / samps;
+        stream->AddMarker(Marker(cur.GetName(), frame, pos));
     }
     mInWaveFileData = new WaveFileData(*mInWaveFile);
     mInputBuffers[0] = new unsigned short[0x1000];
@@ -29,7 +26,7 @@ WavReader::WavReader(File *file, StandardStream *stream)
     mBufNumSamples = 0;
     mBufOffset = 0;
     mEnableReads = true;
-    mInitted = true;
+    mInitted = false;
 }
 
 WavReader::~WavReader() {

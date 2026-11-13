@@ -10,13 +10,13 @@ enum FXCore {
 };
 
 struct Marker {
-    Marker(const String &str = String()) : name(str), position(0), posMS(0) {}
     Marker(const String &name, int position, float posMS)
         : name(name), position(position), posMS(posMS) {}
     String name; // 0x0
     int position; // 0x8
     float posMS; // 0xc
 };
+
 struct JumpInstance {
     float mFromMs;
     float mToMs;

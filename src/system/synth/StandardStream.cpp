@@ -35,7 +35,8 @@ StandardStream::ChannelParams::ChannelParams()
 StandardStream::StandardStream(
     File *f, float f1, float f2, Symbol ext, bool b1, bool b2, bool b3
 )
-    : mPollingEnabled(b2), mUseStreamReceiverFile(b3) {
+    : mPollingEnabled(b2), mUseStreamReceiverFile(b3), mStartMarker(String(), 0, 0),
+      mEndMarker(String(), 0, 0) {
     MILO_ASSERT(f, 0x4A);
     mExt = ext;
     mFile = f;
@@ -172,7 +173,7 @@ void StandardStream::LoadMarkerList(const char *cc) {
     int i98 = 0;
     stream >> i98;
     for (int i = 0; i < i98; i++) {
-        Marker marker;
+        Marker marker(String(), 0, 0);
         stream >> marker.name;
         stream >> marker.position;
         marker.posMS = ((float)marker.position * 1000.0f) / (float)i94;
@@ -671,8 +672,7 @@ void StandardStream::PollStream() {
                 if (mCurrentSamp >= mJumpFromSamples && mCurrentSamp < mJumpToSamples) {
                     DoJump();
                 }
-            } else if (mJumpFromSamples > mJumpToSamples
-                       && mCurrentSamp >= mJumpFromSamples) {
+            } else if (mJumpFromSamples > mJumpToSamples && mCurrentSamp >= mJumpFromSamples) {
                 DoJump();
             }
         }
