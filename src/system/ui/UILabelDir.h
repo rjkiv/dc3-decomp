@@ -33,6 +33,7 @@ public:
     static void Init();
 
     NEW_OBJ(UILabelDir)
+    REGISTER_OBJ(UILabelDir)
 
 protected:
     UILabelDir();

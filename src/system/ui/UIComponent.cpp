@@ -89,7 +89,7 @@ void UIComponent::OldResourcePreload(BinStream &bs) {
 }
 
 void UIComponent::Init() {
-    REGISTER_OBJ_FACTORY(UIComponent);
+    UIComponent::Register();
     sSelectFrames = SystemConfig("objects", "UIComponent")->FindInt("select_frames");
 }
 

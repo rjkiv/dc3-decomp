@@ -28,6 +28,7 @@ public:
     );
 
     NEW_OBJ(UIListHighlight)
+    REGISTER_OBJ(UIListHighlight)
     OBJ_MEM_OVERLOAD(0x11)
 
 protected:

@@ -20,6 +20,7 @@ public:
     virtual void DrawShowing();
 
     NEW_OBJ(Screenshot)
+    REGISTER_OBJ(Screenshot)
     OBJ_MEM_OVERLOAD(0x13)
 
 protected:

@@ -90,6 +90,7 @@ public:
     float DisabledAlphaScale() const;
 
     NEW_OBJ(UIListWidget)
+    REGISTER_OBJ(UIListWidget)
     OBJ_MEM_OVERLOAD(0x48)
 
 protected:

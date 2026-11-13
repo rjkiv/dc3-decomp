@@ -50,6 +50,7 @@ public:
     virtual void Enter();
 
     NEW_OBJ(InlineHelp)
+    REGISTER_OBJ(InlineHelp)
     OBJ_MEM_OVERLOAD(0x16)
 
     static void Init();

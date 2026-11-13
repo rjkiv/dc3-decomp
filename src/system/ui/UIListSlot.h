@@ -55,6 +55,7 @@ public:
     const char *MatchName() const;
 
     NEW_OBJ(UIListSlot)
+    REGISTER_OBJ(UIListSlot)
     OBJ_MEM_OVERLOAD(0x27)
 
 private:

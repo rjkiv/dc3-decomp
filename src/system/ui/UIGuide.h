@@ -19,6 +19,7 @@ public:
     virtual void Load(BinStream &);
 
     NEW_OBJ(UIGuide)
+    REGISTER_OBJ(UIGuide)
     OBJ_MEM_OVERLOAD(0x11)
 
 protected:

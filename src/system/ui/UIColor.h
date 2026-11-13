@@ -19,6 +19,7 @@ public:
     virtual void Load(BinStream &);
 
     NEW_OBJ(UIColor)
+    REGISTER_OBJ(UIColor)
     OBJ_MEM_OVERLOAD(0x10)
 
     const Hmx::Color &GetColor() const;

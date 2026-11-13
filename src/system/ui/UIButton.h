@@ -24,6 +24,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15);
     NEW_OBJ(UIButton)
+    REGISTER_OBJ(UIButton)
 
     static void Init();
 

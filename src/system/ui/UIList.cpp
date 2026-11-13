@@ -731,15 +731,15 @@ void UIList::SetProvider(UIListProvider *prov) {
 
 void UIList::Init() {
     Register();
-    REGISTER_OBJ_FACTORY(UIListArrow)
-    REGISTER_OBJ_FACTORY(UIListCustom)
-    REGISTER_OBJ_FACTORY(UIListDir)
-    REGISTER_OBJ_FACTORY(UIListHighlight)
-    REGISTER_OBJ_FACTORY(UIListLabel)
-    REGISTER_OBJ_FACTORY(UIListMesh)
-    REGISTER_OBJ_FACTORY(UIListSlot)
-    REGISTER_OBJ_FACTORY(UIListSubList)
-    REGISTER_OBJ_FACTORY(UIListWidget)
+    UIListArrow::Register();
+    UIListCustom::Register();
+    UIListDir::Register();
+    UIListHighlight::Register();
+    UIListLabel::Register();
+    UIListMesh::Register();
+    UIListSlot::Register();
+    UIListSubList::Register();
+    UIListWidget::Register();
 }
 
 void UIList::CalcBoundingBox(Box &box) {

@@ -311,7 +311,7 @@ void InlineHelp::UpdateLabelText() {
             );
     }
 }
-void InlineHelp::Init() { REGISTER_OBJ_FACTORY(InlineHelp) }
+void InlineHelp::Init() { InlineHelp::Register(); }
 
 String InlineHelp::GetIconStringFromAction(int idx) {
     static Symbol action_chars("action_chars");

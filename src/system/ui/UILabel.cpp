@@ -661,7 +661,7 @@ void UILabel::CenterWithLabel(UILabel *label, bool b2, float f3) {
 }
 
 void UILabel::Init() {
-    REGISTER_OBJ_FACTORY(UILabel);
+    UILabel::Register();
     UILabelDir::Init();
 }
 

@@ -33,6 +33,7 @@ public:
     virtual void Load(BinStream &);
 
     NEW_OBJ(UIFontImporter)
+    REGISTER_OBJ(UIFontImporter)
     OBJ_MEM_OVERLOAD(0x2A);
 
     void ImportSettingsFromFont(RndFontBase *f);

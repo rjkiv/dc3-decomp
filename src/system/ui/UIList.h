@@ -102,7 +102,7 @@ public:
 
     NEW_OBJ(UIList)
     OBJ_MEM_OVERLOAD(0x21)
-    static void Register() { REGISTER_OBJ_FACTORY(UIList) }
+    REGISTER_OBJ(UIList)
 
 private:
     virtual void OldResourcePreload(BinStream &);

@@ -44,6 +44,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19);
     NEW_OBJ(PanelDir)
+    REGISTER_OBJ(PanelDir)
 
     void SetOwnerPanel(UIPanel *panel) { mOwnerPanel = panel; }
     UIPanel *OwnerPanel() { return mOwnerPanel; }

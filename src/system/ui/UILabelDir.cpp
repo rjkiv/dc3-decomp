@@ -174,7 +174,7 @@ UIColor *UILabelDir::GetStateColor(UIComponent::State state) const {
 }
 
 void UILabelDir::Init() {
-    REGISTER_OBJ_FACTORY(UILabelDir);
+    UILabelDir::Register();
     gColor = Hmx::Object::New<UIColor>();
     gColor->SetColor(Hmx::Color(1, 1, 1, 1));
 }
