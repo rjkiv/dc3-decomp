@@ -16,6 +16,7 @@ public:
     virtual void SetTex(RndTex *tex);
 
     NEW_OBJ(DxMovie)
+    REGISTER_OBJ(DxMovie)
 
 private:
     void StreamReadFinish();

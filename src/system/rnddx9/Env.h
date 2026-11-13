@@ -9,6 +9,7 @@ public:
     virtual void Select(const Vector3 *);
 
     NEW_OBJ(DxEnviron)
+    REGISTER_OBJ(DxEnviron)
 protected:
     DxEnviron() {}
 };

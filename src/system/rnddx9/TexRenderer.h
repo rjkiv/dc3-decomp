@@ -11,4 +11,5 @@ public:
     virtual void PostDeviceReset() { mDirty = true; }
 
     NEW_OBJ(DxTexRenderer)
+    REGISTER_OBJ(DxTexRenderer)
 };
