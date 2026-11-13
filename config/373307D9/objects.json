@@ -655,7 +655,7 @@
             "system/synth/AudioDucker.cpp": "Matching",
             "system/synth/BinkReader.cpp": "Matching",
             "system/synth/ByteGrinder.cpp": "Matching",
-            "system/synth/Emitter.cpp": "NonMatching",
+            "system/synth/Emitter.cpp": "Matching",
             "system/synth/Faders.cpp": "Matching",
             "system/synth/FxSend.cpp": "Matching",
             "system/synth/FxSendBitCrush.cpp": "Matching",
