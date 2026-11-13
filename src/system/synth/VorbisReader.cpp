@@ -41,9 +41,9 @@ namespace {
                 b2 = false;
                 for (auto it = gReaders.begin(); it != gReaders.end();) {
                     VorbisReader *cur = *it;
-                    if (cur->PendingRemoval()) {
+                    if (cur->mExiting) {
                         it = gReaders.erase(it);
-                        cur->SetPendingRemoval(false);
+                        cur->mExiting = false;
                     } else {
                         ++it;
                         b2 = cur->DecodeThreadPoll() || b2;
@@ -74,7 +74,7 @@ VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, b
     }
     mOggSync = new ogg_sync_state;
     ogg_sync_init(mOggSync);
-    mPendingRemoval = false;
+    mExiting = false;
     if (gEvent == INVALID_HANDLE_VALUE) {
         gEvent = CreateEventA(nullptr, false, false, nullptr);
         MILO_ASSERT(gEvent, 0xFE);
@@ -90,9 +90,9 @@ VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, b
 }
 
 VorbisReader::~VorbisReader() {
-    mPendingRemoval = true;
+    mExiting = true;
     mAllowDecode = false;
-    while (mPendingRemoval) {
+    while (mExiting) {
         SetEvent(gEvent);
     }
     delete[] mHdrBuf;
@@ -375,8 +375,10 @@ bool VorbisReader::TryDecode() {
                 return true;
             }
         }
-    } else if (mEof && !mReadBuffer && QueuedOutputSamples() == 0 && !mDone
-               && mThreadBufferConsumed >= mThreadBuffers[0].size()) {
+    } else if (
+        mEof && !mReadBuffer && QueuedOutputSamples() == 0 && !mDone
+        && mThreadBufferConsumed >= mThreadBuffers[0].size()
+    ) {
         EndData();
         mDone = true;
     }
