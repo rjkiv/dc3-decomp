@@ -6,17 +6,17 @@
 
 #define BINK_AUDIO_CHANNEL_MAX 16
 
-enum BinkReaderState {
-    kOpenBink = 0,
-    kOpenTracks = 1,
-    kInitStream = 2,
-    kPlay = 3,
-    kDone = 4,
-    kFailure = 5,
-};
-
 class BinkReader : public StreamReader {
 public:
+    enum BinkReaderState {
+        kOpenBink = 0,
+        kOpenTracks = 1,
+        kInitStream = 2,
+        kPlay = 3,
+        kDone = 4,
+        kFailure = 5,
+    };
+
     BinkReader(File *, StandardStream *);
     virtual ~BinkReader();
     virtual void Poll(float);
