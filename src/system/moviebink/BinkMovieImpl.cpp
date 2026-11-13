@@ -21,6 +21,7 @@
 #include "os/Timer.h"
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Mat.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Rnd_NG.h"
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/Tex.h"
@@ -775,6 +776,89 @@ void BinkMovieImpl::FinishOpen() {
         }
         SetRect();
         SetPaused(true);
+    }
+}
+
+void BinkMovieImpl::SetRect() {
+    CHECK_THREAD;
+    float f7, f9, f10;
+    if (mWidth != 0) {
+        MILO_ASSERT(mHeight != 0, 0x466);
+        f9 = mHeight;
+        f10 = mWidth;
+        f7 = f9;
+    } else {
+        f10 = TheRnd.Width();
+        f9 = TheRnd.Height();
+        f7 = Min(TheRnd.YRatio() * f10, f9);
+    }
+    MILO_ASSERT(mAspect, 0x479);
+    float f5, f8;
+    if (mFillWidth) {
+        f8 = mAspect * f10;
+        f5 = f10;
+        if (f8 > f7) {
+            f8 = f7;
+            f5 = f7 / mAspect;
+        }
+    } else {
+        f8 = f7;
+        f5 = f7 / mAspect;
+        if (f5 > f10) {
+            f5 = f10;
+            f8 = mAspect * f10;
+        }
+    }
+    mRect.x = (f10 - f5) / 2;
+    mRect.y = (f9 - Min((f8 / f7) * f9, f9)) / 2;
+    mRect.w = f10 - mRect.x * 2;
+    mRect.h = f9 - mRect.y * 2;
+}
+
+void BinkMovieImpl::BeginFrame() {
+    CHECK_THREAD;
+    if (sAsyncMovie) {
+        sAsyncMovie->SetPaused(true);
+    }
+    sAsyncMovie = this;
+    mMidFrame = true;
+    mTargetFrame =
+        (mBuffers->FrameBuffers.FrameNum + 1) % mBuffers->FrameBuffers.TotalFrames;
+    int u10 = (mFrameNum + 1)
+        % (TheBinkMovieSys.GetUnk10() * mBuffers->FrameBuffers.TotalFrames);
+    mTargetBuf = u10 >= mBuffers->FrameBuffers.TotalFrames;
+    BINKFRAMEPLANESET &frame = mBuffers->FrameBuffers.Frames[mTargetFrame];
+    frame.YPlane.BufferPitch = mBuffers->YTex[mTargetFrame][mTargetBuf]->TexelsPitch();
+    frame.cRPlane.BufferPitch = mBuffers->CrTex[mTargetFrame][mTargetBuf]->TexelsPitch();
+    frame.cBPlane.BufferPitch = mBuffers->CbTex[mTargetFrame][mTargetBuf]->TexelsPitch();
+    frame.APlane.BufferPitch = mBuffers->ATex[mTargetFrame][mTargetBuf]->TexelsPitch();
+    mBuffers->YTex[mTargetFrame][mTargetBuf]->TexelsLock(frame.YPlane.Buffer);
+    mBuffers->CrTex[mTargetFrame][mTargetBuf]->TexelsLock(frame.cRPlane.Buffer);
+    mBuffers->CbTex[mTargetFrame][mTargetBuf]->TexelsLock(frame.cBPlane.Buffer);
+    mBuffers->ATex[mTargetFrame][mTargetBuf]->TexelsLock(frame.APlane.Buffer);
+    MILO_ASSERT(frame.YPlane.Buffer != NULL, 0x4FD);
+    MILO_ASSERT(frame.cRPlane.Buffer != NULL, 0x4FE);
+    MILO_ASSERT(frame.cBPlane.Buffer != NULL, 0x4FF);
+    MILO_ASSERT(frame.APlane.Buffer != NULL, 0x500);
+}
+
+void BinkMovieImpl::EndFrame() {
+    CHECK_THREAD;
+    if (mMidFrame) {
+        mBuffers->YTex[mTargetFrame][mTargetBuf]->TexelsUnlock();
+        mBuffers->CrTex[mTargetFrame][mTargetBuf]->TexelsUnlock();
+        mBuffers->CbTex[mTargetFrame][mTargetBuf]->TexelsUnlock();
+        mBuffers->ATex[mTargetFrame][mTargetBuf]->TexelsUnlock();
+        int x = mBuffers->FrameBuffers.FrameNum;
+        int y = mFrameNum >= mBuffers->FrameBuffers.TotalFrames;
+        StoreCache(mBuffers->YTex[x][y]);
+        StoreCache(mBuffers->CrTex[x][y]);
+        StoreCache(mBuffers->CbTex[x][y]);
+        StoreCache(mBuffers->ATex[x][y]);
+        sAsyncMovie = nullptr;
+        mMidFrame = false;
+    } else {
+        MILO_NOTIFY("mMidFrame");
     }
 }
 
