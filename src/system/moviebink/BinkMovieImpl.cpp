@@ -122,7 +122,7 @@ MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
     } else {
         for (int i = 0; i < ret->FrameBuffers.TotalFrames; i++) {
             BINKFRAMEPLANESET &curFrame = ret->FrameBuffers.Frames[i];
-            for (int j = 0; j < TheBinkMovieSys.GetUnk10(); j++) {
+            for (int j = 0; j < TheBinkMovieSys.GetNumFramebuffers(); j++) {
                 MILO_ASSERT(!ret->YTex[i][j], 0x5A2);
                 MILO_ASSERT(!ret->CrTex[i][j], 0x5A3);
                 MILO_ASSERT(!ret->CbTex[i][j], 0x5A4);
@@ -286,7 +286,7 @@ bool BinkMovieImpl::BeginFromFile(
             mFillWidth = b4;
             mBinkHandle = kNoHandle;
             mAspect = 0;
-            mAsync = TheBinkMovieSys.GetUnkC();
+            mAsync = TheBinkMovieSys.IsAsync();
             mPerfTimer.Reset();
             MILO_ASSERT(!mLoader, 0xD6);
             MILO_ASSERT(!mBink, 0xD7);
@@ -331,7 +331,7 @@ bool BinkMovieImpl::BeginFromBuffer(
         mPreload = true;
         mBinkHandle = kNoHandle;
         mAspect = 0;
-        mAsync = TheBinkMovieSys.GetUnkC();
+        mAsync = TheBinkMovieSys.IsAsync();
         mPerfTimer.Reset();
         MILO_ASSERT(!mLoader, 0x127);
         MILO_ASSERT(!mBink, 0x128);
@@ -550,7 +550,9 @@ void BinkMovieImpl::SetPaused(bool paused) {
         BinkPause(mBink, paused);
         if (mAsync && !paused && !mMidFrame) {
             BeginFrame();
-            BinkDoFrameAsync(mBink, TheBinkMovieSys.Core0(), TheBinkMovieSys.Core1());
+            BinkDoFrameAsync(
+                mBink, TheBinkMovieSys.GetBinkCore0(), TheBinkMovieSys.GetBinkCore1()
+            );
         }
         mPaused = paused;
         if (paused) {
@@ -619,7 +621,8 @@ void BinkMovieImpl::Terminate() {
 void BinkMovieImpl::NextFrame() {
     CHECK_THREAD;
     mFrameNum++;
-    if (mFrameNum >= mBuffers->FrameBuffers.TotalFrames * TheBinkMovieSys.GetUnk10()) {
+    if (mFrameNum
+        >= mBuffers->FrameBuffers.TotalFrames * TheBinkMovieSys.GetNumFramebuffers()) {
         mFrameNum = 0;
     }
     BinkNextFrame(mBink);
@@ -635,7 +638,9 @@ void BinkMovieImpl::DoFrame() {
         if (!b3) {
             NextFrame();
             BeginFrame();
-            BinkDoFrameAsync(mBink, TheBinkMovieSys.Core0(), TheBinkMovieSys.Core1());
+            BinkDoFrameAsync(
+                mBink, TheBinkMovieSys.GetBinkCore0(), TheBinkMovieSys.GetBinkCore1()
+            );
         }
     } else {
         BeginFrame();
@@ -713,8 +718,8 @@ void BinkMovieImpl::MovieOpen(const char *name, unsigned int flags) {
     mPaused = false;
     if (TheMovieSys.IsInitialized()) {
         if (mLocalizationTrack != 0) {
-            if (TheBinkMovieSys.Track()) {
-                mLocalizationTrack = TheBinkMovieSys.Track();
+            if (TheBinkMovieSys.GetForceTrack()) {
+                mLocalizationTrack = TheBinkMovieSys.GetForceTrack();
             }
             unsigned int tracks = mLocalizationTrack - 1;
             BinkSetSoundTrack(1, &tracks);
@@ -733,7 +738,7 @@ void BinkMovieImpl::MovieOpen(const char *name, unsigned int flags) {
                 MILO_ASSERT(mLocalizationTrack - 1 < mBink->NumTracks, 0x42D);
             }
             BinkSetVolume(mBink, 0, mVolume);
-            TheBinkMovieSys.AddMovie(this);
+            TheBinkMovieSys.MovieOpened(this);
         }
     }
 }
@@ -744,7 +749,7 @@ void BinkMovieImpl::MovieClose() {
         BinkDoFrameAsyncWait(mBink, -1);
         EndFrame();
     }
-    TheBinkMovieSys.RemoveMovie(this);
+    TheBinkMovieSys.MovieClosed(this);
     BinkClose(mBink);
     mBink = nullptr;
 }
@@ -825,7 +830,7 @@ void BinkMovieImpl::BeginFrame() {
     mTargetFrame =
         (mBuffers->FrameBuffers.FrameNum + 1) % mBuffers->FrameBuffers.TotalFrames;
     int u10 = (mFrameNum + 1)
-        % (TheBinkMovieSys.GetUnk10() * mBuffers->FrameBuffers.TotalFrames);
+        % (TheBinkMovieSys.GetNumFramebuffers() * mBuffers->FrameBuffers.TotalFrames);
     mTargetBuf = u10 >= mBuffers->FrameBuffers.TotalFrames;
     BINKFRAMEPLANESET &frame = mBuffers->FrameBuffers.Frames[mTargetFrame];
     frame.YPlane.BufferPitch = mBuffers->YTex[mTargetFrame][mTargetBuf]->TexelsPitch();
