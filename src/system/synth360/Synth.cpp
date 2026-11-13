@@ -149,18 +149,18 @@ void Synth360::Init() {
     Synth::Init();
     SynthSample360::Init();
     StreamReceiver360::Init();
-    REGISTER_OBJ_FACTORY(FxSendReverb360)
-    REGISTER_OBJ_FACTORY(FxSendDelay360)
-    REGISTER_OBJ_FACTORY(FxSendCompress360)
-    REGISTER_OBJ_FACTORY(FxSendEQ360)
-    REGISTER_OBJ_FACTORY(FxSendFlanger360)
-    REGISTER_OBJ_FACTORY(FxSendMeterEffect360)
-    REGISTER_OBJ_FACTORY(FxSendWah360)
-    REGISTER_OBJ_FACTORY(FxSendBitCrush360)
-    REGISTER_OBJ_FACTORY(FxSendDistortion360)
-    REGISTER_OBJ_FACTORY(FxSendChorus360)
-    REGISTER_OBJ_FACTORY(FxSendPitchShift360)
-    REGISTER_OBJ_FACTORY(FxSendSynapse360)
+    FxSendReverb360::Register();
+    FxSendDelay360::Register();
+    FxSendCompress360::Register();
+    FxSendEQ360::Register();
+    FxSendFlanger360::Register();
+    FxSendMeterEffect360::Register();
+    FxSendWah360::Register();
+    FxSendBitCrush360::Register();
+    FxSendDistortion360::Register();
+    FxSendChorus360::Register();
+    FxSendPitchShift360::Register();
+    FxSendSynapse360::Register();
     if (SystemConfig("synth")->FindInt("enable_headset_output")) {
         SetupHeadsetSubmixes();
     }
@@ -467,32 +467,32 @@ void Synth360::SetupHeadsetSubmixes() {
         audioDesc.pOutputVoice = mHeadsetSubmix[i];
         audioDescs.push_back(audioDesc);
     }
-    // clang-format on 
-    IXAudio2SourceVoice* v;
-    WAVEFORMATEX wav = { 1, 1, 48000, 96000, 2, 16, 0 };
-    XAUDIO2_VOICE_SENDS sends = { audioDescs.size(), &audioDescs[0] };
-    HRESULT hr = mXAudio2->CreateSourceVoice(&v,&wav,2,2,nullptr,&sends,nullptr);
-    MILO_ASSERT(SUCCEEDED(hr), 0x30A);
+// clang-format on
+IXAudio2SourceVoice *v;
+WAVEFORMATEX wav = { 1, 1, 48000, 96000, 2, 16, 0 };
+XAUDIO2_VOICE_SENDS sends = { audioDescs.size(), &audioDescs[0] };
+HRESULT hr = mXAudio2->CreateSourceVoice(&v, &wav, 2, 2, nullptr, &sends, nullptr);
+MILO_ASSERT(SUCCEEDED(hr), 0x30A);
 
-    static BYTE sAudioData[0x100];
-    XAUDIO2_BUFFER buffer;
-    buffer.Flags = 0;
-    memset(&buffer.AudioBytes, 0, sizeof(buffer) - sizeof(buffer.Flags)); // terrible
-    buffer.AudioBytes = sizeof(sAudioData);
-    buffer.pAudioData = sAudioData;
-    buffer.PlayBegin = 0;
-    buffer.PlayLength = 0;
-    buffer.LoopBegin = 0;
-    buffer.LoopLength = 0;
-    buffer.LoopCount = 255;
-    buffer.pContext = nullptr;
-    hr = mHeadsetSeedVoice->SubmitSourceBuffer(&buffer, nullptr);
-    MILO_ASSERT(SUCCEEDED(hr), 0x319);
-    hr = mHeadsetSeedVoice->Start(0, 0);
-    MILO_ASSERT(SUCCEEDED(hr), 0x31C);
+static BYTE sAudioData[0x100];
+XAUDIO2_BUFFER buffer;
+buffer.Flags = 0;
+memset(&buffer.AudioBytes, 0, sizeof(buffer) - sizeof(buffer.Flags)); // terrible
+buffer.AudioBytes = sizeof(sAudioData);
+buffer.pAudioData = sAudioData;
+buffer.PlayBegin = 0;
+buffer.PlayLength = 0;
+buffer.LoopBegin = 0;
+buffer.LoopLength = 0;
+buffer.LoopCount = 255;
+buffer.pContext = nullptr;
+hr = mHeadsetSeedVoice->SubmitSourceBuffer(&buffer, nullptr);
+MILO_ASSERT(SUCCEEDED(hr), 0x319);
+hr = mHeadsetSeedVoice->Start(0, 0);
+MILO_ASSERT(SUCCEEDED(hr), 0x31C);
 }
 
-void Synth360::Poll(){
+void Synth360::Poll() {
     START_AUTO_TIMER("synth");
     mMasteringVoice->SetEffectParameters(1, mMeterParams, 4, 0);
     static float ratio1 = DbToRatio(-3.0f);
@@ -504,7 +504,6 @@ void Synth360::Poll(){
         MicManagerXbox::GetInstance()->Poll();
     }
 
-    
     StartSynchronizedVoices();
     StopSynchronizedVoices();
     VorbisReader::SignalDecodeThread();

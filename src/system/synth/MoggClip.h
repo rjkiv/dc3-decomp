@@ -50,6 +50,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18);
     NEW_OBJ(MoggClip)
+    REGISTER_OBJ(MoggClip)
 
     bool IsStreaming() const;
     void FadeOut(float);

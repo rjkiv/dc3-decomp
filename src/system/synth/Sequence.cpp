@@ -178,12 +178,12 @@ DataNode Sequence::OnPlay(DataArray *arr) {
 }
 
 void Sequence::Init() {
-    SfxSeq::Init();
-    WaitSeq::Init();
-    RandomGroupSeq::Init();
-    SerialGroupSeq::Init();
-    ParallelGroupSeq::Init();
-    RandomIntervalGroupSeq::Init();
+    SfxSeq::Register();
+    WaitSeq::Register();
+    RandomGroupSeq::Register();
+    SerialGroupSeq::Register();
+    ParallelGroupSeq::Register();
+    RandomIntervalGroupSeq::Register();
 }
 
 #pragma endregion

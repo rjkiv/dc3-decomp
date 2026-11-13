@@ -35,6 +35,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14);
     NEW_OBJ(ThreeDSound)
+    REGISTER_OBJ(ThreeDSound)
 
     void EnablePan(bool enable);
     void SaveWorldXfm();

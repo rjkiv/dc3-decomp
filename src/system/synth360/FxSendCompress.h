@@ -16,6 +16,7 @@ public:
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
     NEW_OBJ(FxSendCompress360)
+    REGISTER_OBJ(FxSendCompress360)
 
 protected:
     virtual IUnknown *CreateFx();

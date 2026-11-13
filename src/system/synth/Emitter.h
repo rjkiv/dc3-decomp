@@ -29,7 +29,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B);
     NEW_OBJ(SynthEmitter);
-    static void Init() { REGISTER_OBJ_FACTORY(SynthEmitter) }
+    REGISTER_OBJ(SynthEmitter);
 
 private:
     void CheckLoadResources();

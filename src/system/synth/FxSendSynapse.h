@@ -15,6 +15,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10);
     NEW_OBJ(FxSendSynapse)
+    REGISTER_OBJ(FxSendSynapse)
 
 protected:
     FxSendSynapse();

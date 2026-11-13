@@ -145,30 +145,30 @@ END_HANDLERS
 
 void Synth::Init() {
     SynthUtlInit();
-    REGISTER_OBJ_FACTORY(Fader);
-    Sfx::Init();
-    REGISTER_OBJ_FACTORY(MidiInstrument)
+    Fader::Register();
+    Sfx::Register();
+    MidiInstrument::Register();
     SynthSample::Init();
     Sequence::Init();
-    SynthEmitter::Init();
-    REGISTER_OBJ_FACTORY(FxSendReverb)
-    REGISTER_OBJ_FACTORY(FxSendDelay)
-    REGISTER_OBJ_FACTORY(FxSendBitCrush)
-    REGISTER_OBJ_FACTORY(FxSendDistortion)
-    REGISTER_OBJ_FACTORY(FxSendCompress)
-    REGISTER_OBJ_FACTORY(FxSendEQ)
-    REGISTER_OBJ_FACTORY(FxSendFlanger)
-    REGISTER_OBJ_FACTORY(FxSendChorus)
-    REGISTER_OBJ_FACTORY(FxSendMeterEffect)
-    REGISTER_OBJ_FACTORY(FxSendPitchShift)
-    REGISTER_OBJ_FACTORY(FxSendSynapse)
-    REGISTER_OBJ_FACTORY(FxSendWah)
-    REGISTER_OBJ_FACTORY(MoggClip)
-    REGISTER_OBJ_FACTORY(MeterEffectMonitor)
-    REGISTER_OBJ_FACTORY(Sound)
-    REGISTER_OBJ_FACTORY(ADSR)
-    REGISTER_OBJ_FACTORY(ThreeDSound)
-    REGISTER_OBJ_FACTORY(AudioDuckerTrigger)
+    SynthEmitter::Register();
+    FxSendReverb::Register();
+    FxSendDelay::Register();
+    FxSendBitCrush::Register();
+    FxSendDistortion::Register();
+    FxSendCompress::Register();
+    FxSendEQ::Register();
+    FxSendFlanger::Register();
+    FxSendChorus::Register();
+    FxSendMeterEffect::Register();
+    FxSendPitchShift::Register();
+    FxSendSynapse::Register();
+    FxSendWah::Register();
+    MoggClip::Register();
+    MeterEffectMonitor::Register();
+    Sound::Register();
+    ADSR::Register();
+    ThreeDSound::Register();
+    AudioDuckerTrigger::Register();
     mMasterFader = Hmx::Object::New<Fader>();
     mSfxFader = Hmx::Object::New<Fader>();
     mMidiInstrumentFader = Hmx::Object::New<Fader>();

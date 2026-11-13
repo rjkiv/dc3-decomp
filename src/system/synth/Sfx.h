@@ -85,7 +85,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1E);
     NEW_OBJ(Sfx);
-    static void Init() { REGISTER_OBJ_FACTORY(Sfx) }
+    REGISTER_OBJ(Sfx);
 
     void Pause(bool);
 

@@ -15,6 +15,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0xF);
     NEW_OBJ(FxSendBitCrush)
+    REGISTER_OBJ(FxSendBitCrush)
 
 protected:
     FxSendBitCrush();

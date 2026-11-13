@@ -87,6 +87,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x71);
     NEW_OBJ(MidiInstrument)
+    REGISTER_OBJ(MidiInstrument)
 private:
     void
     StartSample(unsigned char note, unsigned char vel, int durFramesLeft, int glideID);

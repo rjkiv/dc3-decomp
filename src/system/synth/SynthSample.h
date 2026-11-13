@@ -40,6 +40,7 @@ public:
     static void Init();
     static void Disable();
     NEW_OBJ(SynthSample);
+    REGISTER_OBJ(SynthSample);
 
 protected:
     SynthSample();

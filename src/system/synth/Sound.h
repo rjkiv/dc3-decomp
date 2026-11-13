@@ -67,6 +67,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(Sound)
+    REGISTER_OBJ(Sound)
 
 private:
     void OnTriggerSound(int);

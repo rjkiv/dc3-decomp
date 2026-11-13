@@ -14,6 +14,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10);
     NEW_OBJ(FxSendPitchShift)
+    REGISTER_OBJ(FxSendPitchShift)
 
 protected:
     FxSendPitchShift();

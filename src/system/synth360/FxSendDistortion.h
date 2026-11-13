@@ -15,6 +15,7 @@ public:
     virtual void OnParametersChanged() { FxSend360::SyncEffectParams(); }
 
     NEW_OBJ(FxSendDistortion360)
+    REGISTER_OBJ(FxSendDistortion360)
 
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 

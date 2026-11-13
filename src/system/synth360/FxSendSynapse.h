@@ -13,6 +13,7 @@ public:
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
     NEW_OBJ(FxSendSynapse360)
+    REGISTER_OBJ(FxSendSynapse360)
 
 protected:
     virtual IUnknown *CreateFx();
