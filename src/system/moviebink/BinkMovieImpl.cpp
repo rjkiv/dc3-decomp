@@ -12,6 +12,7 @@
 #include "obj/Object.h"
 #include "os/Block.h"
 #include "os/Debug.h"
+#include "os/Endian.h"
 #include "os/File.h"
 #include "os/OSFuncs.h"
 #include "os/Platform.h"
@@ -30,6 +31,8 @@
 #include "utl/MemMgr.h"
 #include "xdk/XAPILIB.h"
 
+BinkMovieImpl *BinkMovieImpl::sAsyncMovie = nullptr;
+int BinkMovieImpl::sActivePending = 0;
 std::vector<BinkMovieImpl *> BinkMovieImpl::sActiveMovies;
 
 namespace {
@@ -43,13 +46,21 @@ namespace {
         }
     }
 
-    void EndianSwapBuffer(void *buffer, int size);
+    typedef unsigned int uint32;
+
+    void EndianSwapBuffer(void *buffer, int size) {
+        MILO_ASSERT(size % sizeof(uint32) == 0, 0x4B);
+        uint32 *bufEnd = (uint32 *)((char *)buffer + size);
+        for (uint32 *it = (uint32 *)buffer; it < bufEnd; it++) {
+            EndianSwapEq(*it);
+        }
+    }
 }
 
 #pragma region MovieInternalBuffers
 
 MovieInternalBuffers::MovieInternalBuffers() {
-    memset(&mBuffers, 0, sizeof(BINKFRAMEBUFFERS));
+    memset(&FrameBuffers, 0, sizeof(BINKFRAMEBUFFERS));
     YTex[0][0] = nullptr;
     YTex[0][1] = nullptr;
     YTex[1][0] = nullptr;
@@ -66,12 +77,12 @@ MovieInternalBuffers::MovieInternalBuffers() {
     ATex[0][1] = nullptr;
     ATex[1][0] = nullptr;
     ATex[1][1] = nullptr;
-    unk40 = nullptr;
-    unkbc = 0;
+    Mat = nullptr;
+    mShareCount = 0;
 }
 
 MovieInternalBuffers::~MovieInternalBuffers() {
-    RELEASE(unk40);
+    RELEASE(Mat);
     for (uint i = 0; i < 2; i++) {
         for (uint j = 0; j < 2; j++) {
             RELEASE(YTex[i][j]);
@@ -85,31 +96,31 @@ MovieInternalBuffers::~MovieInternalBuffers() {
 MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
     MovieInternalBuffers *ret = new MovieInternalBuffers();
 
+    BINKFRAMEBUFFERS curBuffers;
     for (int i = 0; i < binks.size(); i++) {
         BINK *cur = binks[i];
         if (cur) {
-            BINKFRAMEBUFFERS curBuffers;
             memset(&curBuffers, 0, sizeof(BINKFRAMEBUFFERS));
             BinkGetFrameBuffersInfo(cur, &curBuffers);
-            ret->mBuffers.TotalFrames =
-                Max(curBuffers.TotalFrames, ret->mBuffers.TotalFrames);
-            ret->mBuffers.YABufferWidth =
-                Max(curBuffers.YABufferWidth, ret->mBuffers.YABufferWidth);
-            ret->mBuffers.YABufferHeight =
-                Max(curBuffers.YABufferHeight, ret->mBuffers.YABufferHeight);
-            ret->mBuffers.cRcBBufferWidth =
-                Max(curBuffers.cRcBBufferWidth, ret->mBuffers.cRcBBufferWidth);
-            ret->mBuffers.cRcBBufferHeight =
-                Max(curBuffers.cRcBBufferHeight, ret->mBuffers.cRcBBufferHeight);
-            BinkRegisterFrameBuffers(cur, &ret->mBuffers);
+            ret->FrameBuffers.TotalFrames =
+                Max(curBuffers.TotalFrames, ret->FrameBuffers.TotalFrames);
+            ret->FrameBuffers.YABufferWidth =
+                Max(curBuffers.YABufferWidth, ret->FrameBuffers.YABufferWidth);
+            ret->FrameBuffers.YABufferHeight =
+                Max(curBuffers.YABufferHeight, ret->FrameBuffers.YABufferHeight);
+            ret->FrameBuffers.cRcBBufferWidth =
+                Max(curBuffers.cRcBBufferWidth, ret->FrameBuffers.cRcBBufferWidth);
+            ret->FrameBuffers.cRcBBufferHeight =
+                Max(curBuffers.cRcBBufferHeight, ret->FrameBuffers.cRcBBufferHeight);
+            BinkRegisterFrameBuffers(cur, &ret->FrameBuffers);
         }
     }
-    if (ret->mBuffers.TotalFrames == 0) {
+    if (ret->FrameBuffers.TotalFrames == 0) {
         delete ret;
         return nullptr;
     } else {
-        for (int i = 0; i < ret->mBuffers.TotalFrames; i++) {
-            BINKFRAMEPLANESET &curFrame = ret->mBuffers.Frames[i];
+        for (int i = 0; i < ret->FrameBuffers.TotalFrames; i++) {
+            BINKFRAMEPLANESET &curFrame = ret->FrameBuffers.Frames[i];
             for (int j = 0; j < TheBinkMovieSys.GetUnk10(); j++) {
                 MILO_ASSERT(!ret->YTex[i][j], 0x5A2);
                 MILO_ASSERT(!ret->CrTex[i][j], 0x5A3);
@@ -120,32 +131,32 @@ MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
                 ret->CbTex[i][j] = Hmx::Object::New<RndTex>();
                 ret->ATex[i][j] = Hmx::Object::New<RndTex>();
                 ret->YTex[i][j]->SetBitmap(
-                    ret->mBuffers.YABufferWidth,
-                    ret->mBuffers.YABufferHeight,
+                    ret->FrameBuffers.YABufferWidth,
+                    ret->FrameBuffers.YABufferHeight,
                     8,
                     (RndTex::Type)0x24,
                     false,
                     nullptr
                 );
                 ret->CrTex[i][j]->SetBitmap(
-                    ret->mBuffers.cRcBBufferWidth,
-                    ret->mBuffers.cRcBBufferHeight,
+                    ret->FrameBuffers.cRcBBufferWidth,
+                    ret->FrameBuffers.cRcBBufferHeight,
                     8,
                     (RndTex::Type)0x24,
                     false,
                     nullptr
                 );
                 ret->CbTex[i][j]->SetBitmap(
-                    ret->mBuffers.cRcBBufferWidth,
-                    ret->mBuffers.cRcBBufferHeight,
+                    ret->FrameBuffers.cRcBBufferWidth,
+                    ret->FrameBuffers.cRcBBufferHeight,
                     8,
                     (RndTex::Type)0x24,
                     false,
                     nullptr
                 );
                 ret->ATex[i][j]->SetBitmap(
-                    ret->mBuffers.YABufferWidth,
-                    ret->mBuffers.YABufferHeight,
+                    ret->FrameBuffers.YABufferWidth,
+                    ret->FrameBuffers.YABufferHeight,
                     8,
                     (RndTex::Type)0x24,
                     false,
@@ -171,14 +182,14 @@ MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
             }
         }
 
-        ret->unk40 = Hmx::Object::New<RndMat>();
-        ret->unk40->SetPreLit(true);
-        ret->unk40->SetUseEnv(false);
-        ret->unk40->SetBlend(RndMat::kBlendSrc);
-        ret->unk40->SetAlphaWrite(false);
-        ret->unk40->SetZMode(BaseMaterial::kDisable);
-        ret->unk40->SetTexWrap(BaseMaterial::kClamp);
-        CreateAndSetMetaMat(ret->unk40);
+        ret->Mat = Hmx::Object::New<RndMat>();
+        ret->Mat->SetPreLit(true);
+        ret->Mat->SetUseEnv(false);
+        ret->Mat->SetBlend(RndMat::kBlendSrc);
+        ret->Mat->SetAlphaWrite(false);
+        ret->Mat->SetZMode(BaseMaterial::kDisable);
+        ret->Mat->SetTexWrap(BaseMaterial::kClamp);
+        CreateAndSetMetaMat(ret->Mat);
         return ret;
     }
 }
@@ -222,7 +233,7 @@ BinkMovieImpl::BinkMovieImpl()
     : mLoader(0), mMovieLoader(0), mBink(0), mPreload(0), mPreloadBuf(0), mBufferSize(0),
       mOwnPreloadBuf(0), mFrameNum(0), mWidth(0), mHeight(0), mPaused(0),
       mBinkHandle(kNoHandle), mLoadPending(0), mMidFrame(0), mThreadId(gMainThreadID),
-      mVolume(0x8000), mInternalBufs(0) {
+      mVolume(0x8000), mBuffers(0) {
     CHECK_THREAD;
 }
 
@@ -263,7 +274,7 @@ bool BinkMovieImpl::BeginFromFile(
     if (TheLoadMgr.GetPlatform() == kPlatformNone) {
         return false;
     } else {
-        mName = c1;
+        mPath = c1;
         mPreload = b3;
         if (!PlatformCacheFile(c1)) {
             return false;
@@ -282,19 +293,19 @@ bool BinkMovieImpl::BeginFromFile(
             if (b3) {
                 static int _x(MemFindHeap("physical"));
                 MemHeapTracker tmp(_x);
-                const char *str = mName.c_str();
+                const char *str = mPath.c_str();
                 BinStream *bs6 = nullptr;
                 if (bs && bs->Cached()) {
                     bs6 = bs;
                 }
                 mLoader = new FileLoader(str, str, pos, 0, true, true, bs6, "misc");
             } else {
-                mMovieLoader = new BinkMovieLoader(mName.c_str(), kLoadStayBack, this);
+                mMovieLoader = new BinkMovieLoader(mPath.c_str(), kLoadStayBack, this);
             }
             sActiveMovies.push_back(this);
             sActivePending++;
             if (sActivePending > 1 && !b3) {
-                MILO_NOTIFY("%s, multiple movies must be preloaded", mName);
+                MILO_NOTIFY("%s, multiple movies must be preloaded", mPath);
             }
             mLoadPending = true;
             return true;
@@ -311,7 +322,7 @@ bool BinkMovieImpl::BeginFromBuffer(
     if (TheLoadMgr.GetPlatform() == kPlatformNone) {
         return false;
     } else {
-        mName = "";
+        mPath = "";
         mLoop = b3;
         mMute = b2;
         mLocalizationTrack = i1;
@@ -324,7 +335,7 @@ bool BinkMovieImpl::BeginFromBuffer(
         MILO_ASSERT(!mLoader, 0x127);
         MILO_ASSERT(!mBink, 0x128);
         MILO_ASSERT(!mPreloadBuf, 0x129);
-        mPreloadBuf = iBuffer;
+        mPreloadBuf = (char *)iBuffer;
         mBufferSize = iBufSizeBytes;
         mOwnPreloadBuf = b1;
         mLoadPending = true;
@@ -340,15 +351,17 @@ void BinkMovieImpl::Draw() {
         TheNgRnd.Clear(1, Hmx::Color(0, 0, 0, 0));
     } else {
         unsigned int flags = mBink->OpenFlags;
-        // mInternalBufs->unk40->SetNormalMap()
+        bool u5 = flags >> 0x11 & 1;
+        bool u14 = flags >> 0x14 & 1;
+        int x = mBuffers->FrameBuffers.FrameNum;
+        int y = mFrameNum >= mBuffers->FrameBuffers.TotalFrames;
+        mBuffers->Mat->SetDiffuseTex(mBuffers->YTex[x][y]);
+        mBuffers->Mat->SetSpecularMap(!u5 ? mBuffers->CrTex[x][y] : nullptr);
+        mBuffers->Mat->SetEmissiveMap(!u5 ? mBuffers->CbTex[x][y] : nullptr);
+        mBuffers->Mat->SetNormalMap(u14 ? mBuffers->ATex[x][y] : nullptr);
         SetRect();
         TheNgRnd.DrawRect(
-            mRect,
-            mInternalBufs->unk40,
-            kMovieShader,
-            Hmx::Color(0, 0, 0, 0),
-            nullptr,
-            nullptr
+            mRect, mBuffers->Mat, kMovieShader, Hmx::Color(), nullptr, nullptr
         );
         TheShaderMgr.SetPConstant((PShaderConstant)0, (RndTex *)nullptr);
         TheShaderMgr.SetPConstant((PShaderConstant)2, (RndTex *)nullptr);
@@ -361,13 +374,13 @@ bool BinkMovieImpl::Poll() {
     CHECK_THREAD;
     if (CheckOpen(true)) {
         return true;
-    } else if (mBink && mInternalBufs) {
+    } else if (mBink && mBuffers) {
         if (!mPreloadBuf) {
             float ms = mPerfTimer.SplitMs();
             mPerfTimer.Restart();
             if (ms > 49.0f) {
                 const char *msg = MakeString(
-                    "GLITCH: %g ms (%g ms bink), %s\n", ms, mBinkTimer.SplitMs(), mName
+                    "GLITCH: %g ms (%g ms bink), %s\n", ms, mBinkTimer.SplitMs(), mPath
                 );
                 static DataNode &n = DataVariable("notify_level");
                 if (n.Int() == 0) {
@@ -447,12 +460,12 @@ void BinkMovieImpl::End() {
         mPreloadBuf = nullptr;
     }
     mOwnPreloadBuf = false;
-    if (mInternalBufs) {
-        mInternalBufs->unkbc--;
-        if (mInternalBufs->unkbc == 0) {
-            delete mInternalBufs;
+    if (mBuffers) {
+        mBuffers->mShareCount--;
+        if (mBuffers->mShareCount == 0) {
+            delete mBuffers;
         }
-        mInternalBufs = nullptr;
+        mBuffers = nullptr;
     }
     mThreadId = gMainThreadID;
 }
@@ -507,9 +520,9 @@ bool BinkMovieImpl::CheckOpen(bool b1) {
                 }
             }
             if (!UsingCD()) {
-                MovieOpen(mName.c_str(), 0x400);
+                MovieOpen(mPath.c_str(), 0x400);
             } else {
-                File *file = NewFile(mName.c_str(), FILE_OPEN_READ);
+                File *file = NewFile(mPath.c_str(), FILE_OPEN_READ);
                 if (file && file->GetFileHandle(mBinkHandle)) {
                     MovieOpen((const char *)mBinkHandle, 0x800400);
                 }
@@ -605,7 +618,7 @@ void BinkMovieImpl::Terminate() {
 void BinkMovieImpl::NextFrame() {
     CHECK_THREAD;
     mFrameNum++;
-    if (mFrameNum >= mInternalBufs->mBuffers.TotalFrames * TheBinkMovieSys.GetUnk10()) {
+    if (mFrameNum >= mBuffers->FrameBuffers.TotalFrames * TheBinkMovieSys.GetUnk10()) {
         mFrameNum = 0;
     }
     BinkNextFrame(mBink);
@@ -638,7 +651,7 @@ void BinkMovieImpl::DiscContentionCheck(Loader *l) {
     CHECK_THREAD;
     FOREACH (it, TheLoadMgr.Loading()) {
         if (*it != l && !dynamic_cast<DirUnloader *>(*it)) {
-            unkbc[*it] = (*it)->LoaderFile();
+            mContention[*it] = (*it)->LoaderFile();
         }
     }
 }
@@ -648,7 +661,7 @@ void BinkMovieImpl::DiscContentionPublish() {
     bool first = true;
     int count = 0;
     String str;
-    FOREACH (it, unkbc) {
+    FOREACH (it, mContention) {
         if (!first) {
             str += ", ";
         }
@@ -661,7 +674,7 @@ void BinkMovieImpl::DiscContentionPublish() {
             str = str.substr(0, 500);
         }
         MILO_NOTIFY("Streaming Bink Thrashed with %d files: (%s)", count, str);
-        unkbc.clear();
+        mContention.clear();
     }
 }
 
@@ -673,7 +686,7 @@ void BinkMovieImpl::SharedFinishOpen(bool b1) {
         std::vector<BINK *> binks;
         for (int i = 0; i < sActiveMovies.size(); i++) {
             BinkMovieImpl *impl = sActiveMovies[i];
-            if (!impl->mInternalBufs) {
+            if (!impl->mBuffers) {
                 movies.push_back(impl);
                 binks.push_back(impl->mBink);
             }
@@ -682,8 +695,8 @@ void BinkMovieImpl::SharedFinishOpen(bool b1) {
         if (mibs) {
             for (int i = 0; i < movies.size(); i++) {
                 BinkMovieImpl *impl = movies[i];
-                impl->mInternalBufs = mibs;
-                mibs->unkbc++;
+                impl->mBuffers = mibs;
+                mibs->mShareCount++;
                 impl->FinishOpen();
             }
         }
@@ -738,7 +751,7 @@ void BinkMovieImpl::MovieClose() {
 void BinkMovieImpl::FinishOpen() {
     CHECK_THREAD;
     if (!mBink) {
-        MILO_NOTIFY("BinkOpen \'%s\' error: %s", mName, BinkGetError());
+        MILO_NOTIFY("BinkOpen \'%s\' error: %s", mPath, BinkGetError());
     } else {
         BinkSetSoundOnOff(mBink, mMute == 0);
         BINKSUMMARY summary;
@@ -753,7 +766,7 @@ void BinkMovieImpl::FinishOpen() {
             width_fixed += width_low_4 != 0 ? 16 - width_low_4 : 0;
             MILO_FAIL(
                 "Bink movie %s must have multiples of 16 for its width and height.\nTry changing from %d x %d to %d x %d.",
-                mName.c_str(),
+                mPath.c_str(),
                 summary.Width,
                 summary.Height,
                 width_fixed,
