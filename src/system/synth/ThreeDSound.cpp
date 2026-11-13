@@ -144,10 +144,7 @@ void ThreeDSound::Highlight() {
             Transform xfm = WorldXfm();
             Vector3 vscale;
             MakeScale(xfm.m, vscale);
-            vscale.x = 1.0f / vscale.x;
-            vscale.y = 1.0f / vscale.y;
-            vscale.z = 1.0f / vscale.z;
-            Scale(vscale, xfm.m, xfm.m);
+            Scale(Vector3(1 / vscale.x, 1 / vscale.y, 1 / vscale.z), xfm.m, xfm.m);
             if (mMinimumFalloff <= mRadius) {
                 UtilDrawSphere(
                     WorldXfm().v, mMinimumFalloff, Hmx::Color(1, 0, 0), nullptr
