@@ -20,6 +20,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x11)
     NEW_OBJ(PostProcer)
+    REGISTER_OBJ(PostProcer)
 
 protected:
     PostProcer();

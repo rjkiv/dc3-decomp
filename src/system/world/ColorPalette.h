@@ -25,6 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(ColorPalette)
+    REGISTER_OBJ(ColorPalette)
 
     int NumColors() const { return mColors.size(); }
     const Hmx::Color &GetColor(int idx) const {

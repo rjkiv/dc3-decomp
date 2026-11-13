@@ -20,6 +20,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(LightHue)
+    REGISTER_OBJ(LightHue)
 
     void TranslateColor(Hmx::Color const &, Hmx::Color &);
 

@@ -78,6 +78,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(WorldDir)
+    REGISTER_OBJ(WorldDir)
 
     static void Init();
 

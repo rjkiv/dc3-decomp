@@ -42,7 +42,7 @@ public:
     virtual char const *GetProcType() { return "NgSpotlightDrawer"; }
 
     NEW_OBJ(NgSpotlightDrawer);
-
+    REGISTER_OBJ(NgSpotlightDrawer);
     static void Init();
 
     SpotlightResources &SR() {

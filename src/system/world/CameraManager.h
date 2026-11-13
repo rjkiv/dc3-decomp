@@ -40,6 +40,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(CameraManager)
+    REGISTER_OBJ(CameraManager)
     static Rand sRand;
     static int sSeed;
 

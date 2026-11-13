@@ -19,21 +19,21 @@
 
 void WorldInit() {
     WorldDir::Init();
-    REGISTER_OBJ_FACTORY(BeatClock)
-    REGISTER_OBJ_FACTORY(CameraManager)
-    REGISTER_OBJ_FACTORY(ColorPalette)
-    REGISTER_OBJ_FACTORY(WorldCrowd)
-    REGISTER_OBJ_FACTORY(WorldCrowd3DCharHandle)
+    BeatClock::Register();
+    CameraManager::Register();
+    ColorPalette::Register();
+    WorldCrowd::Register();
+    WorldCrowd3DCharHandle::Register();
     CamShot::Init();
-    REGISTER_OBJ_FACTORY(WorldReflection)
+    WorldReflection::Register();
     Spotlight::Init();
-    REGISTER_OBJ_FACTORY(LightPreset)
-    REGISTER_OBJ_FACTORY(LightHue)
+    LightPreset::Register();
+    LightHue::Register();
     SpotlightDrawer::Init();
-    REGISTER_OBJ_FACTORY(SpotlightEnder)
-    REGISTER_OBJ_FACTORY(WorldInstance)
-    REGISTER_OBJ_FACTORY(PhysicsVolume)
-    REGISTER_OBJ_FACTORY(PostProcer)
+    SpotlightEnder::Register();
+    WorldInstance::Register();
+    PhysicsVolume::Register();
+    PostProcer::Register();
     NgSpotlightDrawer::Init();
     PreloadSharedSubdirs("world");
 }

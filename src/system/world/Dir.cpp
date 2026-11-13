@@ -626,7 +626,7 @@ void WorldDir::ClearDeltas() {
 }
 
 void WorldDir::Init() {
-    REGISTER_OBJ_FACTORY(WorldDir)
+    WorldDir::Register();
     SetTheWorld(nullptr);
     sGlowMat = Hmx::Object::New<RndMat>();
     sGlowMat->SetBlend(BaseMaterial::kBlendSrcAlpha);

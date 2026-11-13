@@ -165,6 +165,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(LightPreset)
+    REGISTER_OBJ(LightPreset)
 
     int GetCurrentKeyframe() const;
     bool PlatformOk() const;

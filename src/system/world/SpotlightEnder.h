@@ -21,6 +21,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(SpotlightEnder)
+    REGISTER_OBJ(SpotlightEnder)
 
 protected:
     SpotlightEnder();

@@ -1342,7 +1342,7 @@ void CamShot::ListAnimChildren(std::list<RndAnimatable *> &children) const {
 }
 
 void CamShot::Init() {
-    REGISTER_OBJ_FACTORY(CamShot)
+    CamShot::Register();
     sAnimTarget = Hmx::Object::New<Hmx::Object>();
 }
 
