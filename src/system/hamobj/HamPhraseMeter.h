@@ -23,6 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10)
     NEW_OBJ(HamPhraseMeter)
+    REGISTER_OBJ(HamPhraseMeter)
 
     void SetRatingFrac(float, float);
 

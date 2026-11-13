@@ -81,6 +81,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x68)
     NEW_OBJ(HamMove)
+    REGISTER_OBJ(HamMove)
     static float sMinFrameDistBeats;
 
     void SetTexture(RndTex *);

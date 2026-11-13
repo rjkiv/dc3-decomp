@@ -75,6 +75,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(HamNavProvider)
+    REGISTER_OBJ(HamNavProvider)
     static void Init();
 
     void SetChecked(Symbol, bool, bool);

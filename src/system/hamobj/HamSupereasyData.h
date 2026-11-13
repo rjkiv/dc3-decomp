@@ -28,6 +28,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(HamSupereasyData)
+    REGISTER_OBJ(HamSupereasyData)
 
 protected:
     HamSupereasyData();

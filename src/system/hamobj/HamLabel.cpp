@@ -126,4 +126,4 @@ void HamLabel::FinishValueChange() {
     UITransitionHandler::FinishValueChange();
 }
 
-void HamLabel::Init() { REGISTER_OBJ_FACTORY(HamLabel); }
+void HamLabel::Init() { HamLabel::Register(); }

@@ -25,6 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(SongDifficultyDisplay)
+    REGISTER_OBJ(SongDifficultyDisplay)
     static void Init();
 
     void SetLevel(int);

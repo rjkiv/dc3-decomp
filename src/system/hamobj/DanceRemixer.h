@@ -26,6 +26,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(DanceRemixer)
+    REGISTER_OBJ(DanceRemixer)
     void SetJump(int aFromMeasure, int aToMeasure);
     void ClearJump();
     float JumpedBeat(float b) const;

@@ -48,6 +48,7 @@ public:
     MoveGraph &operator=(const MoveGraph &);
 
     NEW_OBJ(MoveGraph);
+    REGISTER_OBJ(MoveGraph);
 
     std::map<Symbol, MoveParent *> mNodes; // 0x2c
     std::map<Symbol, MoveVariant *> mVariantsByName; // 0x44

@@ -22,6 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(OriginalChoreoRemixer)
+    REGISTER_OBJ(OriginalChoreoRemixer)
 
 protected:
     OriginalChoreoRemixer();

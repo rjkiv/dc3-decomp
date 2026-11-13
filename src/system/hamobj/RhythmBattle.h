@@ -32,6 +32,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x23)
     NEW_OBJ(RhythmBattle)
+    REGISTER_OBJ(RhythmBattle)
 
     void End();
     void ResetCombo();

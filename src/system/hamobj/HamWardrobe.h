@@ -23,6 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2B)
     NEW_OBJ(HamWardrobe)
+    REGISTER_OBJ(HamWardrobe)
 
     HamCharacter *GetCharacter(int idx) const;
     HamCharacter *GetBackup(int idx) const;

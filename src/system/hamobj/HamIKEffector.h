@@ -56,6 +56,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(HamIKEffector)
+    REGISTER_OBJ(HamIKEffector)
 
 protected:
     HamIKEffector();

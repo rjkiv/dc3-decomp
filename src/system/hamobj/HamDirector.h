@@ -76,6 +76,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x6D)
     NEW_OBJ(HamDirector)
+    REGISTER_OBJ(HamDirector)
 
     WorldDir *GetWorld();
     float GetMainFaceOverrideWeight();

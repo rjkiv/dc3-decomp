@@ -74,6 +74,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2F)
     NEW_OBJ(MoveDir)
+    REGISTER_OBJ(MoveDir)
 
     void ClearLimbFeedback(int);
     void SetFiltersEnabled(bool);

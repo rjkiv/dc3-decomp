@@ -26,6 +26,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x11)
     NEW_OBJ(MiniLeaderboardDisplay)
+    REGISTER_OBJ(MiniLeaderboardDisplay)
     static void Init();
 
 protected:

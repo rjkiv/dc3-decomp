@@ -368,7 +368,7 @@ DataNode GetPlayableOutfits(DataArray *a) {
 }
 
 void HamGameData::Init() {
-    REGISTER_OBJ_FACTORY(HamGameData);
+    HamGameData::Register();
     RELEASE(TheGameData);
     TheGameData = new HamGameData();
     TheGameData->SetName("gamedata", ObjectDir::Main());

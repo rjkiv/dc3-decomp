@@ -102,7 +102,7 @@ void StarsDisplay::DrawShowing() {
     }
 }
 
-void StarsDisplay::Init() { REGISTER_OBJ_FACTORY(StarsDisplay); }
+void StarsDisplay::Init() { StarsDisplay::Register(); }
 
 void StarsDisplay::Update() {
     MILO_ASSERT(mResourceDir, 0x2C);

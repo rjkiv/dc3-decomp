@@ -46,7 +46,7 @@ BEGIN_COPYS(HamPhotoDisplay)
     END_COPYING_MEMBERS
 END_COPYS
 
-void HamPhotoDisplay::Init() { REGISTER_OBJ_FACTORY(HamPhotoDisplay); }
+void HamPhotoDisplay::Init() { HamPhotoDisplay::Register(); }
 
 INIT_REVS(1, 0)
 

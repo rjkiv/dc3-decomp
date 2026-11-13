@@ -32,6 +32,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18)
     NEW_OBJ(HamRegulate)
+    REGISTER_OBJ(HamRegulate)
 
     void RegulateWay(Waypoint *, float);
     void SetWaypoint(Waypoint *w) { mWay = w; }

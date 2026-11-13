@@ -66,6 +66,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(HamCharacter)
+    REGISTER_OBJ(HamCharacter)
     static void Init();
     static void Terminate();
 

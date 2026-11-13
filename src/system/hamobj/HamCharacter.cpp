@@ -348,7 +348,7 @@ void HamCharacter::RemovingObject(Hmx::Object *obj) {
 }
 
 void HamCharacter::Init() {
-    REGISTER_OBJ_FACTORY(HamCharacter);
+    HamCharacter::Register();
     TheDebug.AddExitCallback(HamCharacter::Terminate);
     const char *path = "";
     DataArray *cfg = SystemConfig("objects", "HamCharacter");

@@ -65,6 +65,6 @@ void MiniLeaderboardDisplay::OldResourcePreload(BinStream &bs) {
     mResourceDir.SetName(name, true);
 }
 
-void MiniLeaderboardDisplay::Init() { REGISTER_OBJ_FACTORY(MiniLeaderboardDisplay); }
+void MiniLeaderboardDisplay::Init() { MiniLeaderboardDisplay::Register(); }
 
 void MiniLeaderboardDisplay::Update() {}

@@ -23,6 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(HamIKSkeleton)
+    REGISTER_OBJ(HamIKSkeleton)
 
     void NeutralLocalPos(RndTransformable *, Vector3 &);
     void NeutralWorldXfm(RndTransformable *, Transform &);

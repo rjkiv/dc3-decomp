@@ -15,6 +15,7 @@ public:
     static int mPreferStreaming;
 
     NEW_OBJ(HamSong)
+    REGISTER_OBJ(HamSong)
 
 private:
     // Song

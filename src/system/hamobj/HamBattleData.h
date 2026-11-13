@@ -49,6 +49,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(HamBattleData)
+    REGISTER_OBJ(HamBattleData)
 
 protected:
     HamBattleData();

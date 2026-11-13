@@ -41,6 +41,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2D)
     NEW_OBJ(SongCollision)
+    REGISTER_OBJ(SongCollision)
 
     void Update(MoveDir *moves);
     bool Equals(SongCollision *collision);

@@ -18,6 +18,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10)
     NEW_OBJ(CrazeHollaback)
+    REGISTER_OBJ(CrazeHollaback)
 
 protected:
     CrazeHollaback();

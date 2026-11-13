@@ -32,6 +32,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x11)
     NEW_OBJ(HamScrollSpeedIndicator)
+    REGISTER_OBJ(HamScrollSpeedIndicator)
 
     void Show(bool);
     void HandleEnter();

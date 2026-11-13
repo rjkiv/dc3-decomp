@@ -2,6 +2,7 @@
 #include "hamobj/HamMove.h"
 #include "math/Key.h"
 #include "obj/Msg.h"
+#include "obj/Object.h"
 #include "ui/UIComponent.h"
 #include "ui/UILabel.h"
 #include "ui/UITransitionHandler.h"
@@ -32,6 +33,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x20)
     NEW_OBJ(HamLabel)
+    REGISTER_OBJ(HamLabel)
     static void Init();
 
     void SetCanHaveFocus(bool focus) { mCanHaveFocus = focus; }

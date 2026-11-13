@@ -49,6 +49,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x21)
     NEW_OBJ(HollaBackMinigame)
+    REGISTER_OBJ(HollaBackMinigame)
 
 protected:
     HollaBackMinigame();

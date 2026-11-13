@@ -19,6 +19,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(SuperEasyRemixer)
+    REGISTER_OBJ(SuperEasyRemixer)
 
     void SendDowngradeDatapoint(Symbol, int, Symbol, int, int, int, Symbol);
     static void LoadAllVariants();

@@ -25,6 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x12)
     NEW_OBJ(TransConstraint)
+    REGISTER_OBJ(TransConstraint)
     void SnapToParent();
     void SetParent(RndTransformable *parent) { mParent = parent; }
     void SetEnabled(bool enabled) { mEnabled = enabled; }

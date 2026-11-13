@@ -22,6 +22,7 @@ public:
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
     NEW_OBJ(PoseFatalities)
+    REGISTER_OBJ(PoseFatalities)
 
     void DrawDebug();
     void Enter();

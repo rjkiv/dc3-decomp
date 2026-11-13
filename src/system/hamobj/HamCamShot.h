@@ -111,6 +111,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(HamCamShot)
+    REGISTER_OBJ(HamCamShot)
 
 private:
     DataNode OnTestDelta(DataArray *);

@@ -50,6 +50,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2D)
     NEW_OBJ(PracticeSection)
+    REGISTER_OBJ(PracticeSection)
 
     const std::vector<PracticeStep> &Steps() const;
     void ClearSteps();

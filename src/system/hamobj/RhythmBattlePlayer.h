@@ -50,6 +50,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(RhythmBattlePlayer)
+    REGISTER_OBJ(RhythmBattlePlayer)
 
     void SetInTheZone(int zoned, bool transition, bool bad);
     float InAnimBeatLength() const;

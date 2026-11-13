@@ -1,5 +1,6 @@
 #pragma once
 #include "hamobj/HamLabel.h"
+#include "obj/Object.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Dir.h"
 #include "ui/ResourceDirPtr.h"
@@ -29,6 +30,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(MeterDisplay)
+    REGISTER_OBJ(MeterDisplay)
     static void Init();
 
     void AnimateToValue(int, int);
