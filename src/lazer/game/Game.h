@@ -77,7 +77,7 @@ public:
     void SetTimePaused(bool);
     void LoadNewVenue(Symbol);
     void LoadNewSongMoves(Symbol, bool);
-    void SetGamePaused(bool, bool, bool);
+    void SetGamePaused(bool paused, bool playing, bool pauseSFX);
     void LoadNewSong(Symbol, Symbol);
     void StartIntro();
     void SetRealTime(bool);

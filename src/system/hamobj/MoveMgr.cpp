@@ -18,6 +18,7 @@
 #include "os/System.h"
 #include "rndobj/PropAnim.h"
 #include "rndobj/PropKeys.h"
+#include "stl/_pair.h"
 #include <algorithm>
 #include <climits>
 
@@ -434,21 +435,29 @@ void MoveMgr::SongInit() {
         mExpertPracticeKeys = nullptr;
 }
 
-void MoveMgr::NextMovesToShow(DataArray *a, int measure) {
-    MILO_LOG("MoveMgr: next moves to show for measure %d\n", measure);
-    if (mTempSongChoices.size() < measure + 1) {
-        mTempSongChoices.resize(measure + 1);
+void MoveMgr::NextMovesToShow(DataArray *result, int iMoveIndex) {
+    MILO_LOG("MoveMgr: next moves to show for measure %d\n", iMoveIndex);
+    if (mTempSongChoices.size() < iMoveIndex + 1) {
+        mTempSongChoices.resize(iMoveIndex + 1);
     }
-    if (!mTempSongChoices[measure].mMoves[0]) {
+
+    const auto moves = mTempSongChoices[iMoveIndex].mMoves;
+    if (!moves[0]) {
         MILO_LOG("MoveMgr: oh no they are not ready yet!\n");
-        PrepareNextChoiceSet(measure - 1);
+        PrepareNextChoiceSet(iMoveIndex - 1);
     }
+
+    int count = 0;
     for (int i = 0; i < 4; i++) {
-        MILO_LOG("\t%s\n", mTempSongChoices[measure].mMoves[i]->GetName());
+        if (moves[i]) {
+            MILO_LOG("\t%s\n", moves[i]->GetName());
+            count++;
+        } else
+            break;
     }
-    a->Resize(4);
+    result->Resize(4);
     for (int i = 0; i < 4; i++) {
-        a->Node(i) = mTempSongChoices[measure].mMoves[i]->GetName();
+        result->Node(i) = moves[i % count]->GetName();
     }
 }
 

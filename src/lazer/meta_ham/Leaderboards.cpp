@@ -277,14 +277,15 @@ void Leaderboards::UploadScores(HamProfile *profile) {
     }
 }
 
-Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
+Symbol Leaderboards::ShowGamercard(int index, HamProfile *pRequestingProfile) {
     static Symbol display_gamercard_pad_error("display_gamercard_pad_error");
-    if ((0 <= i) && (i <= mRows.size())) {
-        if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
+    if ((0 <= index) && (index <= mRows.size())) {
+        if (ThePlatformMgr.IsSignedIntoLive(pRequestingProfile->GetPadNum())) {
             if (mRows.size() != 0) {
-                const OnlineID id(mRows[i].xuid);
-                ShowGamercardResult result =
-                    ThePlatformMgr.ShowGamercardForPadNum(profile->GetPadNum(), &id);
+                const OnlineID onlineID(mRows[index].xuid);
+                ShowGamercardResult result = ThePlatformMgr.ShowGamercardForPadNum(
+                    pRequestingProfile->GetPadNum(), &onlineID
+                );
                 if (result == kGamercardPrivilegeError) {
                     static Symbol display_gamercard_privilege_error(
                         "display_gamercard_privilege_error"
@@ -298,6 +299,8 @@ Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
                 }
             }
             return gNullStr;
+        } else {
+            return display_gamercard_pad_error;
         }
     }
     return display_gamercard_pad_error;
