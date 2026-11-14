@@ -35,12 +35,12 @@ public:
 
     SeqInst *MakeInst();
     /** "Play the sequence" */
-    SeqInst *Play(float, float, float);
+    SeqInst *Play(float vol, float pan, float transpose);
     /** "Stop all instances of this sequence" */
-    void Stop(bool);
+    void Stop(bool force);
 
 protected:
-    void OnTriggerSound(int);
+    void OnTriggerSound(int play);
     DataNode OnPlay(DataArray *);
 
     ObjPtrList<SeqInst> mInsts; // 0x38
@@ -126,10 +126,10 @@ public:
     bool GetAllowRepeats() const { return mAllowRepeats; }
     void AddToPlayedHistory(int idx);
     bool HasPlayed(int idx) {
-        std::list<int>::reverse_iterator it;
-        for (it = mPlayHistory.rbegin(); it != mPlayHistory.rend(); it++) {
-            if (*it == idx)
+        for (auto it = mPlayHistory.begin(); it != mPlayHistory.end(); it++) {
+            if (idx == *it) {
                 return true;
+            }
         }
         return false;
     }

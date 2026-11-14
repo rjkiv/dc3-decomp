@@ -3,9 +3,10 @@
 #include "math/Rand.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
+#include "os/Debug.h"
 #include "utl/Std.h"
 
-bool sForceSerialSequences;
+static bool sForceSerialSequences;
 
 namespace {
     float RandomVal(float f1, float f2) {
@@ -353,6 +354,30 @@ int RandomGroupSeq::NextIndex() {
     return mNextPlayIndex;
 }
 
+void RandomGroupSeq::PickNextIndex() {
+    MILO_ASSERT(GetNumSimul() == 1 || Children().size() == 1, 0x1B2);
+    if (!sForceSerialSequences) {
+        mNextPlayIndex = RandomInt(0, Children().size());
+    } else {
+        mNextPlayIndex = (mNextPlayIndex + 1) % (int)Children().size();
+    }
+
+    if (Children().size() > 1 && !mAllowRepeats) {
+        if (mForceChooseIndex > 0) {
+            mNextPlayIndex = mForceChooseIndex;
+        } else {
+            while (HasPlayed(mNextPlayIndex)) {
+                if (!sForceSerialSequences) {
+                    mNextPlayIndex = RandomInt(0, Children().size());
+                } else {
+                    mNextPlayIndex = (mNextPlayIndex + 1) % (int)Children().size();
+                }
+            }
+        }
+    }
+    AddToPlayedHistory(mNextPlayIndex);
+}
+
 void RandomGroupSeq::ForceNextIndex(int i) {
     MILO_ASSERT(GetNumSimul() == 1 || Children().size() == 1, 0x1E0);
     if (i < 0 || i > Children().size() - 1) {
@@ -580,7 +605,45 @@ void GroupSeqInst::SetTranspose(float f) {
 #pragma region RandomGroupSeqInst
 
 RandomGroupSeqInst::RandomGroupSeqInst(RandomGroupSeq *seq)
-    : GroupSeqInst(seq, false), mIt(mSeqs.end()) {}
+    : GroupSeqInst(seq, false), mIt(mSeqs.end()) {
+    mNumSeqs = seq->GetNumSimul();
+    auto &children = seq->Children();
+    int numChildren = children.size();
+    int u6 = Min<int>(mNumSeqs, numChildren);
+    if (u6 == 1) {
+        int nextIdx = seq->NextIndex();
+        int mod = nextIdx % numChildren;
+        seq->PickNextIndex();
+        int idx = 0;
+        FOREACH (it, children) {
+            if (idx == mod) {
+                SeqInst *inst = (*it)->MakeInst();
+                if (inst) {
+                    mSeqs.push_back();
+                    mSeqs.back() = inst;
+                }
+                break;
+            }
+            idx++;
+        }
+    } else {
+        int n = numChildren;
+        while (u6 != 0) {
+            FOREACH (it, children) {
+                if (u6 == n || RandomFloat() <= (float)u6 / (float)n) {
+                    SeqInst *inst = (*it)->MakeInst();
+                    if (inst) {
+                        mSeqs.push_back();
+                        mSeqs.back() = inst;
+                    }
+                    u6--;
+                }
+                n--;
+            }
+        }
+    }
+    mIt = mSeqs.begin();
+}
 
 void RandomGroupSeqInst::StartImpl() {
     for (ObjVector<ObjPtr<SeqInst> >::iterator it = mIt; it != mSeqs.end(); it++) {
@@ -609,12 +672,12 @@ void RandomGroupSeqInst::Poll() {
 #pragma region RandomIntervalGroupSeqInst
 
 RandomIntervalGroupSeqInst::RandomIntervalGroupSeqInst(RandomIntervalGroupSeq *seq)
-    : GroupSeqInst(seq, false), unk4c(seq->Children().size()), mRunning(false) {
+    : GroupSeqInst(seq, false), mNextTimes(seq->Children().size()), mRunning(false) {
     mMaxSimultaneous = seq->GetMaxSimul();
     mAvgIntervalSecs = seq->GetAvgInterval();
     mIntervalSpread = seq->GetIntervalSpread();
     for (int i = 0; i < seq->Children().size(); i++) {
-        unk4c[i] = -1.0f;
+        mNextTimes[i] = -1.0f;
     }
 }
 
@@ -629,7 +692,7 @@ void RandomIntervalGroupSeqInst::Stop() {
 }
 
 void RandomIntervalGroupSeqInst::StartImpl() {
-    for (int i = 0; i < unk4c.size(); i++) {
+    for (int i = 0; i < mNextTimes.size(); i++) {
         ComputeNextTime(i);
     }
     mRunning = true;
@@ -666,10 +729,10 @@ void SerialGroupSeqInst::Poll() {
     while (mIt != mSeqs.end()) {
         if ((*mIt) && (*mIt)->IsRunning())
             return;
-        if (mIt++ != mSeqs.end()) {
-            SeqInst *si = (*mIt);
-            if (si)
-                si->Start();
+        ++mIt;
+        if (mIt != mSeqs.end()) {
+            if (*mIt)
+                (*mIt)->Start();
         }
     }
 }
