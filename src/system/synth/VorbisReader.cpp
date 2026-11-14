@@ -575,7 +575,8 @@ bool VorbisReader::DecodeThreadPoll() {
         return false;
     }
     for (int i = 0; i < mNumChannels; i++) {
-        mThreadBuffers[i].clear(); // ???
+        auto &cur = mThreadBuffers[i];
+        cur.erase(cur.begin(), cur.begin() + mThreadBufferConsumed);
     }
     if (mThreadBufferStart != -1) {
         mThreadBufferStart += mThreadBufferConsumed;
@@ -584,7 +585,37 @@ bool VorbisReader::DecodeThreadPoll() {
     bool ret = TryDecode();
     if (QueuedOutputSamples() > 0) {
         float **pcmPtr;
-        vorbis_synthesis_pcmout(mVorbisDsp, &pcmPtr);
-        // more
+        int pcmRet = vorbis_synthesis_pcmout(mVorbisDsp, &pcmPtr);
+        int numBufs = mThreadBuffers[0].size();
+        int i14 = 0x1000 - numBufs;
+        int i12 = Min(i14, pcmRet);
+        if (i12 > 0) {
+            s64 i10 = mVorbisDsp->granulepos - pcmRet;
+            if (mThreadBufferStart == -1 && i10 >= 0) {
+                mThreadBufferStart = i10 - numBufs;
+            }
+            if (mThreadBufferStart != -1 && i10 >= 0
+                && i10 != numBufs + mThreadBufferStart) {
+                printf(
+                    "start = %i cur = %i got = %i\n",
+                    (int)mThreadBufferStart,
+                    numBufs,
+                    (int)i10
+                );
+            }
+            int i14_2 = Min(i14, pcmRet);
+            for (int i = 0; i < mNumChannels; i++) {
+                mThreadBuffers[i].resize(i14_2 + numBufs);
+                for (int j = 0; j < i14_2; j++) {
+                    mThreadBuffers[i][j + numBufs] =
+                        Clamp(-32767.0f, 32767.0f, pcmPtr[i][j] * 32767.0f);
+                }
+            }
+            ret = true;
+        } else {
+            ret = i14 != 0 ? ret : false;
+        }
+        vorbis_synthesis_read(mVorbisDsp, i12);
     }
+    return ret;
 }
