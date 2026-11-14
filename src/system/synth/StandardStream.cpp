@@ -118,7 +118,29 @@ float StandardStream::GetTime() {
         return mStartMs;
 }
 
-// float StandardStream::GetJumpBackTotalTime() { return mAccumulatedLoopbacks; }
+float StandardStream::GetJumpBackTotalTime(float f1) const {
+    bool b2 = true;
+    float f5 = 0;
+    float f9 = 0;
+    for (int i = mJumpInstList.size() - 1; i >= 0; i--) {
+        const JumpInstance &cur = mJumpInstList[i];
+        if (f1 >= cur.mPlayedMs) {
+            f5 = cur.mPlayedMs;
+            f9 = cur.mTotalOffsetMs;
+            break;
+        }
+        b2 = false;
+    }
+    if (b2 && mJumpFromSamples != mJumpToSamples) {
+        float f8 = f9 + f5;
+        float fromMs = SampToMs(mJumpFromSamples);
+        float toMs = SampToMs(mJumpToSamples);
+        if (f8 < fromMs && (f1 - f5) + f8 >= fromMs) {
+            f9 += toMs - fromMs;
+        }
+    }
+    return f9;
+}
 
 float StandardStream::GetInSongTime() {
     float time = GetTime();
@@ -487,12 +509,8 @@ float StandardStream::GetBufferAheadTime() const {
 void StandardStream::DoJump() {
     MILO_ASSERT(mJumpFromSamples != 0, 0x316);
     if (!mJumpFile.empty()) {
-        if (mFile) {
-            delete mFile;
-        }
-        if (mRdr) {
-            delete mRdr;
-        }
+        delete mFile;
+        delete mRdr;
         mFile = NewFile(mJumpFile.c_str(), 2);
         if (!mFile) {
             MILO_FAIL("\nCould not open %s", mJumpFile.c_str());
@@ -680,4 +698,30 @@ void StandardStream::PollStream() {
 
     UpdateVolumes();
     UpdateTime();
+}
+
+int StandardStream::ConsumeData(void **pcmIn, int samples, int startSamp) {
+    if (mGetInfoOnly) {
+        return 0;
+    }
+    int numChannels = mChannels.size();
+    int numPhysicalChannels = numChannels - mVirtualChans;
+    MILO_ASSERT(numChannels != 0, 0x1A9);
+    if (startSamp >= 0 && startSamp != mCurrentSamp) {
+        MILO_LOG("sample mismatch: expected %i, got %i\n", mCurrentSamp, startSamp);
+        mCurrentSamp = startSamp;
+    }
+
+    float *pcm[30];
+    MILO_ASSERT(numChannels < DIM(pcm), 0x1B3);
+
+    for (int i = 0; i < numChannels; i++) {
+        if (i < numPhysicalChannels) {
+            pcm[i] = ((float **)pcmIn)[i];
+        } else {
+            pcm[i] = (float *)mVirtBufs[i - numPhysicalChannels];
+        }
+    }
+
+    return 0;
 }

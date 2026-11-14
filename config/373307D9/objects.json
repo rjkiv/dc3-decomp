@@ -685,7 +685,7 @@
             "system/synth/SampleData.cpp": "Matching",
             "system/synth/SampleInst.cpp": "Matching",
             "system/synth/SampleZone.cpp": "Matching",
-            "system/synth/Sequence.cpp": "NonMatching",
+            "system/synth/Sequence.cpp": "Matching",
             "system/synth/Sfx.cpp": "Matching",
             "system/synth/SfxMap.cpp": "Matching",
             "system/synth/Sound.cpp": "Matching",

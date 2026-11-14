@@ -611,6 +611,7 @@ RandomGroupSeqInst::RandomGroupSeqInst(RandomGroupSeq *seq)
     int numChildren = children.size();
     int u6 = Min<int>(mNumSeqs, numChildren);
     if (u6 == 1) {
+        volatile int lol = numChildren;
         int nextIdx = seq->NextIndex();
         int mod = nextIdx % numChildren;
         seq->PickNextIndex();

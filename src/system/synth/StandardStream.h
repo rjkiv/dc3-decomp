@@ -97,7 +97,7 @@ public:
     bool IsPastStreamJumpPointOfNoReturn();
     void InitInfo(int, int, bool, int);
     float GetBufferAheadTime() const;
-    int ConsumeData(void **, int, int);
+    int ConsumeData(void **pcmIn, int samples, int startSamp);
     void SetBufSecs(float secs) { mBufSecs = secs; }
     int GetNumInfoChannels() { return mInfoChannels; }
 
