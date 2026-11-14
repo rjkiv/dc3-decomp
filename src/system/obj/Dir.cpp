@@ -1171,8 +1171,8 @@ DataNode ObjectDir::OnFind(DataArray *da) {
 }
 
 void ObjectDir::PreInit(int hashSize, int stringSize) {
-    REGISTER_OBJ_FACTORY(Hmx::Object);
-    REGISTER_OBJ_FACTORY(ObjectDir);
+    Hmx::Object::Register();
+    ObjectDir::Register();
     sMainDir = new ObjectDir();
     sMainDir->Reserve(hashSize, stringSize);
     sMainDir->SetName("main", sMainDir);

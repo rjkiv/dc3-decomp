@@ -21,4 +21,5 @@ public:
     virtual void Print(const char *);
 
     NEW_OBJ(TextFile);
+    REGISTER_OBJ(TextFile)
 };

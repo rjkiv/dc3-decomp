@@ -132,7 +132,7 @@ void DataInit() {
     DataInitFuncs();
     TheLoadMgr.RegisterFactory("dta", DataFactory);
     TheLoadMgr.RegisterFactory("dtx", DataFactory);
-    REGISTER_OBJ_FACTORY(TextFile);
+    TextFile::Register();
     gDataMacroWarning = OptionBool("no_macro_warn", true);
     ObjectDir::PreInit(19997, 150000);
 }

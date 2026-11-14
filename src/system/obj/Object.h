@@ -1259,6 +1259,7 @@ namespace Hmx {
         void SetProperty(DataArray *prop, const DataNode &val);
 
         NEW_OBJ(Hmx::Object);
+        REGISTER_OBJ(Hmx::Object);
         /** Given an Object derivative's class name, construct a new instance of the
          * Object. */
         static Object *NewObject(Symbol name);

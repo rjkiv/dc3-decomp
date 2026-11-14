@@ -356,6 +356,7 @@ public:
     static std::map<std::pair<Symbol, Symbol>, bool> sSuperClassMap;
 
     NEW_OBJ(ObjectDir);
+    REGISTER_OBJ(ObjectDir)
     OBJ_MEM_OVERLOAD(0x111);
 
 protected:
