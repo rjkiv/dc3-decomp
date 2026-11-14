@@ -17,6 +17,7 @@
 #include "hamobj/DanceRemixer.h"
 #include "hamobj/DancerSequence.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/HamAudio.h"
 #include "hamobj/HamBattleData.h"
 #include "hamobj/HamCamShot.h"
 #include "hamobj/HamCamTransform.h"
@@ -81,7 +82,10 @@ void HamInit() {
         HamBattleData::Register();
         SongLayout::Register();
         HamDriver::Register();
-        REGISTER_OBJ_FACTORY(Hmx::Object);
+        // this is one of the following:
+        // HamAudio, HamMaster, HamPlayerData, CharCameraInput
+        // i'm gonna put down HamAudio
+        HamAudio::Register();
         HamGameData::Init();
         HamIconMan::Register();
         HamIKEffector::Register();

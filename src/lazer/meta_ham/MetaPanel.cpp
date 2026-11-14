@@ -159,7 +159,8 @@ void MetaPanel::Init() {
     SongSelectPlaylistPanel::Register();
     SongStatusMgr::Init();
     TexLoadPanel::Register();
-    REGISTER_OBJ_FACTORY(Hmx::Object)
+    // i dunno man
+    Hmx::Object::Register();
     TheMemcardMgr.Init();
     MetagameRank::Preinit();
     TheProfileMgr.Init();

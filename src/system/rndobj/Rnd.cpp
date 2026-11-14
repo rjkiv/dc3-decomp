@@ -14,6 +14,7 @@
 #include "os/Timer.h"
 #include "rnddx9/Tex.h"
 #include "rndobj/AmbientOcclusion.h"
+#include "rndobj/Anim.h"
 #include "rndobj/AnimFilter.h"
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Cam.h"
@@ -344,9 +345,9 @@ void Rnd::PreInit() {
     RndShockwave::Register();
     DOFProc::Init();
     TexProc::Init();
-    // this is likely some other rndobj without a NewObject overload
+    // this is some other rndobj without a Register overload
     // likeliest candidate would be RndAnimatable, but I can't confirm for sure
-    REGISTER_OBJ_FACTORY(Hmx::Object)
+    RndAnimatable::Register();
     InitShaderOptions();
     mRateOverlay = RndOverlay::Find("rate");
     mHeapOverlay = RndOverlay::Find("heap");
