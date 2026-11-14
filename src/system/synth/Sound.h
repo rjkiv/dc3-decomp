@@ -37,40 +37,51 @@ public:
     // SynthPollable
     virtual const char *GetSoundDisplayName();
     virtual void SynthPoll();
-    virtual void
-    Play(float volume, float pan, float transpose, Hmx::Object *, float delayMs);
-    virtual void Stop(Hmx::Object *, bool);
-    virtual void Pause(bool);
-    virtual bool IsPlaying() const;
+    virtual void Play(
+        float volume,
+        float pan,
+        float transpose,
+        Hmx::Object *event_receiver,
+        float delayMs
+    );
+    virtual void Stop(Hmx::Object *receiver, bool force);
+    virtual void Pause(bool p);
+    virtual bool IsPlaying() const { return !mInsts.empty() || !mDelayedSounds.empty(); }
 
-    void SetVolume(float, Hmx::Object *);
-    void SetSpeed(float, Hmx::Object *);
-    void SetPan(float, Hmx::Object *);
-    void SetSend(FxSend *);
-    void SetReverbMixDb(float);
-    void SetReverbEnable(bool);
-    void SetSynthSample(SynthSample *);
-    void SetMoggClip(MoggClip *);
-    bool DisablePan(DataArray *);
-    void EndLoop(Hmx::Object *);
-    float ElapsedTime();
-    int NumMarkers() const;
-    bool IsMoggReady() const;
-    SynthSample *Sample();
-
-    void SetEventReceiver(Hmx::Object *rcvr) { mEventReceiver = rcvr; }
+    void SetVolume(float v, Hmx::Object *listener);
     float GetVolume() const { return mVol; }
-    bool GetReverbEnable() const { return mReverbEnable; }
+    void SetSpeed(float s, Hmx::Object *listener);
+    //  public: void SetTranspose(float, Hmx::Object*);
+    //  public: float GetTranspose() const;
+    void SetPan(float t, Hmx::Object *listener);
+    float GetPan() const { return mPan; }
+    void SetSend(FxSend *send);
+    FxSend *GetSend() { return mSend; }
+    void SetReverbMixDb(float reverbMixDb);
+    float GetReverbMixDb() { return mReverbMixDb; }
+    void SetReverbEnable(bool reverbEnable);
+    bool GetReverbEnable() { return mReverbEnable; }
+    void SetSynthSample(SynthSample *sample);
+    void SetMoggClip(MoggClip *mogg);
+    void EndLoop(Hmx::Object *listener);
     bool Loop() const { return mLoop; }
-
-    bool SoundEmpty() const { return !mInsts.empty() || !mDelayedSounds.empty(); }
+    SynthSample *Sample();
+    MoggClip *Mogg() { return mMoggClip; }
+    FaderGroup &Faders() { return mFaders; }
+    ADSR *Adsr() { return mADSR; }
+    //  public: stlpmtx_std::vector<SampleMarker >& AccessMarkers();
+    int NumMarkers() const;
+    bool DisablePan(DataArray *unused); // lmao
+    float ElapsedTime();
+    void SetEventReceiver(Hmx::Object *rcvr) { mEventReceiver = rcvr; }
+    bool IsMoggReadyToPlay();
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(Sound)
     REGISTER_OBJ(Sound)
 
 private:
-    void OnTriggerSound(int);
+    void OnTriggerSound(int play);
 
     DataNode OnPlay(DataArray *);
 
@@ -120,4 +131,5 @@ protected:
 
 DECLARE_MESSAGE(SoundPlayMsg, "sound_play")
 SoundPlayMsg(Sound *snd) : Message(Type(), snd) {}
+Sound *GetSound() const { return mData->Obj<Sound>(2); }
 END_MESSAGE
