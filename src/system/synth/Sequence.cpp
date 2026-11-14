@@ -681,8 +681,6 @@ RandomIntervalGroupSeqInst::RandomIntervalGroupSeqInst(RandomIntervalGroupSeq *s
     }
 }
 
-bool RandomIntervalGroupSeqInst::IsRunning() { return mRunning; }
-
 void RandomIntervalGroupSeqInst::Stop() {
     FOREACH (it, mSeqs) {
         if (*it)
@@ -691,11 +689,53 @@ void RandomIntervalGroupSeqInst::Stop() {
     mRunning = false;
 }
 
+bool RandomIntervalGroupSeqInst::IsRunning() { return mRunning; }
+
+void RandomIntervalGroupSeqInst::Poll() {
+    for (auto it = mSeqs.begin(); it != mSeqs.end();) {
+        SeqInst *cur = *it;
+        if (cur && cur->IsRunning()) {
+            ++it;
+        } else {
+            it = mSeqs.erase(it);
+        }
+    }
+
+    float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
+    for (int i = 0; i < mNextTimes.size(); i++) {
+        if (mNextTimes[i] <= secs) {
+            if (mSeqs.size() < mMaxSimultaneous) {
+                int idx = 0;
+                RandomIntervalGroupSeq *owner =
+                    static_cast<RandomIntervalGroupSeq *>(mOwner);
+                FOREACH (it, owner->Children()) {
+                    if (idx == i) {
+                        SeqInst *seq = (*it)->MakeInst();
+                        mSeqs.push_back();
+                        mSeqs.back() = seq;
+                        seq->Start();
+                        break;
+                    }
+                    idx++;
+                }
+            }
+            ComputeNextTime(i);
+        }
+    }
+}
+
 void RandomIntervalGroupSeqInst::StartImpl() {
     for (int i = 0; i < mNextTimes.size(); i++) {
         ComputeNextTime(i);
     }
     mRunning = true;
+}
+
+void RandomIntervalGroupSeqInst::ComputeNextTime(int idx) {
+    if (idx < mNextTimes.size()) {
+        mNextTimes[idx] = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)
+            + RandomVal(mAvgIntervalSecs, mIntervalSpread);
+    }
 }
 
 #pragma endregion
