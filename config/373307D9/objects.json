@@ -694,7 +694,7 @@
             "system/synth/StreamNull.cpp": "Matching",
             "system/synth/StreamReceiver.cpp": "Matching",
             "system/synth/StreamReceiverFile.cpp": "Matching",
-            "system/synth/Synth.cpp": "NonMatching",
+            "system/synth/Synth.cpp": "Matching",
             "system/synth/SynthSample.cpp": "Matching",
             "system/synth/ThreeDSound.cpp": "Matching",
             "system/synth/Utl.cpp": "Matching",

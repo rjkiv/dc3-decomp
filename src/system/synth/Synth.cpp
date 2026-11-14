@@ -258,22 +258,19 @@ void Synth::DestroyPitchShift(FxSendPitchShift *shift) { delete shift; }
 
 float Synth::UpdateOverlay(RndOverlay *o, float y) {
     Hmx::Color white(1, 1, 1);
-    float f24 = (float)TheRnd.Height() * (y + 0.265f);
+    y = (float)TheRnd.Height() * (y + 0.265f);
     if (mDebugStream) {
-        DrawMeterScale(f24);
+        DrawMeterScale(y);
         float volume = mDebugStream->Faders().GetVolume();
-        DrawMeter(f24, volume, 0, "stream");
+        DrawMeter(y, volume, 0, "stream");
         for (int i = 0; i < mDebugStream->GetNumChannels(); i++) {
             DrawMeter(
-                f24,
-                mDebugStream->ChannelFaders(i).GetVolume(),
-                0,
-                MakeString("chan %i", i)
+                y, mDebugStream->ChannelFaders(i).GetVolume(), 0, MakeString("chan %i", i)
             );
         }
     }
     if (!mLevelData.empty()) {
-        DrawMeterScale(f24);
+        DrawMeterScale(y);
     }
     for (int i = 0; i < mLevelData.size(); i++) {
         float rms = RatioToDb(mLevelData[i].mRMS);
@@ -281,12 +278,11 @@ float Synth::UpdateOverlay(RndOverlay *o, float y) {
         if (rms > 2) {
             rms = -30;
         }
-        DrawMeter(f24, rms, peakhold, mLevelData[i].mName.c_str());
+        DrawMeter(y, rms, peakhold, mLevelData[i].mName.c_str());
     }
     auto pollIt = SynthPollable::Pollables().begin();
     char buf[32];
     sprintf(buf, "Total active Sequences: %d", SynthPollable::Pollables().size());
-    y = f24;
     TheRnd.DrawString(buf, Vector2(100, y), white, true);
     y += 12.0f;
     for (; pollIt != SynthPollable::Pollables().end(); ++pollIt) {
@@ -376,7 +372,8 @@ void Synth::RemovePlayHandler(Hmx::Object *obj) { mPlayHandlers.remove(obj); }
 
 void Synth::SendToPlayHandlers(Sound *sound) {
     SoundPlayMsg msg(sound);
-    FOREACH (it, mPlayHandlers) {
+    auto itEnd = mPlayHandlers.end();
+    for (auto it = mPlayHandlers.begin(); it != itEnd; ++it) {
         (*it)->Handle(msg, false);
     }
 }
