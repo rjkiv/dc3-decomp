@@ -141,7 +141,7 @@ void Synth360::PreInit() {
         cfg->FindData("reverb_environment", env, false);
         SetGlobalReverbPreset(env.c_str());
     }
-    EnableLevels(TrackLevels());
+    EnableLevels(mTrackLevels);
 // clang-format on
 }
 

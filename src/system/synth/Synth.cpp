@@ -20,6 +20,7 @@
 #include "flow/Flow.h"
 #include "math/Color.h"
 #include "math/Decibels.h"
+#include "math/Geo.h"
 #include "obj/Data.h"
 #include "obj/DataFile.h"
 #include "obj/DataFunc.h"
@@ -47,7 +48,9 @@
 #include "utl/Loader.h"
 #include <cstdio>
 
-static const float sDrawMeterFloats[3] = { 0.2f, 40, 0.7f };
+static const float kMeterStartX = 0.2f;
+static const float kDBWidth = 40.0f;
+static const float kMeterWidth = 0.7f;
 
 namespace {
     struct DebugGraph {
@@ -62,7 +65,7 @@ namespace {
         Hmx::Color mColor; // 0x10
     };
 
-    std::vector<DebugGraph> gDebugGraphs;
+    static std::vector<DebugGraph> gDebugGraphs;
 }
 
 Loader *WavFactory(const FilePath &file, LoaderPos pos) {
@@ -98,7 +101,7 @@ DataNode returnMasterKey(DataArray *msg) {
 Synth *TheSynth;
 
 Synth::Synth()
-    : mTrackLevels(false), mMuted(false), mMicClientMapper(nullptr), unk98(0),
+    : mTrackLevels(false), mMuted(false), mMicClientMapper(nullptr), mSecureMixer(0),
       mDebugStream(0), mADSR(nullptr) {
     SetName("synth", ObjectDir::Main());
     DataArray *cfg = SystemConfig("synth");
@@ -461,9 +464,40 @@ void Synth::CullZombies() {
     }
 }
 
+void Synth::DrawMeter(float &y0, float lvl, float pkLvl, const char *label) {
+    Hmx::Color gray(0.5f, 0.5f, 0.5f);
+    Hmx::Color black(0, 0, 0);
+    Hmx::Color white(1, 1, 1);
+    Hmx::Color green(0.5f, 1, 0);
+    Hmx::Color red(1, 0.5f, 0.5f);
+
+    TheRnd.DrawString(label, Vector2((float)TheRnd.Width() / 10, y0), white, true);
+
+    float f100 = TheRnd.Width() * kMeterStartX;
+    float ff8 = TheRnd.Width() * kMeterWidth;
+    float f6 = (lvl + kDBWidth) * 0.025f;
+    ClampEq(f6, 0.0f, 1.0f);
+
+    Hmx::Rect bgr(f100, y0, ff8, 12);
+    TheRnd.DrawRect(bgr, black, nullptr, nullptr, nullptr);
+
+    Hmx::Rect fgr(f100, y0, f6 * ff8, 12);
+    TheRnd.DrawRect(fgr, gray, nullptr, nullptr, nullptr);
+
+    float f4 = (pkLvl + kDBWidth) * 0.025f;
+    ClampEq(f4, 0.0f, 1.0f);
+    Hmx::Rect pk(f4 * ff8 + f100, y0, 8, 12);
+    TheRnd.DrawRect(pk, f4 == 1 ? red : green, nullptr, nullptr, nullptr);
+
+    TheRnd.DrawString(
+        MakeString("%i", (int)pkLvl), Vector2(ff8 + f100, y0), Hmx::Color(1, 1, 1), true
+    );
+    y0 += 16;
+}
+
 void Synth::DrawMeterScale(float &y0) {
-    float x1 = TheRnd.Width() * sDrawMeterFloats[0];
-    float x2 = TheRnd.Width() * sDrawMeterFloats[2];
+    float x1 = TheRnd.Width() * kMeterStartX;
+    float x2 = TheRnd.Width() * kMeterWidth;
     Hmx::Color white(1, 1, 1);
     TheRnd.DrawString(MakeString("%i", -0x28), Vector2(x1, y0), white, true);
     TheRnd.DrawString(MakeString("%i", -0x14), Vector2(x2 / 2 + x1, y0), white, true);
