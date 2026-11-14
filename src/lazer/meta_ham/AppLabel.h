@@ -26,6 +26,7 @@ public:
     virtual void SetCreditsText(DataArray *, UIListSlot *);
 
     NEW_OBJ(AppLabel)
+    REGISTER_OBJ(AppLabel)
 
     void SetUserName(const User *user);
     void SetUserName(int padnum);

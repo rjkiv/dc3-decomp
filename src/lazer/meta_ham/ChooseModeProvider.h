@@ -23,6 +23,7 @@ public:
 
     void UpdateList(bool);
     NEW_OBJ(ChooseModeProvider)
+    REGISTER_OBJ(ChooseModeProvider)
 
 private:
     std::vector<Symbol> m_vEntries; // 0x30

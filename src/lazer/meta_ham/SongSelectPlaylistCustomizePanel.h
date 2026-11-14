@@ -18,6 +18,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(SongSelectPlaylistCustomizePanel)
+    REGISTER_OBJ(SongSelectPlaylistCustomizePanel)
 
     SongSelectPlaylistCustomizePanel();
     void UpdatePlaylistName(HamLabel *);

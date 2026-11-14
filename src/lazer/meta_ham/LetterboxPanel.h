@@ -32,6 +32,7 @@ public:
     virtual void Unload();
 
     NEW_OBJ(LetterboxPanel)
+    REGISTER_OBJ(LetterboxPanel)
 
     static LetterboxPanel *sInstance;
 

@@ -26,6 +26,7 @@ public:
     bool ProfileSelected(int) const;
 
     NEW_OBJ(ChooseProfilePanel)
+    REGISTER_OBJ(ChooseProfilePanel)
 
 private:
     void UpdateProfiles();

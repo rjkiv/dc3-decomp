@@ -32,6 +32,7 @@ public:
     virtual UIListWidgetState ElementStateOverride(int, int, UIListWidgetState s) const;
 
     NEW_OBJ(AppMiniLeaderboardDisplay)
+    REGISTER_OBJ(AppMiniLeaderboardDisplay)
 
     bool UpdateLeaderboard(Symbol);
 

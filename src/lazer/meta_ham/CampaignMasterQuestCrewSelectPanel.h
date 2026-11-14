@@ -33,6 +33,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(CampaignMasterQuestCrewSelectPanel)
+    REGISTER_OBJ(CampaignMasterQuestCrewSelectPanel)
 
     int GetTimeSinceEnter() const;
     Symbol GetSelectedCrew();

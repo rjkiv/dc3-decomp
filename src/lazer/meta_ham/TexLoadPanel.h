@@ -57,6 +57,7 @@ public:
     virtual void ContentFailed(const char *);
 
     NEW_OBJ(TexLoadPanel)
+    REGISTER_OBJ(TexLoadPanel)
 
     void FinalizeTexturesChunk();
     DynamicTex *AddTex(const char *, const char *, bool);

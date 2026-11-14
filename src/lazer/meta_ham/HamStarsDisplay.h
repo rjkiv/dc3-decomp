@@ -26,6 +26,7 @@ public:
     void SetSongLastPlayed(int);
 
     NEW_OBJ(HamStarsDisplay)
+    REGISTER_OBJ(HamStarsDisplay)
 
 private:
     void SetSongImpl(int, Difficulty, StarDisplayMode);

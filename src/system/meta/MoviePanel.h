@@ -28,6 +28,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(MoviePanel)
+    REGISTER_OBJ(MoviePanel)
 
     static bool sUseSubtitles;
     MoviePanel();

@@ -57,6 +57,7 @@ public:
     virtual void ContentMounted(char const *, char const *);
 
     NEW_OBJ(HamStorePanel)
+    REGISTER_OBJ(HamStorePanel)
 
     HamStorePanel();
     void LockCart();

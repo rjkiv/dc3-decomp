@@ -38,6 +38,7 @@ public:
     virtual int NumData() const;
 
     NEW_OBJ(ChallengeResultPanel)
+    REGISTER_OBJ(ChallengeResultPanel)
 
 protected:
     DataNode OnMsg(const UIComponentScrollMsg &);

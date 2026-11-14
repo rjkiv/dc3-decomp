@@ -22,6 +22,7 @@ public:
     bool IdentitySelected(int);
 
     NEW_OBJ(CorrectIdentityPanel)
+    REGISTER_OBJ(CorrectIdentityPanel)
 
 private:
     void UpdateIdentityList();

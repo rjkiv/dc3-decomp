@@ -23,6 +23,7 @@ public:
     virtual void ContentMounted(char const *, char const *);
 
     NEW_OBJ(VoiceControlPanel)
+    REGISTER_OBJ(VoiceControlPanel)
 
     void SetRules(bool);
     void PopUp();

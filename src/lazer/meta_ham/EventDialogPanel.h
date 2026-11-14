@@ -24,6 +24,7 @@ public:
     virtual DataNode Handle(DataArray *, bool);
 
     NEW_OBJ(EventDialogPanel)
+    REGISTER_OBJ(EventDialogPanel)
 
     EventDialogPanel();
 

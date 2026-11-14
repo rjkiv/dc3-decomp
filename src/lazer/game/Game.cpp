@@ -905,8 +905,8 @@ DataNode OnDumpMoves(DataArray *) {
 
 void GameInit() {
     GameModeInit();
-    REGISTER_OBJ_FACTORY(GamePanel)
-    REGISTER_OBJ_FACTORY(BustAMovePanel)
+    GamePanel::Register();
+    BustAMovePanel::Register();
     TheDebug.AddExitCallback(GameTerminate);
     TheSongSequence.Init();
     sAutoplayStates.push_back("maximum");

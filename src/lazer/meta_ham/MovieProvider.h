@@ -19,6 +19,7 @@ public:
     void UpdateList();
 
     NEW_OBJ(MovieProvider)
+    REGISTER_OBJ(MovieProvider)
 
 private:
     std::vector<Symbol> m_vMovies; // 0x30

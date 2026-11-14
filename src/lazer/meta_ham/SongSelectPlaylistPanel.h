@@ -36,6 +36,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(SongSelectPlaylistPanel)
+    REGISTER_OBJ(SongSelectPlaylistPanel)
 
     SongSelectPlaylistPanel();
     int GetSelectedPlaylistIndex();

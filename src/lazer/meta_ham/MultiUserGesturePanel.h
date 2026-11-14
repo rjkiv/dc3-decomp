@@ -27,6 +27,7 @@ public:
     virtual bool Exiting() const;
 
     NEW_OBJ(MultiUserGesturePanel)
+    REGISTER_OBJ(MultiUserGesturePanel)
 
     MultiUserGesturePanel();
     void UpdateProviders();

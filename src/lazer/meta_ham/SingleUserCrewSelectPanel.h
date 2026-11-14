@@ -22,6 +22,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(SingleUserCrewSelectPanel)
+    REGISTER_OBJ(SingleUserCrewSelectPanel)
 
     SingleUserCrewSelectPanel();
     void UpdateProviders();

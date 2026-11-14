@@ -26,6 +26,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(KinectSharePanel)
+    REGISTER_OBJ(KinectSharePanel)
 
 private:
     void ConvertImages();

@@ -24,6 +24,7 @@ public:
     virtual bool HasNavList() const { return mNavList != nullptr; }
 
     NEW_OBJ(HamPanel)
+    REGISTER_OBJ(HamPanel)
     void SetNavList(HamNavList *list) { mNavList = list; }
 
 protected:

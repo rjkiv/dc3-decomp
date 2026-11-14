@@ -21,6 +21,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(SongSelectPanel)
+    REGISTER_OBJ(SongSelectPanel)
 
     SongSelectPanel();
     RndTex *GetTexForCharacter(Symbol);

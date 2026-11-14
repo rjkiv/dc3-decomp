@@ -22,6 +22,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(CampaignMasterQuestSongSelectPanel)
+    REGISTER_OBJ(CampaignMasterQuestSongSelectPanel)
 
     bool CanSelectSong(int);
     Symbol GetSong(int);
