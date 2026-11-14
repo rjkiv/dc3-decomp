@@ -672,7 +672,7 @@
             "system/synth/FxSendWah.cpp": "Matching",
             "system/synth/MetaMusic.cpp": "Matching",
             "system/synth/MeterEffectMonitor.cpp": "Matching",
-            "system/synth/Mic.cpp": "NonMatching",
+            "system/synth/Mic.cpp": "Matching",
             "system/synth/MicClientMapper.cpp": "Matching",
             "system/synth/MicNull.cpp": "Matching",
             "system/synth/MidiChannel.cpp": "Matching",
