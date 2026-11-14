@@ -126,27 +126,48 @@ void MemHeap::Init(
     }
 }
 
-void MemHeap::FirstFit(int size, int align, FreeBlockInfo &blockinfo) {
+void MemHeap::FirstFit(int iSizeWords, int iWordAlignShift, FreeBlockInfo &oBlock) {
+    FreeBlock *block = mFreeBlockChain;
     FreeBlock *prev = nullptr;
-    for (auto block = mFreeBlockChain; block != nullptr; block = block->NextBlock()) {
-        int start = ((int)block >> 2) + 1;
-        int alignment = start + (1 << align) - 1 >> (1 << align);
-        int pad = alignment - start;
-        if ((int)block->SizeWords() >= pad + size) {
-            blockinfo.mSizeWords = block->SizeWords();
-            blockinfo.mPadWords = pad;
-            blockinfo.mBlock = block;
-            blockinfo.mPrevBlock = prev;
+
+    if (block == nullptr) {
+        return;
+    }
+
+    for (; block != nullptr;) {
+        unsigned int alignment = 1U << iWordAlignShift;
+        int wordOffset = (int)block >> 2;
+        int sizeWords = block->SizeWords();
+        wordOffset++;
+
+        unsigned int rounded = (alignment - 1U) + wordOffset;
+        rounded = (rounded >> iWordAlignShift) << iWordAlignShift;
+        int padWords = (rounded - wordOffset);
+
+        if (sizeWords >= padWords + iSizeWords) {
+            oBlock.mSizeWords = sizeWords;
+            oBlock.mPadWords = padWords;
+            oBlock.mBlock = block;
+            oBlock.mPrevBlock = prev;
             return;
         }
+        prev = block;
+        block = block->NextBlock();
     }
 }
 
 bool FreeBlock::AttemptMerge(FreeBlock *block, int i2) {
-    if (&this[mSizeWords] == block) {
-        mTimeStamp = Min(block->mTimeStamp, mTimeStamp);
-        mSizeWords += block->mSizeWords;
-        mNextBlock = block->mNextBlock;
+    if (reinterpret_cast<int *>(this) + mSizeWords == reinterpret_cast<int *>(block)) {
+        unsigned int timeStamp = Max(mTimeStamp, block->TimeStamp());
+        unsigned int sizeWords = block->SizeWords();
+        sizeWords += mSizeWords;
+
+        FreeBlock *next = block->NextBlock();
+
+        mTimeStamp = timeStamp;
+        mSizeWords = sizeWords;
+        mNextBlock = next;
+
         if (i2 >= 1) {
             for (int *theBlock = reinterpret_cast<int *>(block);
                  theBlock < reinterpret_cast<int *>(block + 1);
@@ -193,4 +214,122 @@ int *MemHeap::Alloc(int i1, int i2, int &i3) {
         MILO_FAIL(buffer);
     }
     return alloc;
+}
+
+void MemHeap::BestFit(int iSizeWords, int iWordAlignShift, FreeBlockInfo &oBlock) {
+    FreeBlock *block = mFreeBlockChain;
+    FreeBlock *prev = nullptr;
+
+    if (block == nullptr) {
+        return;
+    }
+
+    for (; block != nullptr;) {
+        unsigned int alignment = 1U << iWordAlignShift;
+        int wordOffset = (int)block >> 2;
+        int sizeWords = block->SizeWords();
+        wordOffset++;
+
+        unsigned int rounded = (alignment - 1U) + wordOffset;
+        rounded = (rounded >> iWordAlignShift) << iWordAlignShift;
+        int padWords = (rounded - wordOffset);
+
+        if (sizeWords >= padWords + iSizeWords && sizeWords < oBlock.mSizeWords) {
+            oBlock.mSizeWords = sizeWords;
+            oBlock.mPadWords = padWords;
+            oBlock.mBlock = block;
+            oBlock.mPrevBlock = prev;
+        }
+        prev = block;
+        block = block->NextBlock();
+    }
+}
+
+void MemHeap::LRUFit(int iSizeWords, int iWordAlignShift, FreeBlockInfo &oBlock) {
+    int oldestTime = 0x7FFFFFFF;
+    FreeBlock *block = mFreeBlockChain;
+    FreeBlock *prev = nullptr;
+
+    if (block == nullptr) {
+        return;
+    }
+
+    for (; block != nullptr;) {
+        unsigned int alignment = 1U << iWordAlignShift;
+        int wordOffset = (int)block >> 2;
+        int sizeWords = block->SizeWords();
+        int timeStamp = block->TimeStamp();
+        wordOffset++;
+
+        unsigned int rounded = (alignment - 1U) + wordOffset;
+        rounded = (rounded >> iWordAlignShift) << iWordAlignShift;
+        int padWords = (rounded - wordOffset);
+
+        if (sizeWords >= padWords + iSizeWords && timeStamp < oldestTime) {
+            oBlock.mSizeWords = sizeWords;
+            oldestTime = timeStamp;
+            oBlock.mPadWords = padWords;
+            oBlock.mBlock = block;
+            oBlock.mPrevBlock = prev;
+        }
+        prev = block;
+        block = block->NextBlock();
+    }
+}
+
+void MemHeap::LastFit(int iReqSize, int iAlignShift, FreeBlockInfo &oBlock) {
+    FreeBlock *block = mFreeBlockChain;
+    FreeBlock *prev = nullptr;
+
+    if (block == nullptr) {
+        return;
+    }
+
+    int shift = iAlignShift + 2;
+
+    for (; block != nullptr;) {
+        int sizeWords = block->SizeWords();
+        int end = ((sizeWords - iReqSize) << 2) + (int)block;
+        int aligned = (end >> shift) << shift;
+        int padWords = (aligned - (int)block - 4) >> 2;
+
+        if (padWords >= 0) {
+            oBlock.mSizeWords = sizeWords;
+            oBlock.mPadWords = padWords;
+            oBlock.mBlock = block;
+            oBlock.mPrevBlock = prev;
+        }
+        prev = block;
+        block = block->NextBlock();
+    }
+}
+
+int MemHeap::AllocSize(int *iMem) {
+    if (iMem >= mStart && iMem < mStart + mSizeWords) {
+        unsigned int header = iMem[-1];
+        return (((header >> 8) - ((header >> 4) & 0xF)) - 1) * 4;
+    }
+    return 0;
+}
+
+int MemHeap::GetAlignWords(int iAlignBytes) {
+    if (iAlignBytes == 0) {
+        return 1;
+    }
+
+    int value = iAlignBytes;
+    int i1 = 0;
+    int i2 = 0;
+
+    if (iAlignBytes > 1) {
+        while (value > 1) {
+            if (value & 1) {
+                i2 = 1;
+            }
+            value >>= 1;
+            i1++;
+        }
+    }
+    int result = i1 + i2 - 2;
+    return Max(0, result);
 }

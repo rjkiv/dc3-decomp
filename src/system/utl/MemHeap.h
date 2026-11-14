@@ -39,6 +39,7 @@ public:
         int mPadWords;
     };
 
+    static int GetAlignWords(int);
     int *Alloc(int, int, int &);
     int Free(int *);
     int *Truncate(int *, int, int &);
