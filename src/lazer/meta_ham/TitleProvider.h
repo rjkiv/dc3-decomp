@@ -19,6 +19,7 @@ public:
 
     void UpdateList(bool);
     NEW_OBJ(TitleProvider)
+    REGISTER_OBJ(TitleProvider)
 
 private:
     std::vector<Symbol> m_vEntries; // 0x30

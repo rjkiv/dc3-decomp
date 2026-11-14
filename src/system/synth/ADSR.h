@@ -109,6 +109,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x61);
     NEW_OBJ(ADSR)
+    REGISTER_OBJ(ADSR)
 
     /** Returns a reference to this version of Milo's ADSR implementation */
     ADSRImpl &Impl() { return mADSR; }

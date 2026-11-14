@@ -144,10 +144,7 @@ void ThreeDSound::Highlight() {
             Transform xfm = WorldXfm();
             Vector3 vscale;
             MakeScale(xfm.m, vscale);
-            vscale.x = 1.0f / vscale.x;
-            vscale.y = 1.0f / vscale.y;
-            vscale.z = 1.0f / vscale.z;
-            Scale(vscale, xfm.m, xfm.m);
+            Scale(Vector3(1 / vscale.x, 1 / vscale.y, 1 / vscale.z), xfm.m, xfm.m);
             if (mMinimumFalloff <= mRadius) {
                 UtilDrawSphere(
                     WorldXfm().v, mMinimumFalloff, Hmx::Color(1, 0, 0), nullptr
@@ -190,7 +187,7 @@ void ThreeDSound::Stop(Hmx::Object *obj, bool b2) {
     Sound::Stop(obj, b2);
 }
 
-bool ThreeDSound::IsPlaying() const { return mIsActive || SoundEmpty(); }
+bool ThreeDSound::IsPlaying() const { return mIsActive || Sound::IsPlaying(); }
 
 void ThreeDSound::SaveWorldXfm() { mPreviousTrans = WorldXfm(); }
 
@@ -229,9 +226,9 @@ void ThreeDSound::SetDistance(float f1, float f2) {
     mYZProjection = f2;
     CalculateFaderVolume();
     float f = -96.0f;
-    if (mIsActive && mFader->DuckedValue() > f && !SoundEmpty()) {
+    if (mIsActive && mFader->DuckedValue() > f && !Sound::IsPlaying()) {
         Sound::Play(mVolume, mPan, mTranspose, mEventReceiver, mDelayMs);
-    } else if (mIsActive && mFader->DuckedValue() <= f && SoundEmpty()) {
+    } else if (mIsActive && mFader->DuckedValue() <= f && Sound::IsPlaying()) {
         Sound::Stop(nullptr, true);
     }
 }

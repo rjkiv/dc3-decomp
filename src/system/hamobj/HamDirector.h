@@ -76,6 +76,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x6D)
     NEW_OBJ(HamDirector)
+    REGISTER_OBJ(HamDirector)
 
     WorldDir *GetWorld();
     float GetMainFaceOverrideWeight();
@@ -149,7 +150,7 @@ public:
     HamCamShot *CurShot() const { return mCurShot; }
     FileMerger *GetGameModeMerger() const { return mGameModeMerger; }
     void SetPickingDisabled(bool disable) { mDisablePicking = disable; }
-    bool Unk33d() const { return mIsGameStartHold; }
+    bool GetGameStartHold() const { return mIsGameStartHold; }
     void SetUnk2AC(bool b) { mPollEnabled = b; }
     PoseFatalities *GetPoseFatalities() const { return mPoseFatalities; }
     RndPostProc *GetUnk18c() const { return unk18c; }

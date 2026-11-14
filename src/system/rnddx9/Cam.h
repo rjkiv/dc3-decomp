@@ -12,6 +12,7 @@ public:
     virtual void PostDeviceReset() { UpdateLocal(); }
 
     NEW_OBJ(DxCam)
+    REGISTER_OBJ(DxCam)
 
     void SetViewport();
 

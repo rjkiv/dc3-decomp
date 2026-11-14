@@ -164,7 +164,7 @@ public:
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
     NEW_OBJ(CharBonesObject)
-    static void Init() { REGISTER_OBJ_FACTORY(CharBonesObject) }
+    REGISTER_OBJ(CharBonesObject)
 };
 
 /** "Holds state for a set of bones, and allocates own space" */

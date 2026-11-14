@@ -32,6 +32,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(PracticeOptionsProvider)
+    REGISTER_OBJ(PracticeOptionsProvider)
     static void Init();
 
     void SetVideoReplay(bool);

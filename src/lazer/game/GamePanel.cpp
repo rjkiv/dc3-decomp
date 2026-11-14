@@ -1,4 +1,5 @@
 #include "game/GamePanel.h"
+#include "GamePanel.h"
 #include "flow/PropertyEventProvider.h"
 #include "game/Game.h"
 #include "game/GameMode.h"
@@ -13,6 +14,7 @@
 #include "hamobj/HamPlayerData.h"
 #include "hamobj/HamWardrobe.h"
 #include "hamobj/MoveDir.h"
+#include "math/Utl.h"
 #include "meta/HAQManager.h"
 #include "meta/PreloadPanel.h"
 #include "meta_ham/HamProfile.h"
@@ -50,6 +52,7 @@
 #include "utl/FilePath.h"
 #include "utl/MBT.h"
 #include "utl/MakeString.h"
+#include "utl/SongPos.h"
 #include "utl/TimeConversion.h"
 #include "world/Dir.h"
 #include <cmath>
@@ -118,26 +121,26 @@ float LoopVizCallback::UpdateOverlay(RndOverlay *o, float y) {
             nullptr,
             nullptr
         );
-        int i4c, i48;
-        TheMaster->GetAudio()->GetCurrLoopBeats(i4c, i48);
-        if (i4c != mLoopStart) {
-            mHighlightLoopStart = 3;
-            mLoopStart = i4c;
+        int loopStart, loopEnd;
+        TheMaster->GetAudio()->GetCurrLoopBeats(loopStart, loopEnd);
+        if (loopStart != mLoopStart) {
+            mHighlightLoopStart = 3.0f;
+            mLoopStart = loopStart;
         }
-        if (i48 != mLoopEnd) {
-            mHighlightLoopEnd = 3;
-            mLoopEnd = i48;
+        if (loopEnd != mLoopEnd) {
+            mHighlightLoopEnd = 3.0f;
+            mLoopEnd = loopEnd;
         }
         float beat = MsToBeat(TheMaster->StreamMs());
-        float f14 = (beat - (float)i4c) / (float)(i48 - i4c);
+        float f14 = (beat - (float)loopStart) / (float)(loopEnd - loopStart);
         StandardStream *stream =
             dynamic_cast<StandardStream *>(TheMaster->GetAudio()->GetSongStream());
         float beatAhead = MsToBeat(stream->GetBufferAheadTime());
-        float f10 = (beatAhead - beat) / (float)(i48 - i4c);
+        float f10 = (beatAhead - beat) / (float)(loopEnd - loopStart);
         static Symbol end("end");
         int eventBeat = TheMaster->EventBeat(end);
-        float f16 = (float)i4c / (float)eventBeat;
-        float f12 = (float)i48 / (float)eventBeat;
+        float f16 = (float)loopStart / (float)eventBeat;
+        float f12 = (float)loopEnd / (float)eventBeat;
         mSongMeter.Draw();
         Hmx::Color color(0.8f, 0.8f, 0.8f);
         mSongMeter.DrawBar(f16, f12 - f16, color);
@@ -278,7 +281,7 @@ void GamePanel::Poll() {
         }
         if (mState == kGameNeedStart
             && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) > -0.025f
-            && !TheHamDirector->Unk33d()) {
+            && !TheHamDirector->GetGameStartHold()) {
             StartGame();
         }
         for (int i = 0; i < 2; i++) {
@@ -476,11 +479,11 @@ void GamePanel::SetSoundEventReceiver() {
     }
 }
 
-void GamePanel::SetPausedHelper(bool b1, bool b2) {
+void GamePanel::SetPausedHelper(bool paused, bool pauseSFX) {
     for (int i = 0; i < 2; i++) {
         FitnessFilter *filt = GetFitnessFilter(i);
         if (filt) {
-            filt->SetPaused(b1);
+            filt->SetPaused(paused);
         }
     }
     if (GetState() != kUp) {
@@ -490,39 +493,35 @@ void GamePanel::SetPausedHelper(bool b1, bool b2) {
     while (TheSynth->HasPendingVoices()) {
         TheSynth->Poll();
     }
-    if (!b1 && mCheatPaused) {
+    if (!paused && mCheatPaused) {
         return;
     }
-    if (b1 == mPaused) {
+    if (paused == mPaused) {
         return;
     }
-    mPaused = b1;
+    mPaused = paused;
     if (mPauseCountInTimer->Running()) {
-        if (!b1) {
+        if (!paused) {
             MILO_NOTIFY(
                 "Trying to unpause while the count in is active; should not be possible!"
             );
         }
         mPauseCountInTimer->Reset();
     } else {
-        if (mShouldCountIn && mState == kGamePlaying && !b1) {
-            if (TheGameMode->Property("pause_count_in")->Int() != 0) {
-                mPauseCountInTimer->Start();
-            } else {
-                mGame->SetGamePaused(
-                    b1, mState == kGameNeedIntro || mState == kGameNeedStart, b2
-                );
-                WorldDir *dir = TheHamDirector->GetVenueWorld();
-                for (ObjDirItr<TexMovie> it(dir, true); it != nullptr; ++it) {
-                    if (it->IsOpen()) {
-                        it->SetPaused(b1);
-                    }
+        if (mShouldCountIn && mState == kGamePlaying && !paused
+            && TheGameMode->Property("pause_count_in")->Int() != 0) {
+            mPauseCountInTimer->Start();
+        } else {
+            mGame->SetGamePaused(paused, mState >= kGamePlaying, pauseSFX);
+            WorldDir *dir = TheHamDirector->GetVenueWorld();
+            for (ObjDirItr<TexMovie> it(dir, true); it != nullptr; ++it) {
+                if (it->IsOpen()) {
+                    it->SetPaused(paused);
                 }
-                TheWaveToTurnOnLight->SetPaused(b1);
-                if (!b1) {
-                    while (!FileDiscSpinUp())
-                        ;
-                }
+            }
+            TheWaveToTurnOnLight->SetPaused(paused);
+            while (!paused) {
+                paused = FileDiscSpinUp();
             }
         }
     }
@@ -675,30 +674,31 @@ void GamePanel::UpdateNowBar() {
     float sec = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     float songDuration = TheSongDB->GetSongDurationMs();
     char sec_left_prefix = '-';
-    float durVal = (songDuration * 0.001f) - sec;
-    float val;
-    if (durVal < 0.0f) {
-        durVal = -durVal;
+    float secLeft = (songDuration / 1000.0f) - sec;
+    float percentIntoSong;
+    if (secLeft < 0.0f) {
+        secLeft = -secLeft;
         sec_left_prefix = '+';
     }
     int totalTick = TheTaskMgr.GetSongPos().GetTotalTick();
 
     if (0.0f < songDuration) {
-        val = 100.0f;
-        float eq = (sec * 100.0f) / (songDuration / 1000.0f);
-        if (eq <= 100.0f) {
-            val = eq;
+        percentIntoSong = 100.0f;
+        float percent = (sec * 100.0f) / (songDuration * 0.001f);
+        if (percent <= 100.0f) {
+            percentIntoSong = percent;
         }
     }
+    const SongPos &songPos = TheTaskMgr.GetSongPos();
     *mNowBar << MakeString(
         "MBT %d:%d:%03d [%s %c%s %4.1f%%] (%.2fsec %dtk)\n",
-        TheTaskMgr.GetSongPos().GetMeasure() + 1,
-        TheTaskMgr.GetSongPos().GetBeat() + 1,
-        TheTaskMgr.GetSongPos().GetTick(),
+        songPos.GetMeasure() + 1,
+        songPos.GetBeat() + 1,
+        songPos.GetTick(),
         FormatTimeMSH(sec * 1000.0f),
         sec_left_prefix,
-        FormatTimeMSH(durVal * 1000.0f),
-        val,
+        FormatTimeMSH(secLeft * 1000.0f),
+        percentIntoSong,
         sec,
         totalTick
     );
@@ -762,6 +762,40 @@ void GamePanel::UpdateLatency() {
         );
         mLatency->SetCallback(&gGamePanelCallback);
     }
+}
+
+float GamePanel::DeJitter(float ms) {
+    float f = 1.0e+30f;
+    static DataNode &no_jitter = DataVariable("no_jitter");
+    if (no_jitter.Int() == 0 && 8 < mJitterWindow) {
+        int endPos = (mJitterIndex - 1) & 0x1f;
+        int x = (endPos - mJitterWindow) & 0x1f;
+        float averageJitter = (mJitter[endPos] - mJitter[x]) / (float)mJitterWindow;
+        if (mLastAverage == 0) {
+            mLastAverage = averageJitter;
+        }
+
+        // yeah idk whats happening after here yall
+        mLastAverage = (averageJitter - mLastAverage) * 0.1f + mLastAverage;
+
+        f = mLastMs + mLastAverage;
+        f = Clamp(ms - 16.0f, ms + 16.0f, f);
+        if (f < mLastMs) {
+            f = mLastMs;
+        }
+    }
+
+    mJitter[mJitterIndex] = ms;
+    if (f != 1.0e+30f) {
+        ms = f;
+    }
+
+    mJitterIndex = (mJitterIndex + 1) & 0x1f;
+    if (mJitterWindow < 30) {
+        mJitterWindow++;
+    }
+    mLastMs = ms;
+    return ms;
 }
 
 #pragma endregion

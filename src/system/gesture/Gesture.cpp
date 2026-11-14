@@ -20,17 +20,17 @@ void GestureTerminate() { StreamRenderer::Terminate(); }
 
 void GestureInit() {
     DepthBuffer3D::Init();
-    REGISTER_OBJ_FACTORY(FitnessFilterObj)
-    REGISTER_OBJ_FACTORY(HandRaisedGestureFilter)
-    REGISTER_OBJ_FACTORY(HandsUpGestureFilter)
-    REGISTER_OBJ_FACTORY(HighFiveGestureFilter)
+    FitnessFilterObj::Register();
+    HandRaisedGestureFilter::Register();
+    HandsUpGestureFilter::Register();
+    HighFiveGestureFilter::Register();
     StreamRenderer::Init();
-    REGISTER_OBJ_FACTORY(StreamRecorder)
+    StreamRecorder::Register();
     SkeletonClip::Init();
-    REGISTER_OBJ_FACTORY(SkeletonDir)
+    SkeletonDir::Register();
     SkeletonFrame::Init();
-    REGISTER_OBJ_FACTORY(SkeletonViz)
-    REGISTER_OBJ_FACTORY(NavigationSkeletonDir)
+    SkeletonViz::Register();
+    NavigationSkeletonDir::Register();
     GestureMgr::Init();
     CameraTilt::Init();
     WaveToTurnOnLight::Init();

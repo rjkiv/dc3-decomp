@@ -179,21 +179,21 @@ void UIManager::Init() {
     bool notify = false;
     cfg->FindData("verbose_locale_notifies", notify, false);
     Locale::SetLocaleVerboseNotify(notify);
-    REGISTER_OBJ_FACTORY(UIScreen)
-    REGISTER_OBJ_FACTORY(UIPanel)
-    REGISTER_OBJ_FACTORY(PanelDir)
+    UIScreen::Register();
+    UIPanel::Register();
+    PanelDir::Register();
     UIComponent::Init();
     UIButton::Init();
-    REGISTER_OBJ_FACTORY(UIColor)
+    UIColor::Register();
     UILabel::Init();
     UIList::Init();
-    REGISTER_OBJ_FACTORY(UIPicture)
+    UIPicture::Register();
     UISlider::Init();
-    REGISTER_OBJ_FACTORY(UITrigger)
+    UITrigger::Register();
     InlineHelp::Init();
-    REGISTER_OBJ_FACTORY(UIFontImporter)
-    REGISTER_OBJ_FACTORY(UIGuide)
-    REGISTER_OBJ_FACTORY(Screenshot)
+    UIFontImporter::Register();
+    UIGuide::Register();
+    Screenshot::Register();
     LabelNumberTicker::Init();
     LabelShrinkWrapper::Init();
     TheDebug.AddExitCallback(TerminateCallback);
@@ -208,7 +208,7 @@ void UIManager::Init() {
         }
     }
     CheatProvider::Init();
-    REGISTER_OBJ_FACTORY(LocalePanel)
+    LocalePanel::Register();
     static Message cheat_init("cheat_init");
     Hmx::Object::Handle(cheat_init, false);
     mOverlay = RndOverlay::Find("ui", true);

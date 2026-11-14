@@ -50,6 +50,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19);
     NEW_OBJ(UIComponent)
+    REGISTER_OBJ(UIComponent)
 
     State GetState() { return mState; }
     UIComponent *NavRight() { return mNavRight; }

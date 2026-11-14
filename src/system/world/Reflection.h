@@ -25,6 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(WorldReflection)
+    REGISTER_OBJ(WorldReflection)
 
 protected:
     WorldReflection();

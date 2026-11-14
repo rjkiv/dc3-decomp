@@ -11,9 +11,9 @@
 #include "utl/Symbol.h"
 
 MeterDisplay::MeterDisplay()
-    : mMeshAnim(0), mAnimPeriod(0), mAnimStart(0), mAnimGoal(-1), mMeterLabel(0), mShowText(0),
-      mPercentageText(0), mHideDenominator(0), mWrapperText(gNullStr), mCurrentValue(0),
-      mMax(0), mResourceDir(this) {}
+    : mMeshAnim(0), mAnimPeriod(0), mAnimStart(0), mAnimGoal(-1), mMeterLabel(0),
+      mShowText(0), mPercentageText(0), mHideDenominator(0), mWrapperText(gNullStr),
+      mCurrentValue(0), mMax(0), mResourceDir(this) {}
 
 MeterDisplay::~MeterDisplay() { delete mMeterLabel; }
 
@@ -159,7 +159,7 @@ void MeterDisplay::Update() {
     }
 }
 
-void MeterDisplay::Init() { REGISTER_OBJ_FACTORY(MeterDisplay); }
+void MeterDisplay::Init() { MeterDisplay::Register(); }
 
 void MeterDisplay::AnimateToValue(int x, int y) {
     mAnimGoal = Min(x, mMax);

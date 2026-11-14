@@ -49,7 +49,9 @@ void HamMaster::Poll(float ms) {
         float f9 =
             mAudio->GetSongStream()->GetJumpBackTotalTime(mLastStreamMs) + mLastStreamMs;
         mLoopBack = f9 < mStreamMs;
-        Marker marker2, marker1;
+
+        Marker marker2(String(), 0, 0);
+        Marker marker1(String(), 0, 0);
         bool jp = mAudio->GetSongStream()->CurrentJumpPoints(marker1, marker2);
         if (!mLoopBack && jp && marker1.posMS <= marker2.posMS) {
             mLoopBack = mStreamMs <= marker2.posMS && marker2.posMS < f9;

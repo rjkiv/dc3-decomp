@@ -57,6 +57,7 @@ public:
     virtual void ContentMounted(char const *, char const *);
 
     NEW_OBJ(HamStorePanel)
+    REGISTER_OBJ(HamStorePanel)
 
     HamStorePanel();
     void LockCart();
@@ -68,6 +69,11 @@ public:
     void RemoveDLCFromCart(int);
     void RemoveOfferFromCart(StoreOffer *);
     void AddOfferToCart(StoreOffer *);
+
+    int GetSpecialEnumJobID() const { return mSpecialEnumJobID; }
+    void FinishOfferEnum(std::vector<bool> const &prods, bool extra) {
+        FinishSpecialOfferEnum(prods, extra);
+    }
 
 protected:
     virtual StoreError UpdateOffers(std::list<EnumProduct> const &, bool);
@@ -126,14 +132,19 @@ private:
 };
 
 class SpecialOfferEnumJob : public MultipleItemsEnumJob {
+protected:
+    HamStorePanel *mStorePanel; // 0x5c - not in pdb
+
 public:
     SpecialOfferEnumJob(HamStorePanel *panel, int i, std::vector<QWORD> &vec);
     virtual ~SpecialOfferEnumJob() {}
     virtual void Start();
     virtual bool IsFinished();
     virtual void Cancel(Hmx::Object *);
-    virtual void OnCompletion(Hmx::Object *);
-
-protected:
-    HamStorePanel *mStorePanel; // 0x5c - not in pdb
+    virtual void OnCompletion(Hmx::Object *object) {
+        if (!mStorePanel || mStorePanel->GetSpecialEnumJobID() != ID()) {
+            return;
+        }
+        mStorePanel->FinishOfferEnum(mPurchased, mState == kSuccess);
+    }
 };

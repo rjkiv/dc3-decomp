@@ -44,6 +44,7 @@ public:
     virtual void TextureCompressed(int) { mFramesRecorded++; }
 
     NEW_OBJ(StreamRecorder)
+    REGISTER_OBJ(StreamRecorder)
     OBJ_MEM_OVERLOAD(0x24)
 
 protected:

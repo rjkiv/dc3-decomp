@@ -73,6 +73,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x47)
     NEW_OBJ(SongLayout)
+    REGISTER_OBJ(SongLayout)
 
     void SetDefaultPattern(int);
     void SetDefaultReplacer();

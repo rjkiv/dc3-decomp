@@ -208,7 +208,7 @@ void SongCollision::Print() {
 }
 
 void SongCollision::Init() {
-    REGISTER_OBJ_FACTORY(SongCollision);
+    SongCollision::Register();
     DataArray *tolerance = DataGetMacro("SONG_COLLISION_TOLERANCE");
     if (tolerance) {
         sCollisionTolerance = tolerance->Float(0);

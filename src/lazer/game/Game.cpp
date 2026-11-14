@@ -55,6 +55,7 @@
 #include "utl/TempoMap.h"
 #include "utl/TimeConversion.h"
 #include "world/Dir.h"
+#include <cstdlib>
 
 Game *TheGame;
 static bool sMoveOverlayToggle;
@@ -237,19 +238,19 @@ void Game::CheckPauseRequest() {
 void Game::LoadNewSongAudio(Symbol s) {
     if (mOldSongAudioName != s) {
         mOldSongAudioName = s;
-        HamSongDataValidate hsvd = (HamSongDataValidate)0;
+        HamSongDataValidate validateMode = kHamSongData_NoValidation;
         static Symbol dcimindcontrol("dcimindcontrol");
         if (s != dcimindcontrol) {
             MILO_LOG("new_songaudio_name = '%s'\n", s.Str());
             int songID = TheHamSongMgr.GetSongIDFromShortName(s);
             const HamSongMetadata *pMetadata = TheHamSongMgr.Data(songID);
             if (pMetadata->IsOnDisc()) {
-                hsvd = (HamSongDataValidate)2;
+                validateMode = kHamSongData_Validate;
             }
         }
         RELEASE(mSongInfo);
         mSongInfo = new SongInfoCopy(TheHamSongMgr.SongMgr::SongAudioData(s));
-        mMaster->Load(mSongInfo, false, 0, false, hsvd, nullptr);
+        mMaster->Load(mSongInfo, false, 0, false, validateMode, nullptr);
         Fader *fader = TheSynth->Find<Fader>("per_song_sfx_level.fade", false);
         if (fader) {
             fader->SetVolume(0);
@@ -524,18 +525,18 @@ void Game::SetPaused(bool b1, bool b2) {
     }
 }
 
-void Game::SetGamePaused(bool b1, bool b2, bool b3) {
-    if (mSetPausedCalled && b1) {
-        mGamePauseRequest.mPlaying = b2;
-        mGamePauseRequest.mPauseSfx = b3;
+void Game::SetGamePaused(bool paused, bool playing, bool pauseSFX) {
+    if (mSetPausedCalled && paused) {
+        mGamePauseRequest.mPlaying = playing;
+        mGamePauseRequest.mPauseSfx = pauseSFX;
         mGamePauseRequest.mRequest = true;
     } else {
-        if (!b1 || b3) {
-            TheSynth->PauseAllSfx(b1);
+        if (!paused || pauseSFX) {
+            TheSynth->PauseAllSfx(paused);
         }
-        SetPaused(b1, b2);
+        SetPaused(paused, playing);
         mSetPausedCalled = true;
-        if (b1) {
+        if (paused) {
             TheTaskMgr.SetSecondsAndBeat(
                 TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo), TheTaskMgr.Beat(), false
             );
@@ -598,7 +599,7 @@ void Game::LoadNewSong(Symbol s1, Symbol s2) {
     if (s1 != s2) {
         RELEASE(mSongInfo);
         mSongInfo = new SongInfoCopy(TheHamSongMgr.SongMgr::SongAudioData(s2));
-        mMaster->LoadOnlySongData(mSongInfo, true, (HamSongDataValidate)0);
+        mMaster->LoadOnlySongData(mSongInfo, true, kHamSongData_NoValidation);
         MultiTempoTempoMap *other =
             static_cast<MultiTempoTempoMap *>(HamSongData::sInstance->GetTempoMap());
         mMovesTempoMap = new MultiTempoTempoMap(*other);
@@ -797,6 +798,81 @@ bool Game::HandleWait() {
     return true;
 }
 
+void Game::Poll() {
+    static float sBeat = -1.0f;
+
+    if (!HandleWait()) {
+        if (!TheSongSequence.Done()) {
+            TheTaskMgr.SetSeconds(mGameInput->CurrentMs(mRealtime) * 0.001f, false);
+        }
+    } else {
+        float f = 0.0f;
+        if (TheGamePanel->GetDriveTime()) {
+            f = mGameInput->CurrentMs(mRealtime);
+            if (!mRealtime && mShuttle->IsActive()) {
+                f = PollShuttle();
+            }
+
+            float jumpBackTotalTime = 0;
+            if (!mRealtime && TheMaster) {
+                if (TheMaster->GetAudio()) {
+                    if (TheMaster->GetAudio()->GetSongStream()) {
+                        jumpBackTotalTime =
+                            TheMaster->GetAudio()->GetSongStream()->GetJumpBackTotalTime(
+                                f
+                            );
+                    }
+                }
+            }
+
+            float streamMsToBeat = MsToBeat(f + jumpBackTotalTime);
+            if (fabs(streamMsToBeat - sBeat) > 4.0f) {
+                TheTaskMgr.ResetBeatTaskTime(streamMsToBeat);
+            }
+            sBeat = streamMsToBeat;
+
+            if (!mBroadcastIntroEnd && 0.0f <= f && !TheHamDirector->GetGameStartHold()) {
+                MILO_LOG("Game::Poll: intro timer expired\n");
+                static Message intro_over("intro_over");
+                TheGamePanel->Handle(intro_over, true);
+                mBroadcastIntroEnd = true;
+            }
+            TheTaskMgr.SetSecondsAndBeat(f * 0.001f, streamMsToBeat, false);
+        }
+
+        if (!mPaused && !mRealtime) {
+            bool loaded = IsLoaded() > 0;
+            if (loaded) {
+                float ms = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000.0f;
+                f = ms;
+                mSongPos = mSongDB->CalcSongPos(TheMaster, ms);
+                TheTaskMgr.SetSongPos(mSongPos);
+            }
+        }
+
+        if (f >= 0) {
+            mMaster->Poll(f);
+            float jumpFromMs;
+            float loopStartMs;
+            float loopEndMs;
+            if (TheMaster->DetectStreamJump(jumpFromMs, loopStartMs, loopEndMs)) {
+                float streamToBeat = MsToBeat(TheMaster->StreamMs());
+                float jumpFromBeat = MsToBeat(jumpFromMs);
+                float loopStartBeat = MsToBeat(loopStartMs);
+                float loopEndBeat = MsToBeat(loopEndMs);
+                TheTaskMgr.SetDeltaTime(
+                    kTaskBeats,
+                    (streamToBeat - loopEndBeat) + (loopStartBeat - jumpFromBeat)
+                );
+            }
+
+        } else {
+            mMaster->GetMidiParserMgr()->Poll();
+        }
+        mLastPollMs = f;
+    }
+}
+
 DataNode OnToggleMoveOverlay(DataArray *a) {
     sMoveOverlayToggle = !sMoveOverlayToggle;
     if (TheGame && TheGame->GetMoveDir()) {
@@ -905,8 +981,8 @@ DataNode OnDumpMoves(DataArray *) {
 
 void GameInit() {
     GameModeInit();
-    REGISTER_OBJ_FACTORY(GamePanel)
-    REGISTER_OBJ_FACTORY(BustAMovePanel)
+    GamePanel::Register();
+    BustAMovePanel::Register();
     TheDebug.AddExitCallback(GameTerminate);
     TheSongSequence.Init();
     sAutoplayStates.push_back("maximum");

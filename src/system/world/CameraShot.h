@@ -164,6 +164,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0xAD)
     NEW_OBJ(CamShot)
+    REGISTER_OBJ(CamShot)
 
     float GetDurationSeconds() const;
     bool PlatformOk() const;

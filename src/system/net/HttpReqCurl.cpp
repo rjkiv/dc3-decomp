@@ -12,7 +12,22 @@
 namespace {
     unsigned int WriteMemoryCallback(
         void *contents, unsigned int size, unsigned int nmemb, void *userp
-    );
+    ) {
+        ResponseDataT *mem = (ResponseDataT *)userp;
+        unsigned int iSizeBytes = size * nmemb;
+        if (mem->memory) {
+            mem->memory = (char *)MemRealloc(
+                mem->memory, mem->size + iSizeBytes, __FILE__, 0x1B, "HttpReqCurl", 0
+            );
+            MILO_ASSERT(mem->memory, 0x1C);
+        } else {
+            mem->memory = (char *)MemAlloc(iSizeBytes, __FILE__, 0x21, "HttpReqCurl");
+            MILO_ASSERT(mem->memory, 0x22);
+        }
+        memcpy(mem->memory + mem->size, contents, iSizeBytes);
+        mem->size += iSizeBytes;
+        return iSizeBytes;
+    }
 }
 
 HttpReqCurl::HttpReqCurl(

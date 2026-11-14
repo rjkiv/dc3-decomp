@@ -17,6 +17,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0xF);
     NEW_OBJ(FxSendDelay)
+    REGISTER_OBJ(FxSendDelay)
 
 protected:
     FxSendDelay();

@@ -139,6 +139,10 @@ public:
         mNormalMap = map;
         mDirty |= kDirtyRest;
     }
+    void SetEmissiveMap(RndTex *map) {
+        mEmissiveMap = map;
+        mDirty |= kDirtyRest;
+    }
     void SetColorModFlags(ColorModFlags flags) {
         mFlags = flags;
         mDirty |= kDirtyRest;

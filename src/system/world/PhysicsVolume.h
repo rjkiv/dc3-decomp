@@ -38,6 +38,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x21)
     NEW_OBJ(PhysicsVolume)
+    REGISTER_OBJ(PhysicsVolume)
 
     void SetActiveState(bool);
     void CreatePhysicsVolume(PhysicsManager *);

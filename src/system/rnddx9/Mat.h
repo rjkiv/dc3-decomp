@@ -11,6 +11,7 @@ public:
     OBJ_SET_TYPE(DxMat)
 
     NEW_OBJ(DxMat)
+    REGISTER_OBJ(DxMat)
 
     static void Init();
 };

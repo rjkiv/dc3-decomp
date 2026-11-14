@@ -9,13 +9,17 @@
 #include "synth/FxSend.h"
 #include "synth/MoggClip.h"
 #include "synth/PlayableSample.h"
+#include "synth/SampleData.h"
 #include "synth/SampleInst.h"
 #include "synth/Synth.h"
 #include "synth/SynthSample.h"
 #include "synth/Utl.h"
 #include "utl/Std.h"
 
-const float sSpeedCaps[2] = { 0.00390625f, 4.0f };
+static const float kMinSoundSpeed = 0.00390625f;
+static const float kMaxSoundSpeed = 4;
+
+void unusedsoundlmao(std::vector<SampleMarker> &vec) { ClearAndShrink(vec); }
 
 Sound::Sound()
     : mVol(0), mSpeed(1), mPan(0), mSend(this), mReverbMixDb(kDbSilence),
@@ -44,7 +48,7 @@ BEGIN_HANDLERS(Sound)
     )
     HANDLE_ACTION(add_ducker, mDuckerGrp.Add(_msg->Obj<Fader>(2), _msg->Float(3)))
     HANDLE_ACTION(remove_ducker, mDuckerGrp.Remove(_msg->Obj<Fader>(2)))
-    HANDLE_EXPR(is_mogg_ready, IsMoggReady())
+    HANDLE_EXPR(is_mogg_ready, IsMoggReadyToPlay())
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
@@ -128,43 +132,43 @@ INIT_REVS(9, 0)
 BEGIN_LOADS(Sound)
     LOAD_REVS(bs)
     ASSERT_REVS(9, 0)
-    Hmx::Object::Load(bs);
-    bs >> mVol;
+    LOAD_SUPERCLASS(Hmx::Object)
+    d >> mVol;
     float transpose;
-    bs >> transpose;
-    mSpeed = Clamp(sSpeedCaps[0], sSpeedCaps[1], CalcSpeedFromTranspose(transpose));
-    bs >> mPan;
+    d >> transpose;
+    mSpeed = Clamp(kMinSoundSpeed, kMaxSoundSpeed, CalcSpeedFromTranspose(transpose));
+    d >> mPan;
     d >> mCanStop;
-    bs >> mSynthSample;
+    d >> mSynthSample;
     mAddZombiesOnDelete = mSynthSample;
     if (d.rev >= 2) {
-        bs >> mReverbMixDb;
+        d >> mReverbMixDb;
         d >> mReverbEnable;
     }
     mADSR = nullptr;
     if (d.rev >= 3) {
-        bs >> mADSR;
+        d >> mADSR;
     }
     mSend = nullptr;
     if (d.rev >= 4) {
-        bs >> mSend;
+        d >> mSend;
     }
     if (d.rev >= 5) {
-        bs >> mMoggClip;
+        d >> mMoggClip;
     }
     if (d.rev >= 6) {
         d >> mLoop;
-        bs >> mLoopStartSamp;
-        bs >> mLoopEndSamp;
+        d >> mLoopStartSamp;
+        d >> mLoopEndSamp;
     }
     if (d.rev >= 7) {
-        bs >> mMaxPolyphony;
+        d >> mMaxPolyphony;
     }
     if (d.rev >= 8) {
-        mFaders.Load(bs);
+        mFaders.Load(d);
     }
     if (d.rev >= 9) {
-        mDuckerGrp.Load(bs);
+        mDuckerGrp.Load(d);
     }
     MILO_ASSERT(! (mSynthSample && mMoggClip), 0x95);
 END_LOADS
@@ -174,21 +178,22 @@ const char *Sound::GetSoundDisplayName() { return MakeString("Sequence: %s", Nam
 void Sound::SynthPoll() {
     float deltaMs = TheTaskMgr.DeltaSeconds() * 1000.0f;
     for (auto it = mDelayedSounds.begin(); it != mDelayedSounds.end();) {
-        (*it)->timeLeftMs -= deltaMs;
-        if ((*it)->timeLeftMs <= 0) {
-            Play((*it)->volume, (*it)->pan, (*it)->transpose, this, 0);
-            delete *it;
-            it = mDelayedSounds.erase(it);
+        DelayArgs *cur = *it;
+        cur->timeLeftMs -= deltaMs;
+        if (cur->timeLeftMs <= 0) {
+            Play(cur->volume, cur->pan, cur->transpose, cur->receiver, 0);
+            delete cur;
+            mDelayedSounds.erase(it++);
         } else {
             it++;
         }
     }
     for (auto it = mInsts.begin(); it != mInsts.end();) {
-        PlayableSample *cur = *it;
-        it++;
+        auto it2 = it++;
+        PlayableSample *cur = *it2;
         if (mAddZombiesOnDelete || mMoggClip) {
             if (cur->DonePlaying()) {
-                mInsts.erase(it);
+                mInsts.erase(it2);
             }
         } else {
             mDuckerGrp.Unduck();
@@ -200,12 +205,14 @@ void Sound::SynthPoll() {
             float faderVol, faderPan, faderTranspose;
             mFaders.GetVal(faderVol, faderPan, faderTranspose);
             (*it)->SetVolume(mVol + faderVol);
-            (*it)->SetPan(Clamp(-4.0f, sSpeedCaps[1], mPan + faderPan));
-            (*it)->SetSpeed(Clamp(
-                sSpeedCaps[0],
-                sSpeedCaps[1],
+            faderPan = Clamp(-4.0f, kMaxSoundSpeed, mPan + faderPan);
+            (*it)->SetPan(faderPan);
+            float speed = Clamp(
+                kMinSoundSpeed,
+                kMaxSoundSpeed,
                 CalcSpeedFromTranspose(faderTranspose) * mSpeed
-            ));
+            );
+            (*it)->SetSpeed(speed);
         }
         mFaders.ClearDirty();
     }
@@ -250,10 +257,10 @@ void Sound::Play(
             float faderVol, faderPan, faderTranspose;
             mFaders.GetVal(faderVol, faderPan, faderTranspose);
             sample->Play(mVol + faderVol + volume);
-            sample->SetPan(Clamp(-4.0f, sSpeedCaps[1], mPan + faderPan + pan));
+            sample->SetPan(Clamp(-4.0f, kMaxSoundSpeed, mPan + faderPan + pan));
             sample->SetSpeed(Clamp(
-                sSpeedCaps[0],
-                sSpeedCaps[1],
+                kMinSoundSpeed,
+                kMaxSoundSpeed,
                 CalcSpeedFromTranspose(faderTranspose + transpose) * mSpeed
             ));
             sample->SetEventReceiver(obj ? obj : mEventReceiver);
@@ -316,8 +323,6 @@ void Sound::Pause(bool b1) {
         (*it)->Pause(b1);
     }
 }
-
-bool Sound::IsPlaying() const { return !mInsts.empty() || !mDelayedSounds.empty(); }
 
 void Sound::SetVolume(float vol, Hmx::Object *obj) {
     float faderVol = mFaders.GetVolume();
@@ -430,7 +435,7 @@ bool Sound::DisablePan(DataArray *a) {
         return false;
 }
 
-bool Sound::IsMoggReady() const { return mMoggClip && mMoggClip->IsReadyToPlay(); }
+bool Sound::IsMoggReadyToPlay() { return mMoggClip && mMoggClip->IsReadyToPlay(); }
 
 DataNode Sound::OnPlay(DataArray *a) {
     static Symbol volume("volume");
@@ -450,20 +455,22 @@ SynthSample *Sound::Sample() { return mSynthSample; }
 
 void Sound::SetSpeed(float f1, Hmx::Object *eventReceiver) {
     float speedTranspose = CalcSpeedFromTranspose(mFaders.GetTranspose());
-    float clamped = Clamp(sSpeedCaps[0], sSpeedCaps[1], f1);
+    f1 = Clamp(kMinSoundSpeed, kMaxSoundSpeed, f1);
     if (eventReceiver) {
         FOREACH (it, mInsts) {
             if ((*it)->GetEventReceiver() == eventReceiver) {
                 (*it)->SetSpeed(
-                    Clamp(sSpeedCaps[0], sSpeedCaps[1], speedTranspose * clamped)
+                    Clamp(kMinSoundSpeed, kMaxSoundSpeed, speedTranspose * f1)
                 );
                 return;
             }
         }
     } else {
-        mSpeed = clamped;
+        mSpeed = f1;
         FOREACH (it, mInsts) {
-            (*it)->SetSpeed(Clamp(sSpeedCaps[0], sSpeedCaps[1], speedTranspose * mSpeed));
+            (*it)->SetSpeed(
+                Clamp(kMinSoundSpeed, kMaxSoundSpeed, speedTranspose * mSpeed)
+            );
         }
     }
 }

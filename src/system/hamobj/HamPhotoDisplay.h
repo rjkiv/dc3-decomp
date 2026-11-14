@@ -22,6 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x13)
     NEW_OBJ(HamPhotoDisplay)
+    REGISTER_OBJ(HamPhotoDisplay)
     static void Init();
 
 private:

@@ -18,7 +18,8 @@ namespace {
     void RadFree(void *ptr) { MemFree(ptr); }
 }
 
-BinkMovieSys::BinkMovieSys() : mCritSec(0), mBinkCore0(-1), mBinkCore1(-1), mTrack(0) {
+BinkMovieSys::BinkMovieSys()
+    : mCritSec(0), mBinkCore0(-1), mBinkCore1(-1), mForceTrack(0) {
     mAsyncBink = true;
     mNumFramebuffers = 1;
 }
@@ -54,8 +55,8 @@ void BinkMovieSys::Terminate() {
     {
         CritSecTracker tracker(mCritSec);
         // do you not pop from the list after you terminate?
-        while (mMovies.size()) {
-            mMovies.back()->Terminate();
+        while (mOpenMovies.size()) {
+            mOpenMovies.back()->Terminate();
         }
     }
     RELEASE(mCritSec);
@@ -63,6 +64,6 @@ void BinkMovieSys::Terminate() {
 }
 
 DataNode BinkMovieSys::OnMovieSetTrack(DataArray *a) {
-    TheBinkMovieSys.mTrack = a->Int(1);
+    TheBinkMovieSys.mForceTrack = a->Int(1);
     return 0;
 }

@@ -35,6 +35,7 @@ public:
     void StartScroll(int, bool);
 
     NEW_OBJ(UIListArrow)
+    REGISTER_OBJ(UIListArrow)
     OBJ_MEM_OVERLOAD(0x18)
 
 protected:

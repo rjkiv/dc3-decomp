@@ -150,12 +150,6 @@ public:
     Hmx::Object *Owner() const { return mOwner; }
 };
 
-// template <class T1>
-// BinStream &operator<<(BinStream &bs, const ObjPtr<T1> &ptr);
-
-template <class T1>
-BinStream &operator>>(BinStream &bs, ObjPtr<T1> &ptr);
-
 #pragma endregion
 #pragma region ObjOwnerPtr
 
@@ -176,9 +170,6 @@ public:
 
 template <class T1>
 BinStream &operator<<(BinStream &bs, const ObjOwnerPtr<T1> &ptr);
-
-template <class T1>
-BinStream &operator>>(BinStream &bs, ObjOwnerPtr<T1> &ptr);
 
 #pragma endregion
 #pragma region ObjPtrVec
@@ -946,12 +937,6 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 #define NEW_OBJ(objType)                                                                 \
     static Hmx::Object *NewObject() { return new objType; }
 
-// TODO: this macro should be deprecated and eventually removed in favor of REGISTER_OBJ
-// every Object derivative needs a Register() method,
-// instead of the Init(){ REGISTER_OBJ_FACTORY } they may have now
-#define REGISTER_OBJ_FACTORY(objType)                                                    \
-    Hmx::Object::RegisterFactory(objType::StaticClassName(), objType::NewObject);
-
 #define REGISTER_OBJ(objType)                                                            \
     static void Register() {                                                             \
         RegisterFactory(objType::StaticClassName(), objType::NewObject);                 \
@@ -1268,6 +1253,7 @@ namespace Hmx {
         void SetProperty(DataArray *prop, const DataNode &val);
 
         NEW_OBJ(Hmx::Object);
+        REGISTER_OBJ(Hmx::Object);
         /** Given an Object derivative's class name, construct a new instance of the
          * Object. */
         static Object *NewObject(Symbol name);

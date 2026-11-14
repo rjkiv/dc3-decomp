@@ -39,6 +39,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1D)
     NEW_OBJ(HamVisDir)
+    REGISTER_OBJ(HamVisDir)
 
     void Run(bool);
     void SetGrooviness(float);

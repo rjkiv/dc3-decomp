@@ -44,6 +44,7 @@ public:
     virtual void ContentDone();
 
     NEW_OBJ(MainMenuPanel)
+    REGISTER_OBJ(MainMenuPanel)
 
     MainMenuPanel();
     MainMenuProvider *GetMainMenuProvider();

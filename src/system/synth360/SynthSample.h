@@ -12,6 +12,7 @@ public:
     virtual float LengthMs() const;
 
     NEW_OBJ(SynthSample360);
+    REGISTER_OBJ(SynthSample360);
     static void Init();
 
     int GetNumSamples() const;

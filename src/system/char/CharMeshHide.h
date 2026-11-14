@@ -28,6 +28,7 @@ public:
 
     static void Init();
     NEW_OBJ(CharMeshHide)
+    REGISTER_OBJ(CharMeshHide)
     OBJ_MEM_OVERLOAD(0x15)
 
 protected:

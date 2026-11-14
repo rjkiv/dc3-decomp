@@ -107,7 +107,7 @@ void PracticeOptionsProvider::InitData(RndDir *dir) {
     }
 }
 
-void PracticeOptionsProvider::Init() { REGISTER_OBJ_FACTORY(PracticeOptionsProvider); }
+void PracticeOptionsProvider::Init() { PracticeOptionsProvider::Register(); }
 
 void PracticeOptionsProvider::SetSlow(bool slow) {
     static Symbol ingame_slowmo("ingame_slowmo");

@@ -78,6 +78,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18)
     NEW_OBJ(HamDriver)
+    REGISTER_OBJ(HamDriver)
 
     void Clear();
     void SetClipWeightMap();

@@ -59,6 +59,7 @@ public:
     virtual void InitData(RndDir *);
 
     NEW_OBJ(PracticeChoosePanel)
+    REGISTER_OBJ(PracticeChoosePanel)
 
     float StepStartBeat(int) const;
     float StepEndBeat(int) const;

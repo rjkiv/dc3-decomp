@@ -57,7 +57,7 @@ void LabelNumberTicker::PostLoad(BinStream &bs) {
     UIComponent::PostLoad(bs);
 }
 
-void LabelNumberTicker::Init() { REGISTER_OBJ_FACTORY(LabelNumberTicker) }
+void LabelNumberTicker::Init() { LabelNumberTicker::Register(); }
 
 void LabelNumberTicker::UpdateDisplay() {
     if (mLabel) {

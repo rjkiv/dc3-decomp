@@ -44,7 +44,7 @@ public:
     virtual void PreInit() {}
     virtual void Init();
     virtual void InitSecurity();
-    virtual void SetDolby(bool, bool) {} // 0x64
+    virtual void SetDolby(bool on, bool immediate) {} // 0x64
     virtual bool IsUsingDolby() const { return false; }
     virtual bool Fail() { return false; }
     virtual void Terminate();
@@ -52,78 +52,103 @@ public:
     virtual bool HasPendingVoices() { return false; }
     virtual void SetFXMode(int, FXMode) {}
     virtual FXMode GetFXMode(int) const { return kFXModeOff; }
-    virtual void SetFXVolume(int, float) {}
+    virtual void SetFXVolume(int core, float volDb) {}
     virtual float GetFXVolume(int) const { return 0; }
-    virtual void SetFXDelay(int, float) {}
+    virtual void SetFXDelay(int core, float delay) {}
     virtual float GetFXDelay(int) const { return 0; }
-    virtual void SetFXFeedback(int, float) {}
+    virtual void SetFXFeedback(int core, float feedbackDb) {}
     virtual float GetFXFeedback(int) const { return 0; }
     virtual void SetFXChain(bool) {}
     virtual bool GetFXChain() const { return false; }
-    virtual void SetChatVoiceGain(int, float) {}
+    virtual void SetChatVoiceGain(int ixVoice, float gain) {}
     virtual float GetChatVoiceGain(int) { return 1; }
     virtual Mic *GetMic(int idx) { return mNullMics[idx]; }
     virtual void SetMicFX(bool) {}
     virtual bool GetMicFX() const { return false; }
-    virtual void SetMicVolume(float) {}
+    virtual void SetMicVolume(float volDb) {}
     virtual float GetMicVolume() const { return 0; }
     virtual void SuspendMics() {}
     virtual void ResumeMics() {}
     virtual int GetNumConnectedMics() { return 0; }
     virtual int GetNextAvailableMicID() const { return -1; }
-    virtual bool IsMicConnected(int) const { return false; }
-    virtual void CaptureMic(int) {}
-    virtual void ReleaseMic(int) {}
+    virtual bool IsMicConnected(int micID) const { return false; }
+    virtual void CaptureMic(int micID) {}
+    virtual void ReleaseMic(int micID) {}
     virtual void ReleaseAllMics() {}
     virtual TranscodableMixerOutput *GetSecureOutput() { return nullptr; }
     virtual bool DidMicsChange() const { return false; }
     virtual void ResetMicsChanged() {}
-    virtual Stream *NewStream(const char *, float, float, bool);
-    virtual Stream *NewBufStream(const void *, int, Symbol, float, bool);
-    virtual StreamReader *NewStreamDecoder(File *, StandardStream *, Symbol) {
+    virtual Stream *
+    NewStream(const char *filebase, float startMs, float bufSecs, bool secure);
+    virtual Stream *NewBufStream(
+        const void *buf, int size, Symbol ext, float startMs, bool pollingEnabled
+    );
+    virtual StreamReader *NewStreamDecoder(File *, StandardStream *, Symbol ext) {
         return nullptr;
     }
     virtual void NewStreamFile(const char *fileBase, File *&fileOut, Symbol &extOut);
     virtual void EnableLevels(bool) {}
-    virtual void RequirePushToTalk(bool, int) {}
-    virtual void SetIncomingVoiceChatVolume(float) {}
+    virtual void RequirePushToTalk(bool require, int pad) {}
+    virtual void SetIncomingVoiceChatVolume(float volDb) {}
     virtual FxSendPitchShift *CreatePitchShift(int stage, SendChannels channels);
-    virtual void DestroyPitchShift(FxSendPitchShift *);
+    virtual void DestroyPitchShift(FxSendPitchShift *pitchShift);
 
     // RndOverlay::Callback
     virtual float UpdateOverlay(RndOverlay *, float);
 
+    void RunFlow(const char *);
+    //  public: void Play(const char*, float, float, float);
+    void PlaySound(const char *name, float volume, float pan, float transpose);
     Fader *MasterFader() const { return mMasterFader; }
-    Fader *SfxFader() const { return mSfxFader; }
-    Fader *MidiInstrumentFader() const { return mMidiInstrumentFader; }
-    void SetCommonBank(ObjectDir *bank) { mCommonBank = bank; }
-    ByteGrinder &GetGrinder() { return mGrinder; }
-    MicClientMapper *GetMicClientMapper() const { return mMicClientMapper; }
-    bool CheckCommonBank(bool warn);
     void SetMasterVolume(float);
     float GetMasterVolume();
-    void ToggleHud();
-    const ADSRImpl *DefaultADSR();
-    void SetFX(const DataArray *data);
-    void SetMic(const DataArray *data);
-    int GetFXOverhead();
-    int GetSPUOverhead();
-    void RunFlow(const char *);
-    void StopPlaybackAllMics();
-    void StopAllSfx(bool);
-    void PauseAllSfx(bool);
+    Fader *SfxFader() const { return mSfxFader; }
+    Fader *MidiInstrumentFader() const { return mMidiInstrumentFader; }
     int GetSampleMem(ObjectDir *, Platform plat);
-    void StopAllSounds();
+    int GetSPUOverhead();
+    int GetFXOverhead();
     void AddPlayHandler(Hmx::Object *handler);
     void RemovePlayHandler(Hmx::Object *handler);
+    //  public: void ClearPlayHandlers();
     void SendToPlayHandlers(Sound *);
-    void PlaySound(const char *name, float volume, float pan, float transpose);
-    void AddZombie(SampleInst *);
+    void StopAllSfx(bool);
+    void PauseAllSfx(bool);
+    //  public: void FlushZombieSounds();
+    void SetFX(const DataArray *data);
+    //  public: void PlayMidi(unsigned char, unsigned char, unsigned char, int32_t);
+    //  public: void PauseMidi(bool);
+    //  public: void PlayNoteOn(unsigned char, unsigned char, unsigned char);
+    //  public: void PlayNoteOff(unsigned char, unsigned char, unsigned char);
+    //  public: void PlayInstrument(unsigned char, unsigned char);
+    //  public: void PlayPitchWheel(unsigned char, int32_t);
+    //  public: void PlayController(unsigned char, unsigned char, unsigned char);
+    //  public: void PlayController(unsigned char, unsigned char);
+    //  public: void PlayBank(unsigned char, unsigned char);
+    //  public: void PlayVolume(unsigned char, float);
+    //  public: void PlayPan(unsigned char, float);
+    //  public: void PlayAllNotesOff(unsigned char);
+    //  public: void PlayAllSoundOff(unsigned char);
+    //  public: void PlayReset(unsigned char);
     int GetNumMics() const;
+    void StopPlaybackAllMics();
+    void SetMic(const DataArray *data);
+    MicClientMapper *GetMicClientMapper() { return mMicClientMapper; }
+    class TranscodableMixer *GetSecureMixer() { return mSecureMixer; }
+    void ToggleHud();
+    bool HudShowing() const { return mHud->Showing(); }
+    void DrawMeter(float &y0, float lvl, float pkLvl, const char *label);
     void DrawMeterScale(float &y0);
-    void DrawMeter(float &y0, float lvl, float pkLvl, const char *);
-    bool TrackLevels() const { return mTrackLevels; }
+    ByteGrinder &GetGrinder() { return mGrinder; }
+    //  public: void SetDebugStream(Stream*);
     std::vector<LevelData> &GetLevelData() { return mLevelData; }
+    void SetCommonBank(ObjectDir *bank) { mCommonBank = bank; }
+    bool CheckCommonBank(bool warn);
+    const ADSRImpl *DefaultADSR();
+    void StopAllSounds();
+    void AddZombie(SampleInst *);
+    //  public: bool IsInVOEditMode();
+    //  public: const String& GetVOEditSound() const;
+    //  public: void SetVOEditSound(const char*);
 
     template <class T>
     T *Find(const char *name, bool fail = true) {
@@ -176,7 +201,7 @@ private:
     Fader *mMidiInstrumentFader; // 0x88
     std::list<Hmx::Object *> mPlayHandlers; // 0x8c
     MicClientMapper *mMicClientMapper; // 0x94
-    int unk98; // TranscodableMixer* mSecureMixer? not in pdb????
+    class TranscodableMixer *mSecureMixer; // 0x98
     Stream *mDebugStream; // 0x9c
     RndOverlay *mHud; // 0xa0
     ADSRImpl *mADSR; // 0xa4

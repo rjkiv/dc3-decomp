@@ -72,7 +72,7 @@ void DingoServer::ManageJob(DingoJob *job) {
                 c4 = false;
             }
         }
-        if (c4 && !job->HasHttpReq()) {
+        if (c4 && !job->IsInited()) {
             u7 = !InitAndAddJob(job, false, b8);
         }
     }
@@ -212,7 +212,7 @@ DataNode DingoServer::OnMsg(const DingoJobCompleteMsg &msg) {
         int state = mAuthState;
         MILO_NOTIFY("Got auth response in wrong state: %d.", state);
     } else {
-        if (msg.GetVal3() != 0) {
+        if (msg.Success()) {
             AuthenticateReqJob *job = dynamic_cast<AuthenticateReqJob *>(msg.GetJob());
             MILO_ASSERT(job, 0x14e);
             job->ParseResponse();

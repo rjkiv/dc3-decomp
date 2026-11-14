@@ -28,6 +28,7 @@ public:
     virtual int NumData() const;
 
     NEW_OBJ(CreditsPanel)
+    REGISTER_OBJ(CreditsPanel)
 
 protected:
     DataNode OnMsg(const ButtonDownMsg &);

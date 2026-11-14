@@ -18,6 +18,7 @@ public:
 
     void UpdateList();
     NEW_OBJ(FitnessProvider)
+    REGISTER_OBJ(FitnessProvider)
 
 private:
     std::vector<Symbol> m_vEntries; // 0x30

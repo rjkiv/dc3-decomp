@@ -60,6 +60,12 @@ BinStream &operator<<(BinStream &bs, const ObjRefConcrete<T1, class ObjectDir> &
     return bs;
 }
 
+template <class T1>
+BinStream &operator>>(BinStream &bs, ObjRefConcrete<T1, class ObjectDir> &ptr) {
+    ptr.Load(bs, true, nullptr);
+    return bs;
+}
+
 template <class T1, class T2>
 bool ObjRefConcrete<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
     char buf[128];
@@ -103,12 +109,6 @@ ObjPtr<T>::ObjPtr(Hmx::Object *owner, T *ptr) : ObjRefConcrete<T>(ptr), mOwner(o
 template <class T>
 ObjPtr<T>::ObjPtr(const ObjPtr &p) : ObjRefConcrete<T>(p), mOwner(p.mOwner) {}
 
-template <class T>
-BinStream &operator>>(BinStream &bs, ObjPtr<T> &ptr) {
-    ptr.Load(bs, true, nullptr);
-    return bs;
-}
-
 #pragma endregion
 #pragma region ObjOwnerPtr
 // ------------------------------------------------
@@ -133,15 +133,6 @@ ObjOwnerPtr<T>::~ObjOwnerPtr() {}
 template <class T>
 Hmx::Object *ObjOwnerPtr<T>::RefOwner() const {
     return ObjRefConcrete<T>::mObject->RefOwner();
-}
-
-// template <class T1>
-// BinStream &operator<<(BinStream &bs, const ObjOwnerPtr<T1> &ptr);
-
-template <class T1>
-BinStream &operator>>(BinStream &bs, ObjOwnerPtr<T1> &ptr) {
-    ptr.Load(bs, true, nullptr);
-    return bs;
 }
 
 #pragma endregion

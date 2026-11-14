@@ -37,6 +37,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18);
     NEW_OBJ(UISlider)
+    REGISTER_OBJ(UISlider)
     static void Init();
 
     float Frame() const;

@@ -26,6 +26,7 @@ public:
     virtual void Exit();
 
     NEW_OBJ(UIPicture)
+    REGISTER_OBJ(UIPicture)
     OBJ_MEM_OVERLOAD(0x23)
 
     void SetTex(FilePath const &);

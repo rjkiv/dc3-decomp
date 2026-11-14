@@ -228,7 +228,8 @@ void HamAudio::SetForegroundVolume(float) {}
 void HamAudio::SetStereo(bool) {}
 
 bool HamAudio::GetCurrLoopMarkers(float &f1, float &f2) const {
-    Marker m1, m2;
+    Marker m1(String(), 0, 0);
+    Marker m2(String(), 0, 0);
     Stream *s = mSongStream;
     if (!s || !s->CurrentJumpPoints(m2, m1)) {
         return false;
@@ -287,7 +288,8 @@ void HamAudio::SetCrossfadeJump(float fromMs, float toMs, float fadeMs) {
 }
 
 void HamAudio::SetLoop(float startMs, float endMs, Stream *stream) {
-    Marker m1, m2;
+    Marker m1(String(), 0, 0);
+    Marker m2(String(), 0, 0);
     if (stream->CurrentJumpPoints(m2, m1) && m1.posMS == startMs && m2.posMS == endMs) {
         return;
     } else {

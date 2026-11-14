@@ -41,6 +41,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(BustAMovePanel)
+    REGISTER_OBJ(BustAMovePanel)
 
     void OnBeat();
     void SetUpSongStructure(Symbol);

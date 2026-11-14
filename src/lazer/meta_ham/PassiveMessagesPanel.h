@@ -13,6 +13,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(PassiveMessagesPanel)
+    REGISTER_OBJ(PassiveMessagesPanel)
 
     PassiveMessagesPanel();
 

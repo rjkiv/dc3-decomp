@@ -16,6 +16,7 @@ public:
     virtual bool Exiting() const;
 
     NEW_OBJ(HamScreen)
+    REGISTER_OBJ(HamScreen)
 
 protected:
     bool IsEventDialogOnTop() const;

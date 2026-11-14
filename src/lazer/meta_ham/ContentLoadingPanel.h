@@ -22,6 +22,7 @@ public:
     virtual void ContentDone();
 
     NEW_OBJ(ContentLoadingPanel)
+    REGISTER_OBJ(ContentLoadingPanel)
 
     ContentLoadingPanel();
     void AllowedToShow(bool);

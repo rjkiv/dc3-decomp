@@ -713,7 +713,6 @@ void Character::SetInterestFilterFlags(int i) {
     CharEyes *eyes = GetEyes();
     if (eyes) {
         eyes->SetInterestFilterFlags(i);
-        eyes->SetInterestFiltersChanged(true);
     }
 }
 
@@ -727,7 +726,7 @@ void Character::ClearInterestFilterFlags() {
 #pragma endregion
 #pragma region Character Methods
 
-void Character::Init() { REGISTER_OBJ_FACTORY(Character) }
+void Character::Init() { Character::Register(); }
 void Character::Terminate() {}
 
 ShadowBone *Character::AddShadowBone(RndTransformable *trans) {

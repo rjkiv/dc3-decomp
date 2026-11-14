@@ -17,6 +17,7 @@ public:
     virtual DataNode Handle(DataArray *, bool);
 
     NEW_OBJ(CampaignDiffProvider)
+    REGISTER_OBJ(CampaignDiffProvider)
 
     void UpdateList(bool);
 
@@ -34,6 +35,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(CampaignDiffSelectPanel)
+    REGISTER_OBJ(CampaignDiffSelectPanel)
 
     Difficulty GetSelectedDiff();
     void SelectDiff();

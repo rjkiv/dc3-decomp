@@ -20,11 +20,10 @@ public:
 
     static void SignalDecodeThread();
 
+    int GetVersion() { return mVersion; }
     bool DecodeThreadPoll();
-    bool PendingRemoval() const { return mPendingRemoval; }
-    void SetPendingRemoval(bool b) { mPendingRemoval = b; }
 
-    volatile bool mPendingRemoval; // 0x24 yes this is public
+    volatile bool mExiting; // 0x24 yes this is public
 
 protected:
     virtual void Init();
@@ -33,21 +32,23 @@ protected:
 
     void setupCypher(int);
     void DoRawSeek(int byte);
+    //  protected: int32_t GetLastMapByte();
+
+private:
+    bool DoFileRead();
+    bool TryReadHeader();
+    void InitDecoder();
+    //  private: bool TryConsumeData();
+    bool TryDecode();
+    bool TryReadPacket(ogg_packet &);
+    bool DoSeek();
+    bool CheckHmxHeader();
+    void Decrypt(unsigned char *, int);
+    //  private: int32_t QueuedInputBytes();
+    int QueuedOutputSamples();
 
     int mNumChannels; // 0x28
     int mSampleRate; // 0x2c
-
-private:
-    bool TryReadHeader();
-    bool TryReadPacket(ogg_packet &);
-    void InitDecoder();
-    bool DoSeek();
-    bool DoFileRead();
-    int QueuedOutputSamples();
-    bool TryDecode();
-    bool CheckHmxHeader();
-    void Decrypt(unsigned char *, int);
-
     File *mFile; // 0x30
     int mHeadersRead; // 0x34
     unsigned char *mReadBuffer; // 0x38

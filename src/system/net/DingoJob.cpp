@@ -133,9 +133,12 @@ void DingoJob::AddContent(HttpReq *httpReq) {
     String params;
     mDataPoint->ToJSON(unencoded_params);
     URLEncode(unencoded_params.c_str(), params, false);
-    mParams = new char[params.length()];
-
+    int len = params.length() + 7;
+    mParams = new char[len + 1];
+    strcpy(mParams, "params=");
+    strcat(mParams, params.c_str());
     httpReq->SetContent(mParams);
+    httpReq->SetContentLength(len);
 }
 
 void DingoJob::SetDataPoint(const DataPoint &point) {

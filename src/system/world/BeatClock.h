@@ -34,6 +34,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(BeatClock)
+    REGISTER_OBJ(BeatClock)
 
     void Start() { mIsRunning = true; }
     void Pause() { mIsRunning = false; }

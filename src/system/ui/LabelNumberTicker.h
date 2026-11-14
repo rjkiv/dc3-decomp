@@ -23,6 +23,7 @@ public:
     virtual void Enter();
 
     NEW_OBJ(LabelNumberTicker)
+    REGISTER_OBJ(LabelNumberTicker)
     OBJ_MEM_OVERLOAD(0x14)
 
     static void Init();

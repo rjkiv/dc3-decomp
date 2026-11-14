@@ -23,6 +23,7 @@ public:
 
     static void Init();
     NEW_OBJ(DxTex)
+    REGISTER_OBJ(DxTex)
     static void SetEDRamChecksEnabled(bool enabled) { sEDRamChecksEnabled = enabled; }
 
     void *StartCompress(AlphaCompress);

@@ -34,6 +34,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1E);
     NEW_OBJ(DancerSequence);
+    REGISTER_OBJ(DancerSequence);
 
     /** Returns the DancerFrames - belonging to a move is done by mMoveIdx within each
      */

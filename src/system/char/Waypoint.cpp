@@ -125,7 +125,7 @@ BEGIN_LOADS(Waypoint)
 END_LOADS
 
 void Waypoint::Init() {
-    REGISTER_OBJ_FACTORY(Waypoint);
+    Waypoint::Register();
     DataRegisterFunc("waypoint_find", OnWaypointFind);
     DataRegisterFunc("waypoint_nearest", OnWaypointNearest);
     DataRegisterFunc("waypoint_last", OnWaypointLast);

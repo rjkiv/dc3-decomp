@@ -30,6 +30,7 @@ public:
     virtual void OldResourcePreload(BinStream &);
 
     NEW_OBJ(LabelShrinkWrapper)
+    REGISTER_OBJ(LabelShrinkWrapper)
     OBJ_MEM_OVERLOAD(0x14)
 
     static void Init();

@@ -26,6 +26,7 @@ public:
     virtual class ObjectDir *DataDir();
 
     NEW_OBJ(UIPanel)
+    REGISTER_OBJ(UIPanel)
 
     // UIPanel
 protected:

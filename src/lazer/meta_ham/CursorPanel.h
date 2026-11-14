@@ -12,6 +12,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(CursorPanel)
+    REGISTER_OBJ(CursorPanel)
 
     CursorPanel();
 

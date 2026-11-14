@@ -312,7 +312,7 @@ void HamNavList::SetControllerFocus(int i1) {
 }
 
 void HamNavList::Init() {
-    REGISTER_OBJ_FACTORY(HamNavList);
+    HamNavList::Register();
     DataArray *cfg = SystemConfig("ui");
     cfg->FindData("slide_smooth_amount", sSlideSmoothAmount, false);
     cfg->FindData("slide_trend_amount", sSlideTrendAmount, false);

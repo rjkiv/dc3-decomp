@@ -79,7 +79,7 @@ public:
     float GetWaitSpread() const { return mWaitSpread; }
 
     NEW_OBJ(WaitSeq)
-    static void Init() { REGISTER_OBJ_FACTORY(WaitSeq) }
+    REGISTER_OBJ(WaitSeq)
 
 private:
     /** "Average wait time, in seconds" */
@@ -135,7 +135,7 @@ public:
     }
 
     NEW_OBJ(RandomGroupSeq)
-    static void Init() { REGISTER_OBJ_FACTORY(RandomGroupSeq) }
+    REGISTER_OBJ(RandomGroupSeq)
     static void ForceSerialSequences(bool);
     static bool UsingSerialSequences();
 
@@ -163,7 +163,7 @@ public:
     virtual SeqInst *MakeInstImpl();
 
     NEW_OBJ(RandomIntervalGroupSeq)
-    static void Init() { REGISTER_OBJ_FACTORY(RandomIntervalGroupSeq) }
+    REGISTER_OBJ(RandomIntervalGroupSeq)
 
     float GetAvgInterval() const { return mAvgIntervalSecs; }
     float GetIntervalSpread() const { return mIntervalSpread; }
@@ -191,7 +191,7 @@ public:
     virtual SeqInst *MakeInstImpl();
 
     NEW_OBJ(SerialGroupSeq)
-    static void Init() { REGISTER_OBJ_FACTORY(SerialGroupSeq) }
+    REGISTER_OBJ(SerialGroupSeq)
 };
 
 /** "Plays all of its child sequences at the same time." */
@@ -205,7 +205,7 @@ public:
     virtual SeqInst *MakeInstImpl();
 
     NEW_OBJ(ParallelGroupSeq)
-    static void Init() { REGISTER_OBJ_FACTORY(ParallelGroupSeq) }
+    REGISTER_OBJ(ParallelGroupSeq)
 };
 
 class SfxSeq : public SerialGroupSeq {
@@ -218,7 +218,7 @@ public:
     virtual void Load(BinStream &);
 
     NEW_OBJ(SfxSeq)
-    static void Init() { REGISTER_OBJ_FACTORY(SfxSeq) }
+    REGISTER_OBJ(SfxSeq)
 };
 
 class SeqInst : public Hmx::Object {

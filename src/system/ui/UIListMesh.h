@@ -29,6 +29,7 @@ public:
     RndMesh *Mesh() const { return mMesh; }
 
     NEW_OBJ(UIListMesh)
+    REGISTER_OBJ(UIListMesh)
     OBJ_MEM_OVERLOAD(0x11)
 
 protected:

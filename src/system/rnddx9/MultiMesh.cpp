@@ -137,7 +137,7 @@ static D3DVERTEXELEMENT9 sMutableVertexElement[] = {
 };
 
 void DxMultiMesh::Init() {
-    REGISTER_OBJ_FACTORY(DxMultiMesh);
+    DxMultiMesh::Register();
     HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(sVertexElement, &sVertexDecl);
     DX_ASSERT(hr, 0x97);
     hr = TheDxRnd.Device()->CreateVertexDeclaration(

@@ -17,6 +17,7 @@
 #include "hamobj/DanceRemixer.h"
 #include "hamobj/DancerSequence.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/HamAudio.h"
 #include "hamobj/HamBattleData.h"
 #include "hamobj/HamCamShot.h"
 #include "hamobj/HamCamTransform.h"
@@ -75,59 +76,62 @@ void HamTerminate() {
 void HamInit() {
     GestureInit();
     if (DataGetMacro("INIT_HAM")) {
-        REGISTER_OBJ_FACTORY(CharFeedback);
+        CharFeedback::Register();
         CamShotCatVOInit();
-        REGISTER_OBJ_FACTORY(DancerSequence);
-        REGISTER_OBJ_FACTORY(HamBattleData);
-        REGISTER_OBJ_FACTORY(SongLayout);
-        REGISTER_OBJ_FACTORY(HamDriver);
-        REGISTER_OBJ_FACTORY(Hmx::Object);
+        DancerSequence::Register();
+        HamBattleData::Register();
+        SongLayout::Register();
+        HamDriver::Register();
+        // this is one of the following:
+        // HamAudio, HamMaster, HamPlayerData, CharCameraInput
+        // i'm gonna put down HamAudio
+        HamAudio::Register();
         HamGameData::Init();
-        REGISTER_OBJ_FACTORY(HamIconMan);
-        REGISTER_OBJ_FACTORY(HamIKEffector);
-        REGISTER_OBJ_FACTORY(HamIKSkeleton);
+        HamIconMan::Register();
+        HamIKEffector::Register();
+        HamIKSkeleton::Register();
         HamLabel::Init();
         HamList::Init();
-        REGISTER_OBJ_FACTORY(HamWardrobe);
-        REGISTER_OBJ_FACTORY(HamDirector);
-        REGISTER_OBJ_FACTORY(HamCamShot);
-        REGISTER_OBJ_FACTORY(HamCamTransform);
+        HamWardrobe::Register();
+        HamDirector::Register();
+        HamCamShot::Register();
+        HamCamTransform::Register();
         HamCharacter::Init();
-        REGISTER_OBJ_FACTORY(HamRegulate);
-        REGISTER_OBJ_FACTORY(HamRibbon);
-        REGISTER_OBJ_FACTORY(HamMove);
-        REGISTER_OBJ_FACTORY(HamSkeletonConverter);
-        REGISTER_OBJ_FACTORY(HamSong);
-        REGISTER_OBJ_FACTORY(HamSupereasyData);
-        REGISTER_OBJ_FACTORY(PracticeSection);
-        REGISTER_OBJ_FACTORY(HamVisDir);
+        HamRegulate::Register();
+        HamRibbon::Register();
+        HamMove::Register();
+        HamSkeletonConverter::Register();
+        HamSong::Register();
+        HamSupereasyData::Register();
+        PracticeSection::Register();
+        HamVisDir::Register();
         HamPhotoDisplay::Init();
-        REGISTER_OBJ_FACTORY(HamPhraseMeter);
+        HamPhraseMeter::Register();
         MeterDisplay::Init();
         MiniLeaderboardDisplay::Init();
         SongCollision::Init();
         SongDifficultyDisplay::Init();
         StarsDisplay::Init();
-        REGISTER_OBJ_FACTORY(TransConstraint);
-        REGISTER_OBJ_FACTORY(HamListRibbon);
-        REGISTER_OBJ_FACTORY(HamScrollSpeedIndicator);
+        TransConstraint::Register();
+        HamListRibbon::Register();
+        HamScrollSpeedIndicator::Register();
         HamNavList::Init();
         HamNavProvider::Init();
         PracticeOptionsProvider::Init();
         PhotoSpotlightPositioner::Init();
-        REGISTER_OBJ_FACTORY(RhythmDetector);
-        REGISTER_OBJ_FACTORY(RhythmBattle);
-        REGISTER_OBJ_FACTORY(RhythmBattlePlayer);
-        REGISTER_OBJ_FACTORY(RhythmDetectorGroup);
-        REGISTER_OBJ_FACTORY(HollaBackMinigame);
-        REGISTER_OBJ_FACTORY(MoveGraph);
-        REGISTER_OBJ_FACTORY(CrazeHollaback);
-        REGISTER_OBJ_FACTORY(HamPartyJumpData);
-        REGISTER_OBJ_FACTORY(DanceRemixer);
-        REGISTER_OBJ_FACTORY(OriginalChoreoRemixer);
-        REGISTER_OBJ_FACTORY(SuperEasyRemixer);
-        REGISTER_OBJ_FACTORY(BustAMoveData);
-        REGISTER_OBJ_FACTORY(PoseFatalities);
+        RhythmDetector::Register();
+        RhythmBattle::Register();
+        RhythmBattlePlayer::Register();
+        RhythmDetectorGroup::Register();
+        HollaBackMinigame::Register();
+        MoveGraph::Register();
+        CrazeHollaback::Register();
+        HamPartyJumpData::Register();
+        DanceRemixer::Register();
+        OriginalChoreoRemixer::Register();
+        SuperEasyRemixer::Register();
+        BustAMoveData::Register();
+        PoseFatalities::Register();
         MoveDir::Init();
         DifficultyInit();
         TheDebug.AddExitCallback(HamTerminate);

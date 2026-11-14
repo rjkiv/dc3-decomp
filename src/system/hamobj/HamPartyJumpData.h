@@ -18,6 +18,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x11)
     NEW_OBJ(HamPartyJumpData)
+    REGISTER_OBJ(HamPartyJumpData)
 
 protected:
     HamPartyJumpData();

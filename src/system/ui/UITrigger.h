@@ -24,6 +24,7 @@ public:
     virtual void Enter();
 
     NEW_OBJ(UITrigger)
+    REGISTER_OBJ(UITrigger)
     OBJ_MEM_OVERLOAD(0x14)
 
     bool IsDone() const;

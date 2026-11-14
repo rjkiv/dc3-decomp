@@ -30,6 +30,7 @@ public:
     UIScreen *Screen();
 
     NEW_OBJ(LocalePanel)
+    REGISTER_OBJ(LocalePanel)
 
 protected:
     std::vector<Entry> mEntries; // 0x3c

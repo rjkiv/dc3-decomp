@@ -17,6 +17,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10);
     NEW_OBJ(FxSendReverb)
+    REGISTER_OBJ(FxSendReverb)
 
 protected:
     FxSendReverb();

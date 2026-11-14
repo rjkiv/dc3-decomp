@@ -467,13 +467,10 @@ void HamStorePanel::FinishSpecialOfferEnum(std::vector<bool> const &vec, bool b)
         MILO_LOG("Store: failed to enum our special offers.\n");
     } else {
         for (int i = 0; i < mSpecialOffers.size(); i++) {
-            HamSpecialOffer &offer = mSpecialOffers[i];
-            if (!offer.mIsOwned) {
-                offer.mIsOwned = vec[i];
-            }
-
-            if (offer.mIsOwned) {
-                MILO_LOG("Store: special offer %s is owned\n", offer.mID);
+            mSpecialOffers[i].mIsOwned = mSpecialOffers[i].mIsOwned || vec[i];
+            if (mSpecialOffers[i].mIsOwned) {
+                Symbol id = mSpecialOffers[i].mID;
+                MILO_LOG("Store: special offer %s is owned\n", id);
             }
         }
     }
@@ -567,14 +564,14 @@ DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
     return 1;
 }
 
-StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool b) {
+StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &prods, bool extra) {
     FOREACH (it, mSpecialOffers) {
         if (!it->mIsOwned) {
             bool check = false;
-            FOREACH (listIt, list) {
-                if (listIt->mOfferID == it->mOfferId) {
+            FOREACH (product, prods) {
+                if (product->mOfferID == it->mOfferId) {
                     check = true;
-                    it->mIsOwned = (listIt->mPurchased != 0);
+                    it->mIsOwned = (product->mPurchased != 0);
                     break;
                 }
             }
@@ -588,7 +585,7 @@ StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool 
             }
         }
     }
-    return StorePanel::UpdateOffers(list, b);
+    return StorePanel::UpdateOffers(prods, extra);
 }
 
 BEGIN_HANDLERS(HamStorePanel)

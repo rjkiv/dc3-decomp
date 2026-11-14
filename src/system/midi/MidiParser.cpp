@@ -142,7 +142,7 @@ void MidiParser::SetTypeDef(DataArray *arr) {
 #pragma region MidiParser
 
 void MidiParser::Init() {
-    REGISTER_OBJ_FACTORY(MidiParser);
+    MidiParser::Register();
     MidiParser::mpStart = &DataVariable("mp.start");
     MidiParser::mpEnd = &DataVariable("mp.end");
     MidiParser::mpLength = &DataVariable("mp.length");

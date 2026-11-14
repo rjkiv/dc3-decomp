@@ -59,6 +59,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x4A)
     NEW_OBJ(HamCamTransform)
+    REGISTER_OBJ(HamCamTransform)
 
     void ClearOldCrowds();
 

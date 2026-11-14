@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIList.h"
 #include "utl/MemMgr.h"
 
@@ -18,6 +19,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10)
     NEW_OBJ(HamList)
+    REGISTER_OBJ(HamList)
     static void Init();
 
 protected:

@@ -92,6 +92,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x24)
     NEW_OBJ(WorldCrowd)
+    REGISTER_OBJ(WorldCrowd)
 
     void SetLod(int lod);
     void Set3DCharAll();

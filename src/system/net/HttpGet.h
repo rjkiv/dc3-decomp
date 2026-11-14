@@ -28,13 +28,25 @@ public:
         kS_Nil = -1
     };
 
-    HttpGet(unsigned int ip, unsigned short port, const char *, const char *);
     HttpGet(
-        unsigned int ip, unsigned short port, const char *, unsigned char, const char *
+        unsigned int ip,
+        unsigned short port,
+        const char *strRemoteFile,
+        const char *strHeader
+    );
+    HttpGet(
+        unsigned int ip,
+        unsigned short port,
+        const char *strRemoteFile,
+        unsigned char flags,
+        const char *strHeader
     );
     virtual ~HttpGet();
     virtual void SetContent(const char *content) {}
     virtual void SetContentLength(unsigned int len) {}
+
+    // bool IsWaiting();
+    // unsigned int GetStatusCode();
 
     bool IsDownloaded();
     bool HasFailed();
@@ -42,10 +54,9 @@ public:
     void Send();
     void Poll();
     unsigned int GetBufferSize();
-    void SetTimeout(float);
+    void SetTimeout(float ms);
     HttpGetFailType FailType() const { return mFailType; }
-    State PrevState() const { return mFailState; }
-    int GetRetryCount() { return mRetryCount; }
+    State GetFailState() const { return mFailState; }
 
     MEM_OVERLOAD(HttpGet, 0x1C);
 
@@ -55,6 +66,8 @@ protected:
     virtual void Sending() {
         MILO_FAIL("HttpGet::Sending() - shouldn't be calling this");
     }
+
+    // void ResetTimeoutClock();
 
     void StartReceiving();
     void SafeDisconnect();
@@ -106,10 +119,10 @@ protected:
     virtual void Sending();
 
     const char *mContent; // 0x88
-    unsigned int mContentLength; // 0x8c
+    int mContentLength; // 0x8c
     int mContentBytesLeftToSend; // 0x90
 
 private:
     String mHeader; // 0x94
-    int mHeaderLength;
+    int mHeaderLength; // 0x9c
 };

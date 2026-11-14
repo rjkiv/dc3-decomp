@@ -117,15 +117,15 @@ void DxRnd::PreInit(HWND__ *) {
         TheShaderMgr.PreInit();
         TheRenderState.Init();
         Suspend();
-        REGISTER_OBJ_FACTORY(DxTexRenderer)
-        REGISTER_OBJ_FACTORY(DxCam)
-        REGISTER_OBJ_FACTORY(DxEnviron);
-        REGISTER_OBJ_FACTORY(DxMesh)
+        DxTexRenderer::Register();
+        DxCam::Register();
+        DxEnviron::Register();
+        DxMesh::Register();
         DxMat::Init();
-        REGISTER_OBJ_FACTORY(DxTex)
-        REGISTER_OBJ_FACTORY(DxCubeTex);
+        DxTex::Register();
+        DxCubeTex::Register();
         DxMultiMesh::Init();
-        REGISTER_OBJ_FACTORY(DxMovie)
+        DxMovie::Register();
         DxParticleSys::Init();
         DxLight::Init();
         CreatePostTextures();

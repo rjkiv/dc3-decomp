@@ -45,6 +45,7 @@ public:
     }
 
     NEW_OBJ(DxMesh)
+    REGISTER_OBJ(DxMesh)
 
     POOL_OVERLOAD(DxMesh, 0x56);
 

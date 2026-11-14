@@ -55,29 +55,29 @@ static int ctr_encrypt_fast(
     const unsigned char *pt, unsigned char *ct, unsigned long len, symmetric_CTR *ctr
 ) {
     int x0, x1, x2, x3;
-    int *pti = (int *)pt;
-    int *cti = (int *)ct;
-    for (; len != 0; len -= 0x10) {
-        int i;
-        for (i = 0; i < ctr->blocklen; i++) {
+    for (int n = 0; n < len; n += 0x10) {
+        for (int i = 0; i < ctr->blocklen; i++) {
             if (++ctr->ctr[i] != '\0')
                 break;
         }
         cipher_descriptor[ctr->cipher].ecb_encrypt(ctr->ctr, ctr->pad, &ctr->key);
-        x0 = *pti++;
-        x1 = *pti++;
-        x2 = *pti++;
-        x3 = *pti++;
+
+        const int *pti = (const int *)&pt[n];
+        x0 = pti[0];
+        x1 = pti[1];
+        x2 = pti[2];
+        x3 = pti[3];
 
         x0 ^= ((int *)ctr->pad)[0];
         x1 ^= ((int *)ctr->pad)[1];
         x2 ^= ((int *)ctr->pad)[2];
         x3 ^= ((int *)ctr->pad)[3];
 
-        *cti++ = x0;
-        *cti++ = x1;
-        *cti++ = x2;
-        *cti++ = x3;
+        int *cti = ((int *)&ct[n]);
+        cti[0] = x0;
+        cti[1] = x1;
+        cti[2] = x2;
+        cti[3] = x3;
     }
     return 0;
 }

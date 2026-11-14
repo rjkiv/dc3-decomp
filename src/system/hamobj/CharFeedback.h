@@ -62,6 +62,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x12)
     NEW_OBJ(CharFeedback)
+    REGISTER_OBJ(CharFeedback)
 
     void UpdateLimb(int, bool);
     void ResetErrors();

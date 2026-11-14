@@ -15,6 +15,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10);
     NEW_OBJ(FxSendFlanger)
+    REGISTER_OBJ(FxSendFlanger)
 
 protected:
     FxSendFlanger();

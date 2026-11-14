@@ -69,19 +69,15 @@ INIT_REVS(3, 0)
 BEGIN_LOADS(SynthEmitter)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
-    Hmx::Object::Load(bs);
-    RndTransformable::Load(bs);
-    RndDrawable::Load(bs);
-    bs >> mSfx;
-    bs >> mListener;
-    bs >> mEnabled;
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(RndTransformable)
+    LOAD_SUPERCLASS(RndDrawable)
+    d >> mSfx >> mListener >> mEnabled;
     if (d.rev >= 2) {
-        bs >> mRadOuter;
-        bs >> mRadInner;
+        d >> mRadOuter >> mRadInner;
     }
     if (d.rev >= 3) {
-        bs >> mVolOuter;
-        bs >> mVolInner;
+        d >> mVolOuter >> mVolInner;
     }
     delete mInst;
 END_LOADS
@@ -123,21 +119,24 @@ void SynthEmitter::Poll() {
         if (len > mRadOuter) {
             delete mInst;
         } else {
-            if (mInst) {
+            bool noInst = !mInst;
+            if (noInst) {
                 mInst = dynamic_cast<SfxInst *>(mSfx->MakeInst());
                 if (!mInst) {
                     return;
                 }
             }
-            if (len > mRadInner) {
-                float vol = (mVolOuter - mVolInner) / (mRadOuter - mRadInner);
-                vol = vol * len + -(vol * mRadInner - mVolInner);
+            float rad = mRadInner;
+            if (len > rad) {
+                float vol = (mVolOuter - mVolInner) / (mRadOuter - rad);
+                vol = vol * len + (mVolInner - vol * rad);
                 mInst->SetVolume(vol);
             } else {
                 mInst->SetVolume(mVolInner);
             }
-            mInst->SetTranspose(atan2f(v80.x, v80.y) * 1.2732395f);
-            if (mInst) {
+            float pan = atan2f(v80.x, v80.y) * 1.2732395f;
+            mInst->SetPan(pan);
+            if (noInst) {
                 mInst->Start();
             }
         }

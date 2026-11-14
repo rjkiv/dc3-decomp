@@ -129,12 +129,15 @@ void BinkReader::Poll(float f1) {
 
 void BinkReader::Seek(int i1) {
     if (mBink && mState != kFailure) {
-        double kfBinkFreq = mBinkTracks[0]->Frequency;
-        double kfBinkRate = (double)mBink->FrameRate / (double)mBink->FrameRateDiv;
-        int kiSampleFrame = ((double)i1 / kfBinkFreq - 0.75) * kfBinkRate + 1.0;
+        float kfBinkFreq = mBinkTracks[0]->Frequency;
+        float kfBinkRate = (float)mBink->FrameRate / (float)mBink->FrameRateDiv;
+        unsigned int kiSampleFrame = ((float)i1 / kfBinkFreq - 0.75) * kfBinkRate + 1.0;
         MILO_ASSERT(kiSampleFrame < mBink->Frames, 0x102);
         BinkGoto(mBink, kiSampleFrame, 1);
-        // more...
+        unsigned int u4 =
+            ((float)(mBink->FrameNum - 1) / kfBinkRate + 0.75f) * kfBinkFreq;
+        mSamplesJump = i1 - u4;
+        mSampleCurrent = u4;
         MILO_ASSERT(mSamplesJump < (kfBinkFreq / kfBinkRate), 0x10B);
         mState = kPlay;
     }

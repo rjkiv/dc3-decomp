@@ -25,6 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(WorldCrowd3DCharHandle)
+    REGISTER_OBJ(WorldCrowd3DCharHandle)
 
     void Set3DChar(
         WorldCrowd *,

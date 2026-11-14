@@ -106,7 +106,7 @@ void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
     if (waveFile.BitsPerSample() != 16) {
         MILO_NOTIFY("Wave file %s is not 16-bit", fp);
         return;
-    } else if (waveFile.Format() != 1) {
+    } else if (waveFile.IsCompressed()) {
         MILO_NOTIFY("Wave file %s is compressed", fp);
         return;
     } else {
@@ -129,7 +129,7 @@ void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
         }
         for (int i = 0; i < waveFile.NumMarkers(); i++) {
             mMarkers.push_back(SampleMarker(
-                waveFile.Markers()[i].GetName(), waveFile.Markers()[i].GetFrame()
+                waveFile.GetMarker(i).GetName(), waveFile.GetMarker(i).GetFrame()
             ));
         }
     }

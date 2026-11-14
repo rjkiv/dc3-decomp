@@ -102,7 +102,7 @@ void FileMergerOrganizer::FailedLoading(Loader *l) {
 
 void FileMergerOrganizer::Init() {
     MILO_ASSERT(gNextCatPriority == 1, 0x19E);
-    REGISTER_OBJ_FACTORY(FileMergerOrganizer)
+    FileMergerOrganizer::Register();
     DataArray *cfg = SystemConfig("file_merger_organizer");
     DataArray *catArr = cfg->FindArray("category_order", false);
     DataArray *genderArr = cfg->FindArray("gender_order", false);

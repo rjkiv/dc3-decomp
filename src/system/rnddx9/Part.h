@@ -14,6 +14,7 @@ public:
 
     static void Init();
     NEW_OBJ(DxParticleSys);
+    REGISTER_OBJ(DxParticleSys)
 
 protected:
     DxParticleSys();

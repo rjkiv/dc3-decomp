@@ -18,6 +18,7 @@ public:
     static void Init();
     static void Terminate();
     NEW_OBJ(DxLight)
+    REGISTER_OBJ(DxLight)
 
 protected:
     DxLight();

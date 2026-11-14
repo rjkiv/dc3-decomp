@@ -52,7 +52,7 @@ static D3DVERTEXELEMENT9 sElement[5] = {
 // clang-format on
 
 void DxParticleSys::Init() {
-    REGISTER_OBJ_FACTORY(DxParticleSys);
+    DxParticleSys::Register();
     MILO_ASSERT(!sVertexDecl, 0x46);
     HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(sElement, &sVertexDecl);
     DX_ASSERT(hr, 0x47);

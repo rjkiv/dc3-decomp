@@ -45,6 +45,7 @@ public:
     bool OnGetFitnessDataAndReset(DataArray *);
 
     NEW_OBJ(FitnessFilterObj);
+    REGISTER_OBJ(FitnessFilterObj);
     OBJ_MEM_OVERLOAD(0x40)
 
 protected:

@@ -14,6 +14,7 @@ public:
     static void Init();
     static void Shutdown();
     NEW_OBJ(DxMultiMesh)
+    REGISTER_OBJ(DxMultiMesh)
 
 private:
     void UpdateGeometryBuffers();

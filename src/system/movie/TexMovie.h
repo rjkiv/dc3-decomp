@@ -41,7 +41,7 @@ public:
     void DrawToTexture();
     void SetFile(FilePath const &);
     NEW_OBJ(TexMovie);
-    static void Init() { REGISTER_OBJ_FACTORY(TexMovie); }
+    REGISTER_OBJ(TexMovie);
 
     void SetVolume(float vol) { mMovie.SetVolume(vol); }
     void AddFader(Fader *f) { mMovie.Faders()->Add(f); }

@@ -16,6 +16,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10);
     NEW_OBJ(FxSendChorus)
+    REGISTER_OBJ(FxSendChorus)
 
 protected:
     FxSendChorus();

@@ -1,3 +1,3 @@
 #include "Mat.h"
 
-void DxMat::Init() { REGISTER_OBJ_FACTORY(DxMat) }
+void DxMat::Init() { DxMat::Register(); }

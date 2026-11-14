@@ -68,7 +68,7 @@ void SongDifficultyDisplay::OldResourcePreload(BinStream &bs) {
     mResourceDir.SetName(name, true);
 }
 
-void SongDifficultyDisplay::Init() { REGISTER_OBJ_FACTORY(SongDifficultyDisplay); }
+void SongDifficultyDisplay::Init() { SongDifficultyDisplay::Register(); }
 
 void SongDifficultyDisplay::SetLevel(int level) {
     MILO_ASSERT(mAnimation.Ptr(), 0x60);

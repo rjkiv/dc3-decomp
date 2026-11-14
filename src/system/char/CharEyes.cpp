@@ -20,9 +20,17 @@
 #include "utl/Std.h"
 #include "world/Dir.h"
 
-static const float sFloats[] = { 30, 3, 1 };
+static const float kMaxEyeAng = 30;
+static const float kMaxLook = 3;
+static const float kMinLook = 1;
 
-float chareyesdummyfunclmao() { return sFloats[0]; }
+bool CharEyes::sDisableEyeDart = false;
+bool CharEyes::sDisableEyeJitter = false;
+bool CharEyes::sDisableInterestObjects = false;
+bool CharEyes::sDisableProceduralBlink = false;
+bool CharEyes::sDisableEyeClamping = false;
+
+float chareyesdummyfunclmao() { return kMaxEyeAng; }
 
 bool CharEyes::CharInterestState::IsInRefractoryPeriod() {
     if (interest && mLastTimeStamp >= 0) {
@@ -570,7 +578,7 @@ void CharEyes::Enter() {
     mBlinkTimestamp = -1;
     mBlinkWindowSecsRemaining = -1;
     mLastBlinkDetectTime = -1;
-    mCurInterestFilterFlags = mDefaultInterestFilterFlags;
+    ClearInterestFilterFlags();
     mLastHeadIKWeight = 0;
     mInterestFiltersChanged = false;
     mNewFocusInterest = false;
@@ -654,9 +662,10 @@ bool CharEyes::SetFocusInterest(CharInterest *interest, int i) {
     if (mFocusInterest && mCurFocusPriorityClass > i) {
         return false;
     } else {
+        CharInterest *old = mFocusInterest;
         mFocusInterest = interest;
         mCurFocusPriorityClass = i;
-        if (mFocusInterest != interest) {
+        if (interest != old) {
             mNewFocusInterest = true;
         }
         if (!mFocusInterest) {

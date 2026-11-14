@@ -47,6 +47,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(RhythmDetector)
+    REGISTER_OBJ(RhythmDetector)
 
     /** "Start looking at Kinect data" */
     void StartRecording();

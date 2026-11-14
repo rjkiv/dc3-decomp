@@ -29,7 +29,7 @@ BEGIN_LOADS(HamList)
     PostLoad(bs);
 END_LOADS
 
-void HamList::Init() { REGISTER_OBJ_FACTORY(HamList); }
+void HamList::Init() { HamList::Register(); }
 
 INIT_REVS(19, 0)
 

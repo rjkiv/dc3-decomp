@@ -22,6 +22,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(OptionsPanel)
+    REGISTER_OBJ(OptionsPanel)
 
     OptionsPanel();
     bool OnRedeemToken(int, char const *);

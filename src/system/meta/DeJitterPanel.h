@@ -18,6 +18,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(DeJitterPanel)
+    REGISTER_OBJ(DeJitterPanel)
 
 private:
     Timer mTimer; // 0x38

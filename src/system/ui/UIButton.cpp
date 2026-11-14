@@ -48,4 +48,4 @@ END_HANDLERS
 
 UIButton::UIButton() {}
 
-void UIButton::Init() { REGISTER_OBJ_FACTORY(UIButton) }
+void UIButton::Init() { UIButton::Register(); }

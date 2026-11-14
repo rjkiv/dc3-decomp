@@ -168,7 +168,7 @@ bool HamNavProvider::IsHidden(int idx) const {
         return false;
 }
 
-void HamNavProvider::Init() { REGISTER_OBJ_FACTORY(HamNavProvider); }
+void HamNavProvider::Init() { HamNavProvider::Register(); }
 
 void HamNavProvider::CreateSubListProvider(int index) {
     NavItem &curItem = mNavItems[index];

@@ -86,6 +86,7 @@ public:
     CreateElements(UIList *parent, std::vector<UIListWidget *> &widgets, int num_elems);
 
     NEW_OBJ(UIListDir)
+    REGISTER_OBJ(UIListDir)
     OBJ_MEM_OVERLOAD(0x1b)
 
     //  public: void CalcBoundingBox(Box&);

@@ -14,4 +14,5 @@ public:
     virtual DataNode Handle(DataArray *, bool);
 
     NEW_OBJ(AppNavProvider)
+    REGISTER_OBJ(AppNavProvider)
 };

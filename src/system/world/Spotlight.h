@@ -105,6 +105,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(Spotlight)
+    REGISTER_OBJ(Spotlight)
 
     void SetFlareIsBillboard(bool);
     void SetColorIntensity(const Hmx::Color &c, float f);

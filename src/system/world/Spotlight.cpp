@@ -719,7 +719,7 @@ void Spotlight::SetColorIntensity(const Hmx::Color &c, float f) {
 }
 
 void Spotlight::Init() {
-    REGISTER_OBJ_FACTORY(Spotlight)
+    Spotlight::Register();
     sEnviron = Hmx::Object::New<RndEnviron>();
     BuildBoard();
 }

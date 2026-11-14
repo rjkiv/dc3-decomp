@@ -9,10 +9,10 @@
 
 void MetaInit() {
     Achievements::Init();
-    REGISTER_OBJ_FACTORY(ConnectionStatusPanel)
-    REGISTER_OBJ_FACTORY(DeJitterPanel)
-    REGISTER_OBJ_FACTORY(HeldButtonPanel)
-    REGISTER_OBJ_FACTORY(PreloadPanel)
+    ConnectionStatusPanel::Register();
+    DeJitterPanel::Register();
+    HeldButtonPanel::Register();
+    PreloadPanel::Register();
     TheDebug.AddExitCallback(MetaTerminate);
 }
 

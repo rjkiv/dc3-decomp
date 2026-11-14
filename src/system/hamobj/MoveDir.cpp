@@ -1255,7 +1255,7 @@ DataNode OnGetScoreBonus(DataArray *a) {
 }
 
 void MoveDir::Init() {
-    REGISTER_OBJ_FACTORY(MoveDir);
+    MoveDir::Register();
     DataArray *cfg = SystemConfig()->FindArray("scoring", false);
     if (cfg) {
         LoadScoring(cfg);

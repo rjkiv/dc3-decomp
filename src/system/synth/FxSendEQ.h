@@ -16,6 +16,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0xF);
     NEW_OBJ(FxSendEQ)
+    REGISTER_OBJ(FxSendEQ)
 
 protected:
     FxSendEQ();

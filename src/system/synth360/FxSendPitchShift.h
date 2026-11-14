@@ -13,6 +13,7 @@ public:
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
     NEW_OBJ(FxSendPitchShift360)
+    REGISTER_OBJ(FxSendPitchShift360)
 
 protected:
     virtual IUnknown *CreateFx();

@@ -21,6 +21,7 @@ public:
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
     NEW_OBJ(LoadingPanel)
+    REGISTER_OBJ(LoadingPanel)
 
     LoadingPanel();
 

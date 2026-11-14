@@ -31,6 +31,7 @@ public:
     virtual DataNode Handle(DataArray *, bool);
 
     NEW_OBJ(WeightInputPanel)
+    REGISTER_OBJ(WeightInputPanel)
 
     void SetWeight(float);
     float GetWeight();

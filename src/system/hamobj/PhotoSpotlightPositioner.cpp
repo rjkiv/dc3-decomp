@@ -49,7 +49,7 @@ BEGIN_LOADS(PhotoSpotlightPositioner)
     d >> mRefImage;
 END_LOADS
 
-void PhotoSpotlightPositioner::Init() { REGISTER_OBJ_FACTORY(PhotoSpotlightPositioner); }
+void PhotoSpotlightPositioner::Init() { PhotoSpotlightPositioner::Register(); }
 
 Vector3 PhotoSpotlightPositioner::GetImagePos(Vector2 v2) const {
     Transform xcopy;

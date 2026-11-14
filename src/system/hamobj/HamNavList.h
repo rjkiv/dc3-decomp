@@ -69,6 +69,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x26)
     NEW_OBJ(HamNavList)
+    REGISTER_OBJ(HamNavList)
     void Refresh();
     void HandleHighlightChanged(int);
     void SetNavProvider(HamNavProvider *);

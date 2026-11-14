@@ -19,7 +19,7 @@ void SampleFree(void *mem, const char *, int, const char *) {
 }
 
 void SynthSample360::Init() {
-    REGISTER_OBJ_FACTORY(SynthSample360);
+    SynthSample360::Register();
     SampleData::SetAllocator(SampleAlloc, SampleFree);
 }
 

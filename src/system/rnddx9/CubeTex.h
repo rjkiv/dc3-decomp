@@ -12,6 +12,7 @@ public:
     virtual void Select(int);
 
     NEW_OBJ(DxCubeTex)
+    REGISTER_OBJ(DxCubeTex)
 
 private:
     virtual void Reset();

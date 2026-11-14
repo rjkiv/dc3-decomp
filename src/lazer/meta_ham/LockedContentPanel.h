@@ -22,6 +22,7 @@ public:
     virtual void Poll();
 
     NEW_OBJ(LockedContentPanel)
+    REGISTER_OBJ(LockedContentPanel)
 
     LockedContentPanel();
     void SetUpCampaignSong(Symbol);

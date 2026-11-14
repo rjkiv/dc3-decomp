@@ -20,6 +20,7 @@ public:
     virtual void Exit(UIScreen *);
 
     NEW_OBJ(SigninScreen)
+    REGISTER_OBJ(SigninScreen)
 
 protected:
     DataNode OnMsg(const SigninChangedMsg &);

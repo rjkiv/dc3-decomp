@@ -22,6 +22,7 @@ public:
     bool GetUnk8c() const { return unk8c; }
 
     NEW_OBJ(UIListLabel)
+    REGISTER_OBJ(UIListLabel)
     OBJ_MEM_OVERLOAD(0x11)
 
 protected:

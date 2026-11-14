@@ -22,6 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x13)
     NEW_OBJ(RhythmDetectorGroup)
+    REGISTER_OBJ(RhythmDetectorGroup)
 
     void SetSkeletonIndex(int);
     void RemoveDebugGraphs();

@@ -43,6 +43,7 @@ public:
     virtual void FinishLoad() { UIPanel::FinishLoad(); }
 
     NEW_OBJ(VoiceInputPanel)
+    REGISTER_OBJ(VoiceInputPanel)
 
     DataNode OnMsg(const SpeechRecoMessage &);
     void CreateSongSelectGrammar(Symbol) const;

@@ -22,9 +22,9 @@ public:
     RndTex *CrTex[2][2]; // 0x10
     RndTex *CbTex[2][2]; // 0x20
     RndTex *ATex[2][2]; // 0x30
-    RndMat *unk40; // 0x40
-    BINKFRAMEBUFFERS mBuffers; // 0x44
-    int unkbc; // 0xbc - ref count?
+    RndMat *Mat; // 0x40
+    BINKFRAMEBUFFERS FrameBuffers; // 0x44
+    int mShareCount; // 0xbc
 };
 
 class BinkMovieImpl : public MovieImpl {
@@ -77,10 +77,10 @@ private:
     FileLoader *mLoader; // 0x4
     class BinkMovieLoader *mMovieLoader; // 0x8
     /** The movie's name. */
-    String mName; // 0xc
+    String mPath; // 0xc
     BINK *mBink; // 0x14
     bool mPreload; // 0x18
-    void *mPreloadBuf; // 0x1c
+    char *mPreloadBuf; // 0x1c
     int mBufferSize; // 0x20
     bool mOwnPreloadBuf; // 0x24
     bool mPreloadFromFile; // 0x25
@@ -98,12 +98,12 @@ private:
     int mTargetFrame; // 0xB0
     int mTargetBuf; // 0xB4
     void *mBinkHandle; // 0xb8 - file handle, retrieved from mName
-    std::map<void *, String> unkbc; // 0xbc - key = loader ptr, val = loader file?
+    std::map<void *, String> mContention; // 0xbc - key = loader ptr, val = loader file?
     bool mLoadPending; // 0xD4
-    bool mMidFrame; // 0xD5 - mMidFrame?
+    bool mMidFrame; // 0xD5
     bool mAsync; // 0xD6
     DWORD mThreadId; // 0xd8
     int mLocalizationTrack; // 0xdc
     int mVolume; // 0xe0
-    MovieInternalBuffers *mInternalBufs; // 0xe4
+    MovieInternalBuffers *mBuffers; // 0xe4
 };

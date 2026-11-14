@@ -88,7 +88,7 @@ void NgSpotlightDrawer::ClearPostProc() {
 
 void NgSpotlightDrawer::Init() {
     CheckSharedResources();
-    REGISTER_OBJ_FACTORY(NgSpotlightDrawer);
+    NgSpotlightDrawer::Register();
     RELEASE(sDefault);
     sDefault = Hmx::Object::New<SpotlightDrawer>();
     ((SpotDrawParams &)sDefault->Params()).mLightingInfluence = 0;

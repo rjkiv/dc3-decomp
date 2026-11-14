@@ -119,65 +119,64 @@ MetaPanel::~MetaPanel() {
     RELEASE(TheMetaMusic);
 }
 
-Hmx::Object *MetaPanel::NewObject() { return new MetaPanel(); }
-
 void MetaPanel::Init() {
     MetaInit();
-    REGISTER_OBJ_FACTORY(AppLabel)
-    REGISTER_OBJ_FACTORY(AppMiniLeaderboardDisplay)
-    REGISTER_OBJ_FACTORY(HamPanel)
-    REGISTER_OBJ_FACTORY(HamScreen)
-    REGISTER_OBJ_FACTORY(CalibrationPanel)
-    REGISTER_OBJ_FACTORY(CampaignDiffSelectPanel)
-    REGISTER_OBJ_FACTORY(CampaignDiffProvider)
-    REGISTER_OBJ_FACTORY(CampaignSongSelectPanel)
-    REGISTER_OBJ_FACTORY(CampaignMasterQuestCrewSelectPanel)
-    REGISTER_OBJ_FACTORY(CampaignMasterQuestSongSelectPanel)
-    REGISTER_OBJ_FACTORY(ChallengeResultPanel)
-    REGISTER_OBJ_FACTORY(ChooseProfilePanel)
-    REGISTER_OBJ_FACTORY(CorrectIdentityPanel)
-    REGISTER_OBJ_FACTORY(ContentLoadingPanel)
-    REGISTER_OBJ_FACTORY(CreditsPanel)
-    REGISTER_OBJ_FACTORY(EventDialogPanel)
-    REGISTER_OBJ_FACTORY(FitnessProvider)
-    REGISTER_OBJ_FACTORY(HamStorePanel)
-    REGISTER_OBJ_FACTORY(LetterboxPanel)
-    REGISTER_OBJ_FACTORY(BlacklightPanel)
-    REGISTER_OBJ_FACTORY(HelpBarPanel)
-    REGISTER_OBJ_FACTORY(LoadingPanel)
-    REGISTER_OBJ_FACTORY(LockedContentPanel)
-    REGISTER_OBJ_FACTORY(MainMenuPanel)
-    REGISTER_OBJ_FACTORY(MetaPanel)
+    AppLabel::Register();
+    AppMiniLeaderboardDisplay::Register();
+    HamPanel::Register();
+    HamScreen::Register();
+    CalibrationPanel::Register();
+    CampaignDiffSelectPanel::Register();
+    CampaignDiffProvider::Register();
+    CampaignSongSelectPanel::Register();
+    CampaignMasterQuestCrewSelectPanel::Register();
+    CampaignMasterQuestSongSelectPanel::Register();
+    ChallengeResultPanel::Register();
+    ChooseProfilePanel::Register();
+    CorrectIdentityPanel::Register();
+    ContentLoadingPanel::Register();
+    CreditsPanel::Register();
+    EventDialogPanel::Register();
+    FitnessProvider::Register();
+    HamStorePanel::Register();
+    LetterboxPanel::Register();
+    BlacklightPanel::Register();
+    HelpBarPanel::Register();
+    LoadingPanel::Register();
+    LockedContentPanel::Register();
+    MainMenuPanel::Register();
+    MetaPanel::Register();
     MetaPerformer::Init();
-    REGISTER_OBJ_FACTORY(MoviePanel)
-    REGISTER_OBJ_FACTORY(MovieProvider)
-    REGISTER_OBJ_FACTORY(TitleProvider)
-    REGISTER_OBJ_FACTORY(ChooseModeProvider)
-    REGISTER_OBJ_FACTORY(OptionsPanel)
-    REGISTER_OBJ_FACTORY(SigninScreen)
-    REGISTER_OBJ_FACTORY(SingleUserCrewSelectPanel)
-    REGISTER_OBJ_FACTORY(SongSelectPanel)
-    REGISTER_OBJ_FACTORY(SongSelectPlaylistCustomizePanel)
-    REGISTER_OBJ_FACTORY(SongSelectPlaylistPanel)
+    MoviePanel::Register();
+    MovieProvider::Register();
+    TitleProvider::Register();
+    ChooseModeProvider::Register();
+    OptionsPanel::Register();
+    SigninScreen::Register();
+    SingleUserCrewSelectPanel::Register();
+    SongSelectPanel::Register();
+    SongSelectPlaylistCustomizePanel::Register();
+    SongSelectPlaylistPanel::Register();
     SongStatusMgr::Init();
-    REGISTER_OBJ_FACTORY(TexLoadPanel)
-    REGISTER_OBJ_FACTORY(Hmx::Object)
+    TexLoadPanel::Register();
+    // i dunno man
+    Hmx::Object::Register();
     TheMemcardMgr.Init();
     MetagameRank::Preinit();
     TheProfileMgr.Init();
     Leaderboards::Init();
     Challenges::Init();
     FitnessGoalMgr::Init();
-    REGISTER_OBJ_FACTORY(HamStarsDisplay)
-    REGISTER_OBJ_FACTORY(WeightInputPanel)
-    REGISTER_OBJ_FACTORY(AppNavProvider)
-    REGISTER_OBJ_FACTORY(MultiUserGesturePanel)
-    REGISTER_OBJ_FACTORY(PassiveMessagesPanel)
-    REGISTER_OBJ_FACTORY(CursorPanel)
-    REGISTER_OBJ_FACTORY(PracticeChoosePanel)
-    REGISTER_OBJ_FACTORY(VoiceControlPanel)
-    REGISTER_OBJ_FACTORY(KinectSharePanel)
-    REGISTER_OBJ_FACTORY(VoiceInputPanel)
+    HamStarsDisplay::Register();
+    WeightInputPanel::Register();
+    AppNavProvider::Register();
+    MultiUserGesturePanel::Register();
+    PassiveMessagesPanel::Register();
+    CursorPanel::Register();
+    PracticeChoosePanel::Register();
+    VoiceControlPanel::Register();
+    KinectSharePanel::Register();
+    VoiceInputPanel::Register();
     DataRegisterFunc("toggle_unlock_all", ToggleUnlockAll);
     DataRegisterFunc("toggle_motd_cheat", ToggleMotdCheat);
 }

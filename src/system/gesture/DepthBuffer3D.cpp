@@ -173,7 +173,7 @@ void DepthBuffer3D::ListDrawChildren(std::list<RndDrawable *> &draws) {
 }
 
 void DepthBuffer3D::Init() {
-    REGISTER_OBJ_FACTORY(DepthBuffer3D);
+    DepthBuffer3D::Register();
     TheNgRnd.CreateLargeQuad(0x140, 0xF0, mQuad);
 }
 

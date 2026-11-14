@@ -37,6 +37,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x3F)
     NEW_OBJ(WorldInstance)
+    REGISTER_OBJ(WorldInstance)
 
 protected:
     WorldInstance();

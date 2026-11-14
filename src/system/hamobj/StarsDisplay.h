@@ -32,6 +32,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(StarsDisplay)
+    REGISTER_OBJ(StarsDisplay)
     static void Init();
 
     void SetShowUnplayedSong(bool b) { mShowUnplayedSong = b; }

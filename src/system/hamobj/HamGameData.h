@@ -20,6 +20,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x3B)
     NEW_OBJ(HamGameData)
+    REGISTER_OBJ(HamGameData)
     static void Init();
 
     const DataNode *PlayerProp(int, Symbol) const;

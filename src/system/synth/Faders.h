@@ -46,6 +46,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(Fader)
+    REGISTER_OBJ(Fader)
 
 private:
     void UpdateValue(float, float, float);

@@ -54,6 +54,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x26);
     NEW_OBJ(UILabel)
+    REGISTER_OBJ(UILabel)
 
     static void Init();
     static void Terminate();

@@ -163,7 +163,7 @@ void UISlider::SetFrame(float frame) {
 
 int UISlider::Current() const { return mCurrent; }
 
-void UISlider::Init() { REGISTER_OBJ_FACTORY(UISlider) }
+void UISlider::Init() { UISlider::Register(); }
 
 void UISlider::Update() {
     static Symbol mesh("mesh");

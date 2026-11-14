@@ -35,14 +35,15 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14);
     NEW_OBJ(ThreeDSound)
+    REGISTER_OBJ(ThreeDSound)
 
-    void EnablePan(bool);
+    void EnablePan(bool enable);
     void SaveWorldXfm();
     bool HasMoved();
-    void GetVelocity(Vector3 &);
-    void SetAngle(float);
-    void SetDoppler(float);
-    void SetDistance(float, float);
+    void GetVelocity(Vector3 &v);
+    void SetAngle(float radians);
+    void SetDoppler(float speed);
+    void SetDistance(float dist, float yzProjection);
 
     void EnableDoppler(bool enable) {
         mFader->SetTranspose(0);
@@ -83,13 +84,12 @@ public:
     bool PanEnabled() const { return mEnablePan; }
     bool DopplerEnabled() const { return mEnableDoppler; }
 
-private:
-    void CalculateFaderVolume();
-
 protected:
     ThreeDSound();
 
 private:
+    void CalculateFaderVolume();
+
     bool mIsActive; // 0x194
     bool mPlayWhenSilent; // 0x195
     float mVolume; // 0x198

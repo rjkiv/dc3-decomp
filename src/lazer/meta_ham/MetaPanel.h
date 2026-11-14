@@ -32,7 +32,8 @@ public:
     virtual void Unload();
     virtual void FinishLoad();
 
-    static Hmx::Object *NewObject();
+    NEW_OBJ(MetaPanel)
+    REGISTER_OBJ(MetaPanel)
     static DataNode ToggleUnlockAll(DataArray *);
     static DataNode ToggleMotdCheat(DataArray *);
     static void CycleVenuePreference();

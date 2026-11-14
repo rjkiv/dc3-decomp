@@ -43,6 +43,7 @@ public:
     virtual void FinishLoad();
 
     NEW_OBJ(GamePanel)
+    REGISTER_OBJ(GamePanel)
 
     void SetGameOver(bool);
     bool IsPastStreamJumpPointOfNoReturn();

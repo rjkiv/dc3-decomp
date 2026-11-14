@@ -4,6 +4,7 @@
 #include "gesture/Skeleton.h"
 #include "hamobj/Difficulty.h"
 #include "math/Vec.h"
+#include "obj/Object.h"
 #include "os/DateTime.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Poll.h"
@@ -75,6 +76,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x3C);
     NEW_OBJ(SkeletonClip);
+    REGISTER_OBJ(SkeletonClip)
 
     void SetRecordingPlayer(int player) { mRecordingPlayer = player; }
     bool IsRecording() const;

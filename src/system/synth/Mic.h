@@ -66,11 +66,13 @@ class RingBuffer {
 public:
     RingBuffer() : mSize(0), mBuffer(0) {}
     ~RingBuffer();
+
     void Reset();
     void Init(int size);
     int Write(void *data, int len);
     int Peek(void *data, int len);
     int Read(void *data, int len);
+    const void *Buffer() const { return mBuffer; }
 
 private:
     int mSize; // 0x0

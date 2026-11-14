@@ -134,7 +134,7 @@ void LabelShrinkWrapper::Update() {
     }
 }
 
-void LabelShrinkWrapper::Init() { REGISTER_OBJ_FACTORY(LabelShrinkWrapper) }
+void LabelShrinkWrapper::Init() { LabelShrinkWrapper::Register(); }
 
 void LabelShrinkWrapper::UpdateAndDrawWrapper() {
     MILO_ASSERT(m_pLabel, 0x86);

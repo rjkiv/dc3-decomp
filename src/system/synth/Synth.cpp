@@ -20,6 +20,7 @@
 #include "flow/Flow.h"
 #include "math/Color.h"
 #include "math/Decibels.h"
+#include "math/Geo.h"
 #include "obj/Data.h"
 #include "obj/DataFile.h"
 #include "obj/DataFunc.h"
@@ -47,7 +48,9 @@
 #include "utl/Loader.h"
 #include <cstdio>
 
-static const float sDrawMeterFloats[3] = { 0.2f, 40, 0.7f };
+static const float kMeterStartX = 0.2f;
+static const float kDBWidth = 40.0f;
+static const float kMeterWidth = 0.7f;
 
 namespace {
     struct DebugGraph {
@@ -62,7 +65,7 @@ namespace {
         Hmx::Color mColor; // 0x10
     };
 
-    std::vector<DebugGraph> gDebugGraphs;
+    static std::vector<DebugGraph> gDebugGraphs;
 }
 
 Loader *WavFactory(const FilePath &file, LoaderPos pos) {
@@ -98,7 +101,7 @@ DataNode returnMasterKey(DataArray *msg) {
 Synth *TheSynth;
 
 Synth::Synth()
-    : mTrackLevels(false), mMuted(false), mMicClientMapper(nullptr), unk98(0),
+    : mTrackLevels(false), mMuted(false), mMicClientMapper(nullptr), mSecureMixer(0),
       mDebugStream(0), mADSR(nullptr) {
     SetName("synth", ObjectDir::Main());
     DataArray *cfg = SystemConfig("synth");
@@ -145,30 +148,30 @@ END_HANDLERS
 
 void Synth::Init() {
     SynthUtlInit();
-    REGISTER_OBJ_FACTORY(Fader);
-    Sfx::Init();
-    REGISTER_OBJ_FACTORY(MidiInstrument)
+    Fader::Register();
+    Sfx::Register();
+    MidiInstrument::Register();
     SynthSample::Init();
     Sequence::Init();
-    SynthEmitter::Init();
-    REGISTER_OBJ_FACTORY(FxSendReverb)
-    REGISTER_OBJ_FACTORY(FxSendDelay)
-    REGISTER_OBJ_FACTORY(FxSendBitCrush)
-    REGISTER_OBJ_FACTORY(FxSendDistortion)
-    REGISTER_OBJ_FACTORY(FxSendCompress)
-    REGISTER_OBJ_FACTORY(FxSendEQ)
-    REGISTER_OBJ_FACTORY(FxSendFlanger)
-    REGISTER_OBJ_FACTORY(FxSendChorus)
-    REGISTER_OBJ_FACTORY(FxSendMeterEffect)
-    REGISTER_OBJ_FACTORY(FxSendPitchShift)
-    REGISTER_OBJ_FACTORY(FxSendSynapse)
-    REGISTER_OBJ_FACTORY(FxSendWah)
-    REGISTER_OBJ_FACTORY(MoggClip)
-    REGISTER_OBJ_FACTORY(MeterEffectMonitor)
-    REGISTER_OBJ_FACTORY(Sound)
-    REGISTER_OBJ_FACTORY(ADSR)
-    REGISTER_OBJ_FACTORY(ThreeDSound)
-    REGISTER_OBJ_FACTORY(AudioDuckerTrigger)
+    SynthEmitter::Register();
+    FxSendReverb::Register();
+    FxSendDelay::Register();
+    FxSendBitCrush::Register();
+    FxSendDistortion::Register();
+    FxSendCompress::Register();
+    FxSendEQ::Register();
+    FxSendFlanger::Register();
+    FxSendChorus::Register();
+    FxSendMeterEffect::Register();
+    FxSendPitchShift::Register();
+    FxSendSynapse::Register();
+    FxSendWah::Register();
+    MoggClip::Register();
+    MeterEffectMonitor::Register();
+    Sound::Register();
+    ADSR::Register();
+    ThreeDSound::Register();
+    AudioDuckerTrigger::Register();
     mMasterFader = Hmx::Object::New<Fader>();
     mSfxFader = Hmx::Object::New<Fader>();
     mMidiInstrumentFader = Hmx::Object::New<Fader>();
@@ -255,22 +258,19 @@ void Synth::DestroyPitchShift(FxSendPitchShift *shift) { delete shift; }
 
 float Synth::UpdateOverlay(RndOverlay *o, float y) {
     Hmx::Color white(1, 1, 1);
-    float f24 = (float)TheRnd.Height() * (y + 0.265f);
+    y = (float)TheRnd.Height() * (y + 0.265f);
     if (mDebugStream) {
-        DrawMeterScale(f24);
+        DrawMeterScale(y);
         float volume = mDebugStream->Faders().GetVolume();
-        DrawMeter(f24, volume, 0, "stream");
+        DrawMeter(y, volume, 0, "stream");
         for (int i = 0; i < mDebugStream->GetNumChannels(); i++) {
             DrawMeter(
-                f24,
-                mDebugStream->ChannelFaders(i).GetVolume(),
-                0,
-                MakeString("chan %i", i)
+                y, mDebugStream->ChannelFaders(i).GetVolume(), 0, MakeString("chan %i", i)
             );
         }
     }
     if (!mLevelData.empty()) {
-        DrawMeterScale(f24);
+        DrawMeterScale(y);
     }
     for (int i = 0; i < mLevelData.size(); i++) {
         float rms = RatioToDb(mLevelData[i].mRMS);
@@ -278,12 +278,11 @@ float Synth::UpdateOverlay(RndOverlay *o, float y) {
         if (rms > 2) {
             rms = -30;
         }
-        DrawMeter(f24, rms, peakhold, mLevelData[i].mName.c_str());
+        DrawMeter(y, rms, peakhold, mLevelData[i].mName.c_str());
     }
     auto pollIt = SynthPollable::Pollables().begin();
     char buf[32];
     sprintf(buf, "Total active Sequences: %d", SynthPollable::Pollables().size());
-    y = f24;
     TheRnd.DrawString(buf, Vector2(100, y), white, true);
     y += 12.0f;
     for (; pollIt != SynthPollable::Pollables().end(); ++pollIt) {
@@ -373,7 +372,8 @@ void Synth::RemovePlayHandler(Hmx::Object *obj) { mPlayHandlers.remove(obj); }
 
 void Synth::SendToPlayHandlers(Sound *sound) {
     SoundPlayMsg msg(sound);
-    FOREACH (it, mPlayHandlers) {
+    auto itEnd = mPlayHandlers.end();
+    for (auto it = mPlayHandlers.begin(); it != itEnd; ++it) {
         (*it)->Handle(msg, false);
     }
 }
@@ -461,9 +461,40 @@ void Synth::CullZombies() {
     }
 }
 
+void Synth::DrawMeter(float &y0, float lvl, float pkLvl, const char *label) {
+    Hmx::Color gray(0.5f, 0.5f, 0.5f);
+    Hmx::Color black(0, 0, 0);
+    Hmx::Color white(1, 1, 1);
+    Hmx::Color green(0.5f, 1, 0);
+    Hmx::Color red(1, 0.5f, 0.5f);
+
+    TheRnd.DrawString(label, Vector2((float)TheRnd.Width() / 10, y0), white, true);
+
+    float f100 = TheRnd.Width() * kMeterStartX;
+    float ff8 = TheRnd.Width() * kMeterWidth;
+    float f6 = (lvl + kDBWidth) * 0.025f;
+    ClampEq(f6, 0.0f, 1.0f);
+
+    Hmx::Rect bgr(f100, y0, ff8, 12);
+    TheRnd.DrawRect(bgr, black, nullptr, nullptr, nullptr);
+
+    Hmx::Rect fgr(f100, y0, f6 * ff8, 12);
+    TheRnd.DrawRect(fgr, gray, nullptr, nullptr, nullptr);
+
+    float f4 = (pkLvl + kDBWidth) * 0.025f;
+    ClampEq(f4, 0.0f, 1.0f);
+    Hmx::Rect pk(f4 * ff8 + f100, y0, 8, 12);
+    TheRnd.DrawRect(pk, f4 == 1 ? red : green, nullptr, nullptr, nullptr);
+
+    TheRnd.DrawString(
+        MakeString("%i", (int)pkLvl), Vector2(ff8 + f100, y0), Hmx::Color(1, 1, 1), true
+    );
+    y0 += 16;
+}
+
 void Synth::DrawMeterScale(float &y0) {
-    float x1 = TheRnd.Width() * sDrawMeterFloats[0];
-    float x2 = TheRnd.Width() * sDrawMeterFloats[2];
+    float x1 = TheRnd.Width() * kMeterStartX;
+    float x2 = TheRnd.Width() * kMeterWidth;
     Hmx::Color white(1, 1, 1);
     TheRnd.DrawString(MakeString("%i", -0x28), Vector2(x1, y0), white, true);
     TheRnd.DrawString(MakeString("%i", -0x14), Vector2(x2 / 2 + x1, y0), white, true);

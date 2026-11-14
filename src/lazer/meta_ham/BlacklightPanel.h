@@ -17,6 +17,7 @@ public:
     virtual void Enter();
 
     NEW_OBJ(BlacklightPanel)
+    REGISTER_OBJ(BlacklightPanel)
 
     BlacklightPanel();
     DataNode OnEnterBlacklightMode(DataArray const *);

@@ -15,24 +15,26 @@ public:
 
     void PlatformInit();
     void PlatformStoreCache(void *, unsigned int);
-    bool GetUnkC() const { return mAsyncBink; } // TODO: rename functions
-    int GetUnk10() const { return mNumFramebuffers; }
-    int Core0() const { return mBinkCore0; }
-    int Core1() const { return mBinkCore1; }
-    int Track() const { return mTrack; }
-    void AddMovie(BinkMovieImpl *movie) { mMovies.push_back(movie); }
-    void RemoveMovie(BinkMovieImpl *movie) { mMovies.remove(movie); }
+    bool IsAsync() const { return mAsyncBink; }
+    CriticalSection *GetCS() { return mCritSec; }
+    int GetNumFramebuffers() const { return mNumFramebuffers; }
+    int GetBinkCore0() const { return mBinkCore0; }
+    int GetBinkCore1() const { return mBinkCore1; }
+    int GetForceTrack() const { return mForceTrack; }
+    void SetForceTrack(int track) { mForceTrack = track; }
+    void MovieOpened(BinkMovieImpl *movie) { mOpenMovies.push_back(movie); }
+    void MovieClosed(BinkMovieImpl *movie) { mOpenMovies.remove(movie); }
 
 private:
     static DataNode OnMovieSetTrack(DataArray *);
 
     CriticalSection *mCritSec; // 0x8
     bool mAsyncBink; // 0xc
-    int mNumFramebuffers; // 0x10 - total num frames?
+    int mNumFramebuffers; // 0x10
     int mBinkCore0; // 0x14
     int mBinkCore1; // 0x18
-    int mTrack; // 0x1c
-    std::list<BinkMovieImpl *> mMovies; // 0x20
+    int mForceTrack; // 0x1c
+    std::list<BinkMovieImpl *> mOpenMovies; // 0x20
 };
 
 extern BinkMovieSys &TheBinkMovieSys;

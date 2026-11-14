@@ -18,6 +18,7 @@ public:
     void SetObject(Hmx::Object *);
 
     NEW_OBJ(UIListCustom)
+    REGISTER_OBJ(UIListCustom)
     OBJ_MEM_OVERLOAD(0x1a)
 
 protected:

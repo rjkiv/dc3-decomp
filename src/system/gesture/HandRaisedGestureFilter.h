@@ -25,6 +25,7 @@ public:
     int RaisedMs() const { return mHandRaisedTimer; }
 
     NEW_OBJ(HandRaisedGestureFilter)
+    REGISTER_OBJ(HandRaisedGestureFilter)
 
 protected:
     HandRaisedGestureFilter();

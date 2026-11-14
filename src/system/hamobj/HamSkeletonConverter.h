@@ -39,6 +39,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(HamSkeletonConverter)
+    REGISTER_OBJ(HamSkeletonConverter)
 
     void Set(const BaseSkeleton *);
 

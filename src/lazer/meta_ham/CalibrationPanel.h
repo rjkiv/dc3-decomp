@@ -42,6 +42,7 @@ public:
     void InitializeContent();
 
     NEW_OBJ(CalibrationPanel)
+    REGISTER_OBJ(CalibrationPanel)
 
 private:
     float GetAudioTimeMs() const;

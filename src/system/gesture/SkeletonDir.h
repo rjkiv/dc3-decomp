@@ -35,6 +35,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(SkeletonDir)
+    REGISTER_OBJ(SkeletonDir)
 
     void SetSkeletonClip(SkeletonClip *);
     SkeletonClip *TestClip() const;

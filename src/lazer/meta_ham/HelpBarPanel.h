@@ -29,6 +29,7 @@ public:
 
     static HelpBarPanel *sInstance;
     NEW_OBJ(HelpBarPanel)
+    REGISTER_OBJ(HelpBarPanel)
 
     bool IsAnimating();
     bool UpdateBackButton(UIPanel *);

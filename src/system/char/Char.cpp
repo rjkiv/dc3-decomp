@@ -71,7 +71,7 @@ CharDebug TheCharDebug;
 void CharInit() {
     TheCharDebug.Init();
     Character::Init();
-    CharBonesObject::Init();
+    CharBonesObject::Register();
     CharBoneOffset::Register();
     CharBlendBone::Register();
     CharBone::Register();

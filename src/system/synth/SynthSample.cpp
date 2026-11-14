@@ -161,7 +161,7 @@ void SynthSample::UnregisterChild(SampleInst *inst) {
 }
 
 void SynthSample::Init() {
-    REGISTER_OBJ_FACTORY(SynthSample);
+    SynthSample::Register();
     SampleData::SetAllocator(SampleAlloc, MemFree);
 }
 

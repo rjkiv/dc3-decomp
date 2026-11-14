@@ -21,6 +21,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(PhotoSpotlightPositioner)
+    REGISTER_OBJ(PhotoSpotlightPositioner)
     static void Init();
 
     Vector3 GetImagePos(Vector2) const;
