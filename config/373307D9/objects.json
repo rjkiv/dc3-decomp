@@ -689,7 +689,7 @@
             "system/synth/Sfx.cpp": "Matching",
             "system/synth/SfxMap.cpp": "Matching",
             "system/synth/Sound.cpp": "Matching",
-            "system/synth/StandardStream.cpp": "NonMatching",
+            "system/synth/StandardStream.cpp": "Matching",
             "system/synth/Stream.cpp": "Matching",
             "system/synth/StreamNull.cpp": "Matching",
             "system/synth/StreamReceiver.cpp": "Matching",

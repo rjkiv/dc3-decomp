@@ -723,5 +723,55 @@ int StandardStream::ConsumeData(void **pcmIn, int samples, int startSamp) {
         }
     }
 
-    return 0;
+    unsigned int samps = samples;
+    if (samples >= 0x800) {
+        samps = 0x800;
+    }
+
+    if (mJumpFromSamples > 0) {
+        if (mJumpFromSamples < mJumpToSamples) {
+            if (mCurrentSamp < mJumpToSamples) {
+                if (mCurrentSamp > mJumpFromSamples) {
+                    samps = 0;
+                } else if (mJumpFromSamples - mCurrentSamp < samps) {
+                    samps = mJumpFromSamples - mCurrentSamp;
+                }
+            }
+        } else if (mJumpFromSamples > mJumpToSamples) {
+            MILO_ASSERT(mCurrentSamp <= mJumpFromSamples, 0x1CF);
+            if (mJumpFromSamples - mCurrentSamp < samps) {
+                samps = mJumpFromSamples - mCurrentSamp;
+            }
+        }
+    }
+
+    FOREACH (it, mChannels) {
+        uint bytes = (*it)->BytesWriteable();
+        int i6 = bytes >> 1;
+        if (i6 < (int)samps) {
+            samps = i6;
+        }
+    }
+
+    if (samps != 0) {
+        int size = mFloatSamples ? 4 : 2;
+        FOREACH (it, mChanMaps) {
+            memcpy(pcm[it->second], pcm[it->first], size * samps);
+        }
+        for (int i = 0; i < numChannels; i++) {
+            if (mFloatSamples) {
+                short tmpBuf[2048];
+                for (uint j = 0; j < samps; j++) {
+                    float cur = pcm[i][j] * 32767;
+                    ClampEq(cur, -32767.0f, 32767.0f);
+                    tmpBuf[j] = cur;
+                }
+                mChannels[i]->WriteData(tmpBuf, samps << 1);
+            } else {
+                mChannels[i]->WriteData(pcm[i], samps << 1);
+            }
+        }
+    }
+    mCurrentSamp += samps;
+    return samps;
 }
