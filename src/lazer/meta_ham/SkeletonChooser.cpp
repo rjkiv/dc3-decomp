@@ -26,6 +26,7 @@
 #include "rndobj/Rnd.h"
 #include "ui/UI.h"
 #include "utl/MakeString.h"
+#include "utl/Str.h"
 #include "utl/Symbol.h"
 #include <cstdio>
 
@@ -1077,110 +1078,119 @@ void SkeletonChooser::SetPlayerSkeletonNavData(int p1ID, int p2ID) {
 }
 
 void SkeletonChooser::DrawDebug() {
-    static float sFloat0 = 0.03f;
-    static float sFloat1 = 0.37f;
-    static float sFloat2 = 0.2f;
-    static float sFloat3 = 0.6f;
-    static float sFloat4 = 0.1f;
-    static float sFloat5 = 0.25f;
     if (mDrawDebug) {
-        int skelIdx0 = -1;
-        int skelIdx1 = -1;
-        int trackingID0 = -1;
-        int trackingID1 = -1;
+        static float sSpaceY = 0.03f;
+        static float sSpaceX = 0.37f;
+        static float sLeft = 0.2f;
+        static float sRectWidth = 0.6f;
+        static float sTop = 0.1f;
+        static float sRectHeight = 0.25f;
+
+        char string[50];
+        int firstSkel = -1;
+        int secondSkel = -1;
+        int firstSkelID = -1;
+        int secondSkelID = -1;
 
         for (int i = 0; i < 6; i++) {
-            Skeleton &skel = TheGestureMgr->GetSkeleton(i);
-            if (skel.IsTracked()) {
-                if (skelIdx0 == -1) {
-                    trackingID0 = skel.TrackingID();
-                    skelIdx0 = i;
-                } else if (skelIdx1 == -1) {
-                    trackingID1 = skel.TrackingID();
-                    skelIdx1 = i;
+            Skeleton &skeleton = TheGestureMgr->GetSkeleton(i);
+            if (skeleton.IsTracked()) {
+                if (firstSkel == -1) {
+                    firstSkelID = skeleton.TrackingID();
+                    firstSkel = i;
+                } else if (secondSkel == -1) {
+                    secondSkelID = skeleton.TrackingID();
+                    secondSkel = i;
                 } else {
                     MILO_ASSERT(false, 0x5e3);
                 }
             }
         }
 
-        static Hmx::Color bgColor(0.2f, 0.2f, 0.2f, 0.7f);
-        static Hmx::Color textColor(1.0f, 1.0f, 1.0f, 1.0f);
+        static Hmx::Color sRectColor(0.2f, 0.2f, 0.2f, 0.7f);
+        static Hmx::Color sTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         TheRnd.DrawRectScreen(
-            Hmx::Rect(sFloat5, sFloat3 - 0.05f, sFloat4, sFloat2 + 0.05f),
-            bgColor,
+            Hmx::Rect(sLeft, sTop - 0.05f, sRectWidth, sRectHeight + 0.05f),
+            sRectColor,
             nullptr,
             nullptr,
             nullptr
         );
 
-        for (int i = 0; i < 2; i++) {
-            int skelIdx = (i == 0) ? skelIdx0 : skelIdx1;
-            int trackingID = (i == 0) ? trackingID0 : trackingID1;
-            if (skelIdx >= 0) {
-                for (int j = 0; j < 7; j++) {
-                    char buf[50];
-                    sprintf_s<50>(buf, "");
-                    switch (j) {
+        for (int idx = 0; idx < 2; idx++) {
+            int skel = (idx == 0) ? firstSkel : secondSkel;
+            int id = (idx == 0) ? firstSkelID : secondSkelID;
+
+            if (skel >= 0) {
+                for (int i = 0; i < 7; i++) {
+                    sprintf_s<50>(string, "");
+                    switch (i) {
                     case 0: {
                         int activeIdx = TheGestureMgr->GetActiveSkeletonIndex();
-                        const char *c = (activeIdx == skelIdx) ? "active" : "";
-                        sprintf_s<50>(buf, "Skeleton %d %s", skelIdx, c);
-                        break;
-                    }
+                        sprintf_s<50>(
+                            string,
+                            "Skeleton %d %s",
+                            skel,
+                            (activeIdx == skel) ? "(active)" : ""
+                        );
+                    } break;
                     case 1: {
-                        Skeleton &skel = TheGestureMgr->GetSkeleton(skelIdx);
-                        sprintf_s<50>(buf, "Valid: %d", skel.IsValid());
+                        Skeleton &skeleton = TheGestureMgr->GetSkeleton(skel);
+                        sprintf_s<50>(string, "Valid: %d", skeleton.IsValid());
+                    } break;
+                    case 2:
+                        sprintf_s<50>(string, "Arms crossed: %d", AreArmsCrossed(id));
                         break;
-                    }
-                    case 2: {
-                        sprintf_s<50>(buf, "Arms crossed: %d", AreArmsCrossed(trackingID));
+                    case 3:
+                        sprintf_s<50>(string, "Hand up: %d", IsHandUp(id));
                         break;
-                    }
-                    case 3: {
-                        sprintf_s<50>(buf, "Hand up: %d", IsHandUp(trackingID));
-                        break;
-                    }
                     case 4: {
-                        if (skelIdx0 >= 0 && skelIdx1 >= 0) {
-                            sprintf_s<50>(
-                                buf,
-                                "Is behind: %d",
-                                IsBehindPlayer(
-                                    trackingID, (i != 0) ? trackingID0 : trackingID1
-                                )
-                            );
+                        if (0 <= firstSkel && 0 <= secondSkel) {
+                            if (idx == 0) {
+                                sprintf_s<50>(
+                                    string,
+                                    "Is behind: %d",
+                                    IsBehindPlayer(firstSkelID, secondSkelID)
+                                );
+                            } else {
+                                sprintf_s<50>(
+                                    string,
+                                    "Is behind: %d",
+                                    IsBehindPlayer(secondSkelID, firstSkelID)
+                                );
+                            }
                         }
+                    } break;
+                    case 5:
+                        sprintf_s<50>(string, "Centered: %d", IsCentered(id));
+                        break;
+                    case 6:
+                        sprintf_s<50>(string, "At edge: %d", IsAtEdge(id));
                         break;
                     }
-                    case 5: {
-                        bool isCentered = IsCentered(trackingID);
-                        sprintf_s<50>(buf, "Centered: %d", isCentered);
-                        break;
-                    }
-                    case 6: {
-                        bool isAtEdge = IsAtEdge(trackingID);
-                        sprintf_s<50>(buf, "At edge: %d", isAtEdge);
-                        break;
-                    }
-                    }
-                    Vector2 vec2(i * sFloat1 + sFloat2, j * sFloat0 + sFloat4);
-                    TheRnd.DrawStringScreen(buf, vec2, textColor, true);
+
+                    TheRnd.DrawStringScreen(
+                        string,
+                        Vector2(idx * sSpaceX + sLeft, i * sSpaceY + sTop),
+                        sTextColor,
+                        true
+                    );
                 }
             }
         }
 
-        if (mQueuedActivePlayerIndex >= 0) {
-            char buf[50];
+        if (0 <= mQueuedActivePlayerIndex) {
             sprintf_s<50>(
-                buf,
+                string,
                 "Switching to %d in %f seconds",
                 mQueuedActivePlayerIndex,
                 mSwitchDelay - mSwitchTimer
             );
-            Vector2 vec2(sFloat2 + 0.1f, sFloat0 * 7.0f + sFloat4);
-            TheRnd.DrawStringScreen(buf, vec2, textColor, true);
+
+            TheRnd.DrawStringScreen(
+                string, Vector2(sLeft + 0.1f, sSpaceY * 7.0f + sTop), sTextColor, true
+            );
         }
     }
 }
