@@ -185,6 +185,8 @@ StatementMacros:
   - NEW_POOL_OVERLOAD
   - DELETE_POOL_OVERLOAD
 TabWidth: 4
+TypenameMacros:
+  - XAUDIO2_SEND_DESCRIPTOR
 UseCRLF: false
 UseTab: Never
 WhitespaceSensitiveMacros:

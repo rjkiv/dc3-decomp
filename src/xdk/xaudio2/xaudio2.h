@@ -64,12 +64,10 @@ struct XAUDIO2_SEND_DESCRIPTOR { /* Size=0x8 */
     /* 0x0004 */ struct IXAudio2Voice *pOutputVoice;
 };
 
-// clang-format off
 struct XAUDIO2_VOICE_SENDS { /* Size=0x8 */
     /* 0x0000 */ UINT32 SendCount;
     /* 0x0004 */ XAUDIO2_SEND_DESCRIPTOR *pSends;
 };
-// clang-format on
 
 struct NUI_TALKER_POSITION { /* Size=0x8 */
     /* 0x0000 */ float fDirection;

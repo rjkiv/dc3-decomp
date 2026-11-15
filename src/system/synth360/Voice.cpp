@@ -114,7 +114,6 @@ Voice::~Voice() {
     }
 }
 
-// clang-format off
 void Voice::Init(bool b1) {
     if (TheXboxSynth->GetMasteringVoice()) {
         if (!b1) {
@@ -122,20 +121,20 @@ void Voice::Init(bool b1) {
         }
         MILO_ASSERT(0 < mSampleRate && mSampleRate <= 48000, 0x160);
         MILO_ASSERT(mBuffer, 0x161);
-        if (mSend && !mSend->HasVoices()) {
+        if (mSend && !mSend->Initialized()) {
             FxSend *send = dynamic_cast<FxSend *>(mSend);
             send->RebuildChain();
         }
         XAUDIO2_SEND_DESCRIPTOR desc;
         desc.Flags = 0;
-        IXAudio2Voice* iv;
-        if(mSend){
+        IXAudio2Voice *iv;
+        if (mSend) {
             iv = mSend->InputVoice();
         } else {
             iv = TheXboxSynth->GetMasteringVoice();
         }
         desc.pOutputVoice = iv;
-        std::vector <XAUDIO2_SEND_DESCRIPTOR> descs;
+        std::vector<XAUDIO2_SEND_DESCRIPTOR> descs;
         if (desc.pOutputVoice) {
             descs.push_back(desc);
         }
@@ -149,7 +148,7 @@ void Voice::Init(bool b1) {
         XAUDIO2_SEND_DESCRIPTOR desc3;
         desc3.Flags = 0;
         desc3.pOutputVoice = TheXboxSynth->GetHeadsetSubmix(sHeadsetTarget);
-        if(desc3.pOutputVoice){
+        if (desc3.pOutputVoice) {
             descs.push_back(desc3);
         }
         XAUDIO2_VOICE_SENDS sends;
@@ -161,29 +160,30 @@ void Voice::Init(bool b1) {
         InitVoiceParameters(fmtex, xbuffer);
         MILO_ASSERT(!GetVoice(), 0x194);
 
-        XAUDIO2_VOICE_SENDS* sendsPtr = nullptr;
-        if(sends.SendCount){
+        XAUDIO2_VOICE_SENDS *sendsPtr = nullptr;
+        if (sends.SendCount) {
             sendsPtr = &sends;
-        } 
+        }
         HRESULT hr = createOrReuse(&mPoolVoice, mFmtHash, fmtex.wfx, sendsPtr);
-        
+
         MILO_ASSERT(SUCCEEDED(hr), 0x19D);
         MILO_ASSERT(GetVoice(), 0x19E);
         hr = GetVoice()->SubmitSourceBuffer(&xbuffer, nullptr);
         MILO_ASSERT(SUCCEEDED(hr), 0x1A3);
         UpdateMix();
-        if(GetVoice()){
+        if (GetVoice()) {
             GetVoice()->SetFrequencyRatio(mSpeed, 0);
         }
         mPoolVoice.egParams->AttackRate = mAttackRate;
         mPoolVoice.egParams->ReleaseRate = mReleaseRate;
         mPoolVoice.egParams->StartRelease = 0;
         mPoolVoice.egParams->IsDone = 0;
-        hr = GetVoice()->SetEffectParameters(0, mPoolVoice.egParams, sizeof(EnvelopeGeneratorParams), 0);
+        hr = GetVoice()->SetEffectParameters(
+            0, mPoolVoice.egParams, sizeof(EnvelopeGeneratorParams), 0
+        );
         MILO_ASSERT(SUCCEEDED(hr), 0x1B0);
     }
 }
-// clang-format on
 
 void Voice::blockingStart(bool b1) {
     if (!gShutdownVoiceThread && TheXboxSynth->GetMasteringVoice()) {

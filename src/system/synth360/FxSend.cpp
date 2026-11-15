@@ -11,14 +11,15 @@
 #include "xdk/win_types.h"
 #include "xdk/xaudio2/xaudio2.h"
 
-FxSend360::FxSend360(FxSend *fx) : mInputVoice(0), mThis(fx), mParamsDirty(true) {
+FxSend360::FxSend360(FxSend *fx) : mInputVoice(nullptr), mThis(fx), mParamsDirty(true) {
     TheXboxSynth->AddFxSend(this);
     MILO_ASSERT(mThis, 0x19);
 }
 
 FxSend360::~FxSend360() {
-    if (TheXboxSynth)
+    if (TheXboxSynth) {
         TheXboxSynth->RemoveFxSend(this);
+    }
     CleanChain();
 }
 
@@ -132,62 +133,50 @@ void FxSend360::Reconnect() {
 void FxSend360::CreateInputVoice() {
     MILO_ASSERT(OutputVoice(), 0x177);
     unsigned int numVoices = mVoices.size();
-// clang-format off
-    XAUDIO2_SEND_DESCRIPTOR allDescs[4] = {
-        { 0, mVoices[0] },
-        { 0, numVoices >= 2 ? mVoices[1] : nullptr },
-        { 0, numVoices >= 3 ? mVoices[2] : nullptr },
-        { 0, OutputVoice() }
-    };
-
-    XAUDIO2_SEND_DESCRIPTOR centerDescs[2] = {
-        { 0, mVoices[0] }, { 0, OutputVoice() }
-    };
-
-    XAUDIO2_SEND_DESCRIPTOR stereoDescs[2] = {
-        { 0, mVoices[0] }, { 0, OutputVoice() }
-    };
-
+    XAUDIO2_SEND_DESCRIPTOR allDescs[4] = { { 0, mVoices[0] },
+                                            { 0, numVoices >= 2 ? mVoices[1] : nullptr },
+                                            { 0, numVoices >= 3 ? mVoices[2] : nullptr },
+                                            { 0, OutputVoice() } };
+    XAUDIO2_SEND_DESCRIPTOR centerDescs[2] = { { 0, mVoices[0] }, { 0, OutputVoice() } };
+    XAUDIO2_SEND_DESCRIPTOR stereoDescs[2] = { { 0, mVoices[0] }, { 0, OutputVoice() } };
     int stage = mThis->GetStage() << 1;
     XAUDIO2_VOICE_SENDS sends;
     switch (mThis->Channels()) {
-        default: 
-            MILO_FAIL("FxSend: Unknown Channels");  
-        case kSendAll: 
-        case kSendAllXMix:
-            sends.SendCount = 4;
-            sends.pSends = allDescs;
-            break;
-        case kSendCenter:
-            sends.SendCount = 2;
-            sends.pSends = centerDescs;
-            break;
-        case kSendStereo:
-            sends.SendCount = 2;
-            sends.pSends = stereoDescs;
-            break;
+    default:
+        MILO_FAIL("FxSend: Unknown Channels");
+    case kSendAll:
+    case kSendAllXMix:
+        sends.SendCount = 4;
+        sends.pSends = allDescs;
+        break;
+    case kSendCenter:
+        sends.SendCount = 2;
+        sends.pSends = centerDescs;
+        break;
+    case kSendStereo:
+        sends.SendCount = 2;
+        sends.pSends = stereoDescs;
+        break;
     }
-    HRESULT hr = TheXboxSynth->GetXAudio2()->CreateSubmixVoice(&mInputVoice, 6, 48000, 0, stage, &sends, nullptr);
+    HRESULT hr = TheXboxSynth->GetXAudio2()->CreateSubmixVoice(
+        &mInputVoice, 6, 48000, 0, stage, &sends, nullptr
+    );
     MILO_ASSERT(SUCCEEDED(hr), 0x1A6);
-// clang-format on
 }
 
 void FxSend360::CreateVoice(int i1, int i2) {
     int stage = mThis->GetStage() << 1;
-// clang-format off
     XAUDIO2_SEND_DESCRIPTOR desc = { 0, OutputVoice() };
     std::vector<XAUDIO2_SEND_DESCRIPTOR> descs;
-    if(desc.pOutputVoice){
+    if (desc.pOutputVoice) {
         descs.push_back(desc);
     }
-    if(mThis->GetReverbEnable()){
+    if (mThis->GetReverbEnable()) {
         XAUDIO2_SEND_DESCRIPTOR desc2 = { 0, TheXboxSynth->GetReverbDmVoice() };
         descs.push_back(desc2);
     }
     mFx.push_back(CreateFx());
     MILO_ASSERT(mFx.back(), 0x1CE);
-
-// clang-format on
 }
 
 void FxSend360::UpdateVoiceMatrices() {
@@ -331,10 +320,10 @@ void FxSend360::UpdateVolumes() {
         dryGain = Max(dryGain, 1E-10F);
         wetGain = Max(wetGain, 1E-10F);
 
-        const float floats[36] = { dryGain, 0, 0, 0, 0, 0, 0, dryGain, 0, 0, 0, 0, 0, 0,
-                                   dryGain, 0, 0, 0, 0, 0, 0, dryGain, 0, 0, 0, 0, 0, 0,
-                                   dryGain, 0, 0, 0, 0, 0, 0, dryGain };
-        HRESULT hr = mInputVoice->SetOutputMatrix(OutputVoice(), 6, 6, floats, 0);
+        float dryVolumes[36] = { dryGain, 0, 0, 0, 0, 0, 0, dryGain, 0, 0, 0, 0, 0, 0,
+                                 dryGain, 0, 0, 0, 0, 0, 0, dryGain, 0, 0, 0, 0, 0, 0,
+                                 dryGain, 0, 0, 0, 0, 0, 0, dryGain };
+        HRESULT hr = mInputVoice->SetOutputMatrix(OutputVoice(), 6, 6, dryVolumes, 0);
         MILO_ASSERT(SUCCEEDED(hr), 0x203);
         UpdateVoiceMatrices();
         for (int i = 0; i < mVoices.size(); i++) {

@@ -7,31 +7,31 @@
 class FxSend360 {
 public:
     virtual ~FxSend360();
-    virtual void SyncEffectParams(IXAudio2SubmixVoice *) const = 0;
+    virtual void SyncEffectParams(IXAudio2SubmixVoice *voice) const = 0;
     virtual bool IsStandard() const { return true; }
-    virtual void AddOwnerVoice(Voice *);
-    virtual void RemoveOwnerVoice(Voice *);
-    virtual IUnknown *CreateFx() = 0;
+    virtual void AddOwnerVoice(Voice *pVoice);
+    virtual void RemoveOwnerVoice(Voice *pVoice);
 
-    FxSend360(FxSend *);
+    FxSend360(FxSend *me);
+
+    bool Initialized() { return !mVoices.empty(); }
+    void Refresh(std::vector<FxSend *> &chain);
+    IXAudio2Voice *InputVoice() { return mInputVoice; }
     void SyncEffectParams();
     void UpdateVolumes();
     void Cleanup();
     void CleanChain();
-    void Refresh(std::vector<FxSend *> &);
-
-    bool HasVoices() const { return !mVoices.empty(); }
-    IXAudio2Voice *InputVoice() { return mInputVoice; }
 
 protected:
-    virtual void InitParams(IXAudio2SubmixVoice *, int) {}
+    virtual IUnknown *CreateFx() = 0;
+    virtual void InitParams(IXAudio2SubmixVoice *voice, int numChannels) {}
 
 private:
     IXAudio2Voice *OutputVoice();
     void UpdateVoiceMatrices();
     void CreateInputVoice();
     void Reconnect();
-    void CreateVoice(int, int);
+    void CreateVoice(int channel1, int channel2);
 
     IXAudio2SubmixVoice *mInputVoice; // 0x4
     std::vector<IXAudio2SubmixVoice *> mVoices; // 0x8
