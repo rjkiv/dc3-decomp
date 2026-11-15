@@ -715,7 +715,7 @@
             "system/synth360/synapse_apo/Synapse_dsp.cpp": "NonMatching",
             "system/synth360/EnvelopeGenerator.cpp": "NonMatching",
             "system/synth360/ExternalMic.cpp": "NonMatching",
-            "system/synth360/FxSend.cpp": "NonMatching",
+            "system/synth360/FxSend.cpp": "Matching",
             "system/synth360/FxSendBitCrush.cpp": "Matching",
             "system/synth360/FxSendChorus.cpp": "Matching",
             "system/synth360/FxSendCompress.cpp": "Matching",

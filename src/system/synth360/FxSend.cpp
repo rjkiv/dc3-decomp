@@ -133,12 +133,20 @@ void FxSend360::Reconnect() {
 void FxSend360::CreateInputVoice() {
     MILO_ASSERT(OutputVoice(), 0x177);
     unsigned int numVoices = mVoices.size();
-    XAUDIO2_SEND_DESCRIPTOR allDescs[4] = { { 0, mVoices[0] },
-                                            { 0, numVoices >= 2 ? mVoices[1] : nullptr },
-                                            { 0, numVoices >= 3 ? mVoices[2] : nullptr },
-                                            { 0, OutputVoice() } };
-    XAUDIO2_SEND_DESCRIPTOR centerDescs[2] = { { 0, mVoices[0] }, { 0, OutputVoice() } };
-    XAUDIO2_SEND_DESCRIPTOR stereoDescs[2] = { { 0, mVoices[0] }, { 0, OutputVoice() } };
+    XAUDIO2_SEND_DESCRIPTOR allDescs[4] = {
+        { 0, mVoices[0]                            },
+        { 0, numVoices >= 2 ? mVoices[1] : nullptr },
+        { 0, numVoices >= 3 ? mVoices[2] : nullptr },
+        { 0, OutputVoice()                         }
+    };
+    XAUDIO2_SEND_DESCRIPTOR centerDescs[2] = {
+        { 0, mVoices[0]    },
+        { 0, OutputVoice() }
+    };
+    XAUDIO2_SEND_DESCRIPTOR stereoDescs[2] = {
+        { 0, mVoices[0]    },
+        { 0, OutputVoice() }
+    };
     int stage = mThis->GetStage() << 1;
     XAUDIO2_VOICE_SENDS sends;
     switch (mThis->Channels()) {
@@ -164,8 +172,9 @@ void FxSend360::CreateInputVoice() {
     MILO_ASSERT(SUCCEEDED(hr), 0x1A6);
 }
 
-void FxSend360::CreateVoice(int i1, int i2) {
-    int stage = mThis->GetStage() << 1;
+void FxSend360::CreateVoice(int channel1, int channel2) {
+    int numChannels = channel2 == -1 ? 1 : 2;
+    int stage = mThis->GetStage() * 2 + 1;
     XAUDIO2_SEND_DESCRIPTOR desc = { 0, OutputVoice() };
     std::vector<XAUDIO2_SEND_DESCRIPTOR> descs;
     if (desc.pOutputVoice) {
@@ -175,8 +184,28 @@ void FxSend360::CreateVoice(int i1, int i2) {
         XAUDIO2_SEND_DESCRIPTOR desc2 = { 0, TheXboxSynth->GetReverbDmVoice() };
         descs.push_back(desc2);
     }
+
+    XAUDIO2_VOICE_SENDS sends;
+    XAUDIO2_VOICE_SENDS *sendsList = nullptr;
+    sends.SendCount = descs.size();
+    sends.pSends = descs.begin();
+    if (sends.SendCount != 0) {
+        sendsList = &sends;
+    }
     mFx.push_back(CreateFx());
     MILO_ASSERT(mFx.back(), 0x1CE);
+    XAUDIO2_EFFECT_DESCRIPTOR effectDesc = { mFx.back(), true, numChannels };
+    XAUDIO2_EFFECT_CHAIN chain = { 1, &effectDesc };
+
+    mVoices.resize(mVoices.size() + 1);
+    mVoicesChannels.resize(mVoices.size());
+
+    HRESULT hr = TheXboxSynth->GetXAudio2()->CreateSubmixVoice(
+        &mVoices.back(), numChannels, 48000, 0, stage, sendsList, &chain
+    );
+    MILO_ASSERT(SUCCEEDED(hr), 0x1D8);
+    mVoicesChannels.back() = numChannels;
+    InitParams(mVoices.back(), numChannels);
 }
 
 void FxSend360::UpdateVoiceMatrices() {
