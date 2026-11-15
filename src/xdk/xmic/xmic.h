@@ -31,9 +31,9 @@ typedef struct _XMICCAPABILITIES { /* Size=0x1c */
     /* 0x0018 */ DWORD dwXid;
 } XMICCAPABILITIES;
 
-DWORD XMicGetGain(DWORD, DWORD, float *);
-DWORD XMicSetGain(DWORD, float, XOVERLAPPED *);
-DWORD XMicGetStatus(DWORD);
+DWORD XMicGetGain(DWORD dwMicrophoneIndex, DWORD dwGainIndex, float *pfGain);
+DWORD XMicSetGain(DWORD dwMicrophoneIndex, float fGain, XOVERLAPPED *pOverlapped);
+DWORD XMicGetStatus(DWORD dwMicrophoneIndex);
 DWORD XMicRequestData(
     DWORD dwMicrophoneIndex,
     DWORD dwFrameCount,
@@ -80,5 +80,7 @@ DWORD XMicStop(DWORD dwMicrophoneIndex, XOVERLAPPED *pOverlapped);
 }
 #endif
 
-float XAudio2AmplitudeRatioToDecibels(float);
-void XMicHandleDataTransferCompletion(struct _RMC_ASYNC_REQUEST *, long);
+float XAudio2AmplitudeRatioToDecibels(float Volume);
+void XMicHandleDataTransferCompletion(
+    struct _RMC_ASYNC_REQUEST *pAsyncRequest, long AsyncRequestStatus
+);

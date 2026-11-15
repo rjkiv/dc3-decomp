@@ -39,7 +39,7 @@ std::vector<MicXbox *> ExternalMicClientMgr::mAssocMicXbox;
 
 ExternalMic::ExternalMic(DWORD micId)
     : mIndex(micId), mShutdown(false), mIsActive(false), mGain(-1) {
-    mThread = CreateThread(0, 0, ExternalMicThreadEntry, this, 4, 0);
+    mThread = CreateThread(nullptr, 0, ExternalMicThreadEntry, this, 4, 0);
     MILO_ASSERT(mThread, 0x6a);
     SetThreadPriority(mThread, 15);
     XSetThreadProcessor(mThread, 3);
@@ -52,27 +52,28 @@ ExternalMic::~ExternalMic() {
     CloseHandle(mThread);
 }
 
-HRESULT ExternalMic::gatherGainAttribs(DWORD dw) {
-    if (XMicGetGain(dw, 1, &mMinGain)) {
-        return 0x80004005;
-    } else if (XMicGetGain(dw, 2, &mMaxGain)) {
-        return 0x80004005;
+HRESULT ExternalMic::gatherGainAttribs(DWORD dwMicrophoneIndex) {
+    if (XMicGetGain(dwMicrophoneIndex, 1, &mMinGain) != ERROR_SUCCESS) {
+        return E_FAIL;
     } else {
-        return 0;
+        HRESULT ret = XMicGetGain(dwMicrophoneIndex, 2, &mMaxGain);
+        return ERROR_SUCCESS != ret ? E_FAIL : ERROR_SUCCESS;
     }
 }
 
-HRESULT ExternalMic::processGain(DWORD dw) {
+HRESULT ExternalMic::processGain(DWORD dwMicrophoneIndex) {
     float gainReq = ExternalMicClientMgr::GetRequiredGain(mIndex);
     if (gainReq != mGain) {
         MILO_ASSERT((0.0f <= gainReq) && (gainReq <= 1.0f), 0x26F);
-        DWORD hr = XMicSetGain(dw, (mMaxGain - mMinGain) * gainReq + mMinGain, nullptr);
+        DWORD hr = XMicSetGain(
+            dwMicrophoneIndex, (mMaxGain - mMinGain) * gainReq + mMinGain, nullptr
+        );
         mGain = gainReq;
-        if (hr != 0) {
-            return 0x80004005;
+        if (hr != ERROR_SUCCESS) {
+            return E_FAIL;
         }
     }
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 void ExternalMic::Init() {
@@ -99,6 +100,47 @@ void ExternalMic::Terminate() {
     }
     gMics.clear();
     ExternalMicClientMgr::Terminate();
+}
+
+void ExternalMic::dataReady(
+    DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, XOVERLAPPED *pOverlapped
+) {
+    RequestCompletionData *ctx =
+        (RequestCompletionData *)pOverlapped->dwCompletionContext;
+
+    if (ctx) {
+        int i = 0;
+        unsigned int numBytes = 0;
+        BYTE AudioSamples[2048] = { 0 };
+        PBYTE p = ctx->pAudioFramesBuffer;
+        for (; i < ctx->dwFrameCount; i++) {
+            if (ctx->wFrameLengths[i]) {
+                WORD wFrameLength = ctx->wFrameLengths[i];
+                if (wFrameLength & 1) {
+                    MILO_LOG(
+                        "Mic data frame length was odd: %x bytes; truncating last byte\n",
+                        wFrameLength
+                    );
+                    wFrameLength--;
+                }
+                memcpy(AudioSamples + numBytes, p, wFrameLength);
+                numBytes += wFrameLength;
+            }
+            p += ctx->dwAudioFrameBufferLength;
+        }
+        if (numBytes != 0) {
+            ExternalMicClientMgr::AddAudio(mIndex, AudioSamples, numBytes);
+        }
+        if (XMicGetStatus(ctx->dwMicrophoneIndex) == 2) {
+            XMicRequestData(
+                ctx->dwMicrophoneIndex,
+                ctx->dwFrameCount,
+                ctx->pAudioFramesBuffer,
+                ctx->wFrameLengths,
+                ctx->pOverlap
+            );
+        }
+    }
 }
 
 DWORD ExternalMic::sampleProcessThread() {
