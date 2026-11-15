@@ -36,6 +36,7 @@
 
 #define E_NOINTERFACE                   (long)0x80004002
 #define E_FAIL 							(long)0x80004005
+#define E_UNEXPECTED 					(long)0x8000FFFF
 #define E_SPEECH_UNINITIALIZED          (long)0x80045001
 
 #define E_OUTOFMEMORY                   (long)0x8007000E

@@ -11,7 +11,7 @@ struct PoolVoice {
     IXAudio2SourceVoice *xVoice; // 0x0
     EnvelopeGenerator *eg; // 0x4
     EnvelopeGeneratorParams *egParams; // 0x8
-    tWAVEFORMATEX fmt; // 0xc
+    WAVEFORMATEX fmt; // 0xc
     DWORD tickCount; // 0x20
 };
 
@@ -26,37 +26,38 @@ public:
         kPaused = 0x0004
     };
 
-    Voice(bool, int, bool);
+    Voice(bool isXMA, int channels, bool coherentSet);
     ~Voice();
-    void InitSourceBuffer(XAUDIO2_BUFFER &);
-    int GetAddr();
-    void SetData(const void *, int, int);
-    void Stop(bool);
-    void InitVoiceParameters(XMA2WAVEFORMATEX &, XAUDIO2_BUFFER);
-    void SetSampleRate(int);
-    void SetLoopRegion(int, int);
-    void EndLoop();
-    bool IsPlaying();
-    void SetStartSamp(int);
-    void SetReverbMixDb(float);
-    void Pause(bool);
-    void SetVolume(float);
-    void SetPan(float);
-    void SetReverbEnable(bool);
-    void SetSend(class FxSend360 *);
-    void SetSpeed(float);
-    void Init(bool);
-    void blockingStart(bool);
+    void SetData(const void *buffer, int bytes, int numSamples);
+    void SetSampleRate(int sr);
+    void Init(bool bAsynchronous);
+    void InitSourceBuffer(XAUDIO2_BUFFER &sb);
+    void InitVoiceParameters(XMA2WAVEFORMATEX &xma2Format, XAUDIO2_BUFFER buffer);
     void Start();
-
-    IXAudio2SourceVoice *GetVoice() { return mPoolVoice.xVoice; }
-    int GetStartSamp() { return mStartSamp; }
-    int GetSampleCount() const { return mNumSamples; }
-    int GetLoopStart() const { return mLoopStart; }
-    int GetLoopEnd() const { return mLoopEnd; }
+    void Stop(bool);
+    void Pause(bool p);
+    bool IsPlaying();
+    int GetAddr();
+    void SetVolume(float v);
+    void SetPan(float p);
+    void SetSpeed(float s);
     void SetAttackRate(float r) { mAttackRate = r; }
     void SetReleaseRate(float r) { mReleaseRate = r; }
-    void SetTag(int i) { mTag = i; }
+    void SetSend(class FxSend360 *send);
+    void SetReverbMixDb(float reverbMixDb);
+    void SetReverbEnable(bool enable);
+    void EndLoop();
+    void SetLoopRegion(int loopStart, int loopEnd);
+    int GetLoopStart() const { return mLoopStart; }
+    int GetLoopEnd() const { return mLoopEnd; }
+    void SetStartSamp(int samp);
+    int GetStartSamp() { return mStartSamp; }
+    void Tag(int i) { mTag = i; }
+    IXAudio2SourceVoice *GetVoice() { return mPoolVoice.xVoice; }
+    void blockingStart(bool bAsynchronous);
+    // public: void nonBlockingStart();
+
+    int GetSampleCount() const { return mNumSamples; } // not in pdb
 
     static bool HasPendingVoices();
     static int sHeadsetTarget;
@@ -65,12 +66,20 @@ public:
 
 private:
     HRESULT
-    createOrReuse(PoolVoice *, unsigned int &, tWAVEFORMATEX &, XAUDIO2_VOICE_SENDS *);
-    void UpdateMix();
+    createOrReuse(
+        PoolVoice *pPoolVoice,
+        unsigned int &fmtHash,
+        WAVEFORMATEX &format,
+        XAUDIO2_VOICE_SENDS *pSends
+    );
+    void dispose(PoolVoice *pPoolVoice, unsigned int fmtHash);
+    // private: uint32_t hashFormat(tWAVEFORMATEX&);
+    void SetSendImpl(class FxSend360 *send);
     void UpdateSends();
+    void UpdateMix();
+    // private: void UpdateSpeed();
     void SafeRestart();
-    void SetSendImpl(class FxSend360 *);
-    void dispose(PoolVoice *, unsigned int);
+    // private: IXAudio2Voice* OutputVoice();
 
     unsigned int mFmtHash; // 0x0
     VoiceState mState; // 0x4

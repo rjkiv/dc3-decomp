@@ -366,9 +366,9 @@ HRESULT ExternalMicClientProxy::OnMicConnected(DWORD dw, bool b2, const Symbol &
     MicXbox *mic = ExternalMicClientMgr::GetClient(mIndex);
     if (mic) {
         mic->OnMicConnected(dw, b2, s);
-        return 0;
+        return ERROR_SUCCESS;
     } else {
-        return 0x8000FFFF;
+        return E_UNEXPECTED;
     }
 }
 

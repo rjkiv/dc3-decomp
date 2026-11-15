@@ -86,17 +86,17 @@ void StreamReceiver360::Tag() {
     mTagged = true;
     if (mVoice) {
         if (mRefVoice) {
-            mVoice->SetTag(1);
-            mRefVoice->SetTag(2);
+            mVoice->Tag(1);
+            mRefVoice->Tag(2);
         } else if (mVoice) {
-            mVoice->SetTag(3);
+            mVoice->Tag(3);
         } else {
-            mRefVoice->SetTag(4);
+            mRefVoice->Tag(4);
         }
     }
 
     if (mRefVoice)
-        mRefVoice->SetTag(4);
+        mRefVoice->Tag(4);
 }
 
 void StreamReceiver360::Poll() {
