@@ -6,8 +6,8 @@ DSP::SynapseAPO::~SynapseAPO() { delete m_pSynapse; }
 
 void DSP::SynapseAPO::OnSetParameters(const SynapseAPOParams &params) {
     for (unsigned int i = 0; i < 3; i++) {
-        const SynapseAPOVoiceParams &cur = m_params.mNoteProps[i];
-        const SynapseAPOVoiceParams &next = params.mNoteProps[i];
+        const SynapseAPOVoiceParams &cur = m_params.voices[i];
+        const SynapseAPOVoiceParams &next = params.voices[i];
         if (cur.bEnabled != next.bEnabled) {
             m_pSynapse->SetVoiceEnabled(i, next.bEnabled);
         }

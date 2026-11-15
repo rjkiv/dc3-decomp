@@ -18,16 +18,16 @@ namespace DSP {
     struct SynapseAPOParams {
         SynapseAPOParams() {
             for (int i = 0; i < 3; i++) {
-                mNoteProps[i].bEnabled = false;
-                mNoteProps[i].fNoteHz = 220;
-                mNoteProps[i].fGain = 0;
-                mNoteProps[i].fTransposition = 0;
+                voices[i].bEnabled = false;
+                voices[i].fNoteHz = 220;
+                voices[i].fGain = 0;
+                voices[i].fTransposition = 0;
             }
             fAttackSmoothing = 20;
             fReleaseSmoothing = 40;
         }
 
-        SynapseAPOVoiceParams mNoteProps[3]; // 0x0
+        SynapseAPOVoiceParams voices[3]; // 0x0
         /** "attack time ms for correction". Ranges from 10 to 500. */
         float fAttackSmoothing; // 0x54
         /** "release time ms for correction". Ranges from 10 to 500. */
