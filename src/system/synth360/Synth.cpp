@@ -71,76 +71,77 @@ void Synth360::PreInit() {
     // using processors 3, 4, 5 and 6 for xaudio2
     XAudio2Create(&mXAudio2, 0, 0x3C);
     mXAudio2->CreateMasteringVoice(&mMasteringVoice, 0, 0, 0, 0, nullptr);
-
-    XAUDIO2_EFFECT_DESCRIPTOR effectDescs[2];
-    effectDescs[0].pEffect =
-        static_cast<CXAPOBase *>(new StandardEffect<CompressionEffect>());
-    effectDescs[0].InitialState = true;
-    effectDescs[0].OutputChannels = 6;
-    effectDescs[1].pEffect = static_cast<CXAPOBase *>(new MeterEffect());
-    effectDescs[1].InitialState = true;
-    effectDescs[1].OutputChannels = 6;
-
-    mMeterParams = new MeterEffectParams();
-    mMeterParams->pLevelData = &mLevelData[0]; // idk
-
-    XAUDIO2_EFFECT_CHAIN effectChain = { 2, effectDescs };
-
-    if (mMasteringVoice) {
-        mMasteringVoice->SetEffectChain(&effectChain);
-    }
-
-    DataArray *limiterCfg = SystemConfig("synth", "limiter");
-    float threshold = limiterCfg->FindFloat("threshold");
-    float ratio = limiterCfg->FindFloat("ratio");
-    float attackMs = limiterCfg->FindFloat("attack_ms") / 1000;
-    float releaseMs = limiterCfg->FindFloat("release_ms") / 1000;
-    float outputDb = limiterCfg->FindFloat("output_db");
-
-    CompressionEffect::Params p;
-    p.thresholdDB = -6;
-    p.ratio = 1;
-    p.outputLevel = 1;
-    p.attack = 0.005f;
-    p.release = 0.2f;
-    p.expRatio = 1;
-    p.expAttack = 0.99f;
-    p.expRelease = 1.01f;
-    p.gateThresholdDB = -40;
-    if (mMasteringVoice) {
-        mMasteringVoice->GetEffectParameters(0, &p, sizeof(p));
-    }
-    p.thresholdDB = threshold;
-    p.ratio = ratio;
-    p.attack = attackMs;
-    p.release = releaseMs;
-    p.gateThresholdDB = -140;
-    p.outputLevel = (1 - (1 / ratio)) * threshold + outputDb;
-    if (mMasteringVoice) {
-        mMasteringVoice->SetEffectParameters(0, &p, sizeof(p), 0);
-    }
-    if (mXAudio2 && mMasteringVoice) {
-        XAudio2CreateReverb(&mReverbApo);
-        effectChain.pEffectDescriptors = effectDescs;
-        effectDescs[0].pEffect = mReverbApo;
+    {
+        XAUDIO2_EFFECT_DESCRIPTOR effectDescs[2];
+        effectDescs[0].pEffect =
+            static_cast<CXAPOBase *>(new StandardEffect<CompressionEffect>());
         effectDescs[0].InitialState = true;
-        effectDescs[0].OutputChannels = 2;
-        effectChain.EffectCount = 1;
-        mXAudio2->CreateSubmixVoice(
-            &mReverbVoice, 2, 48000, 0, 0x8000, nullptr, &effectChain
-        );
-        {
-            XAUDIO2_SEND_DESCRIPTOR desc = { 0, mReverbVoice };
-            XAUDIO2_VOICE_SENDS sends = { 1, &desc };
+        effectDescs[0].OutputChannels = 6;
+        effectDescs[1].pEffect = static_cast<CXAPOBase *>(new MeterEffect());
+        effectDescs[1].InitialState = true;
+        effectDescs[1].OutputChannels = 6;
+
+        mMeterParams = new MeterEffectParams;
+        mMeterParams->pLevelData = &mLevelData[0];
+
+        XAUDIO2_EFFECT_CHAIN effectChain = { 2, effectDescs };
+
+        if (mMasteringVoice) {
+            mMasteringVoice->SetEffectChain(&effectChain);
+        }
+
+        DataArray *limiterCfg = SystemConfig("synth", "limiter");
+        float threshold = limiterCfg->FindFloat("threshold");
+        float ratio = limiterCfg->FindFloat("ratio");
+        float attackMs = limiterCfg->FindFloat("attack_ms") / 1000;
+        float releaseMs = limiterCfg->FindFloat("release_ms") / 1000;
+        float outputDb = limiterCfg->FindFloat("output_db");
+
+        CompressionEffect::Params p;
+        p.thresholdDB = -6;
+        p.ratio = 1;
+        p.outputLevel = 1;
+        p.attack = 0.005f;
+        p.release = 0.2f;
+        p.expRatio = 1;
+        p.expAttack = 0.99f;
+        p.expRelease = 1.01f;
+        p.gateThresholdDB = -40;
+        if (mMasteringVoice) {
+            mMasteringVoice->GetEffectParameters(0, &p, sizeof(p));
+        }
+        p.thresholdDB = threshold;
+        p.ratio = ratio;
+        p.attack = attackMs;
+        p.release = releaseMs;
+        p.gateThresholdDB = -140;
+        p.outputLevel = (1 - (1 / ratio)) * threshold + outputDb;
+        if (mMasteringVoice) {
+            mMasteringVoice->SetEffectParameters(0, &p, sizeof(p), 0);
+        }
+        if (mXAudio2 && mMasteringVoice) {
+            XAudio2CreateReverb(&mReverbApo);
+            effectChain.pEffectDescriptors = effectDescs;
+            effectDescs[0].pEffect = mReverbApo;
+            effectDescs[0].InitialState = true;
+            effectDescs[0].OutputChannels = 2;
+            effectChain.EffectCount = 1;
             mXAudio2->CreateSubmixVoice(
-                &mReverbDmVoice, 6, 48000, 0, 0x7FFF, &sends, nullptr
+                &mReverbVoice, 2, 48000, 0, 0x8000, nullptr, &effectChain
+            );
+            XAUDIO2_SEND_DESCRIPTOR voStereo[1];
+            voStereo[0].Flags = 0;
+            voStereo[0].pOutputVoice = mReverbVoice;
+            XAUDIO2_VOICE_SENDS sendList = { 1, voStereo };
+            mXAudio2->CreateSubmixVoice(
+                &mReverbDmVoice, 6, 48000, 0, 0x7FFF, &sendList, nullptr
             );
             mReverbVoice->SetVolume(4, 0);
+            String env;
+            DataArray *cfg = SystemConfig("synth");
+            cfg->FindData("reverb_environment", env, false);
+            SetGlobalReverbPreset(env.c_str());
         }
-        String env;
-        DataArray *cfg = SystemConfig("synth");
-        cfg->FindData("reverb_environment", env, false);
-        SetGlobalReverbPreset(env.c_str());
     }
     EnableLevels(mTrackLevels);
 }
@@ -450,48 +451,50 @@ void Synth360::UpdateDolby() {
 void Synth360::SetupHeadsetSubmixes() {
     mHeadsetSubmix.resize(4);
     for (int i = 0; i < 4; i++) {
-        XAUDIO2_EFFECT_DESCRIPTOR desc;
-        desc.pEffect = static_cast<CXAPOBase *>(new HeadsetXferEffect());
-        desc.InitialState = false;
-        desc.OutputChannels = 1;
-        XAUDIO2_EFFECT_CHAIN chain;
-        chain.EffectCount = 1;
-        chain.pEffectDescriptors = &desc;
-        mXAudio2->CreateSubmixVoice(&mHeadsetSubmix[i], 1, 48000, 0, 0, 0, &chain);
+        XAUDIO2_EFFECT_DESCRIPTOR fxi;
+        fxi.pEffect = static_cast<CXAPOBase *>(new HeadsetXferEffect());
+        fxi.InitialState = false;
+        fxi.OutputChannels = 1;
+        XAUDIO2_EFFECT_CHAIN effectChain;
+        effectChain.EffectCount = 1;
+        effectChain.pEffectDescriptors = &fxi;
+        mXAudio2->CreateSubmixVoice(&mHeadsetSubmix[i], 1, 48000, 0, 0, 0, &effectChain);
     }
     std::vector<XAUDIO2_SEND_DESCRIPTOR> audioDescs;
     for (int i = 0; i < 4; i++) {
-        XAUDIO2_SEND_DESCRIPTOR audioDesc = { 0, mHeadsetSubmix[i] };
-        audioDescs.push_back(audioDesc);
+        XAUDIO2_SEND_DESCRIPTOR desc = { 0, mHeadsetSubmix[i] };
+        audioDescs.push_back(desc);
     }
-    IXAudio2SourceVoice *v;
+    IXAudio2SourceVoice *pSourceVoice;
 
-    WAVEFORMATEX wav;
-    wav.wFormatTag = 1;
-    wav.nChannels = 1;
-    wav.wBitsPerSample = 16;
-    wav.nBlockAlign = 2;
-    wav.nSamplesPerSec = 48000;
-    wav.nAvgBytesPerSec = 96000;
-    wav.cbSize = 0;
+    WAVEFORMATEX wavFormat;
+    wavFormat.wFormatTag = 1;
+    wavFormat.nChannels = 1;
+    wavFormat.wBitsPerSample = 16;
+    wavFormat.nBlockAlign = 2;
+    wavFormat.nSamplesPerSec = 48000;
+    wavFormat.nAvgBytesPerSec = 96000;
+    wavFormat.cbSize = 0;
 
-    XAUDIO2_VOICE_SENDS sends = { audioDescs.size(), &audioDescs[0] };
-    HRESULT hr = mXAudio2->CreateSourceVoice(&v, &wav, 2, 2, nullptr, &sends, nullptr);
+    XAUDIO2_VOICE_SENDS sendList = { audioDescs.size(), &audioDescs[0] };
+    HRESULT hr = mXAudio2->CreateSourceVoice(
+        &pSourceVoice, &wavFormat, 2, 2, nullptr, &sendList, nullptr
+    );
     MILO_ASSERT(SUCCEEDED(hr), 0x30A);
 
     static BYTE silence[256];
-    XAUDIO2_BUFFER buffer;
-    buffer.Flags = 0;
-    memset(&buffer.AudioBytes, 0, sizeof(buffer) - sizeof(buffer.Flags)); // terrible
-    buffer.AudioBytes = sizeof(silence);
-    buffer.pAudioData = silence;
-    buffer.LoopCount = 255;
-    buffer.LoopBegin = 0;
-    buffer.LoopLength = 0;
-    buffer.PlayBegin = 0;
-    buffer.PlayLength = 0;
-    buffer.pContext = nullptr;
-    hr = mHeadsetSeedVoice->SubmitSourceBuffer(&buffer, nullptr);
+    XAUDIO2_BUFFER buf;
+    buf.Flags = 0;
+    memset(&buf.AudioBytes, 0, sizeof(buf) - sizeof(buf.Flags)); // terrible
+    buf.AudioBytes = sizeof(silence);
+    buf.pAudioData = silence;
+    buf.LoopCount = 255;
+    buf.LoopBegin = 0;
+    buf.LoopLength = 0;
+    buf.PlayBegin = 0;
+    buf.PlayLength = 0;
+    buf.pContext = nullptr;
+    hr = mHeadsetSeedVoice->SubmitSourceBuffer(&buf, nullptr);
     MILO_ASSERT(SUCCEEDED(hr), 0x319);
     hr = mHeadsetSeedVoice->Start(0, 0);
     MILO_ASSERT(SUCCEEDED(hr), 0x31C);
@@ -500,13 +503,47 @@ void Synth360::SetupHeadsetSubmixes() {
 void Synth360::Poll() {
     START_AUTO_TIMER("synth");
     mMasteringVoice->SetEffectParameters(1, mMeterParams, 4, 0);
-    static float ratio1 = DbToRatio(-3.0f);
-    static float ratio2 = DbToRatio(-1.2f);
-    static float ratio3 = DbToRatio(-6.2f);
+    static float kCenterCoeff = DbToRatio(-3.0f);
+    static float kBackCoeff = DbToRatio(-1.2f);
+    static float kOppBackCoeff = DbToRatio(-6.2f);
+
+    GetLevelData()[7].mRMS = GetLevelData()[2].mRMS * kCenterCoeff
+        + GetLevelData()[5].mRMS * kOppBackCoeff + GetLevelData()[4].mRMS * kBackCoeff
+        + GetLevelData()[0].mRMS;
+    GetLevelData()[7].mPeak = GetLevelData()[2].mPeak * kCenterCoeff
+        + GetLevelData()[5].mPeak * kOppBackCoeff + GetLevelData()[4].mPeak * kBackCoeff
+        + GetLevelData()[0].mPeak;
+    GetLevelData()[8].mRMS = GetLevelData()[2].mRMS * kCenterCoeff
+        + GetLevelData()[5].mRMS * kBackCoeff + GetLevelData()[4].mRMS * kOppBackCoeff
+        + GetLevelData()[1].mRMS;
+    GetLevelData()[8].mPeak = GetLevelData()[2].mPeak * kCenterCoeff
+        + GetLevelData()[5].mPeak * kBackCoeff + GetLevelData()[4].mPeak * kOppBackCoeff
+        + GetLevelData()[1].mPeak;
 
     Synth::Poll();
     if (!mMics.empty()) {
         MicManagerXbox::GetInstance()->Poll();
+    }
+
+    if (mDolbyChangeTimer.Running()) {
+        float split = mDolbyChangeTimer.SplitMs();
+        if (split < 300) {
+            split *= -0.32f;
+        } else if (split < 600) {
+            split = -96;
+        } else if (mDolbyWantChange) {
+            UpdateDolby();
+            mDolbyWantChange = false;
+            split = -96;
+        } else if (split < 900) {
+            split = -96;
+        } else if (split < 1800) {
+            split = (1800 - split) * -0.10666667f;
+        } else {
+            mDolbyChangeTimer.Reset();
+            split = 0;
+        }
+        SetMasterVolume(split);
     }
 
     StartSynchronizedVoices();
