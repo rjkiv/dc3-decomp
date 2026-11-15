@@ -141,7 +141,7 @@ void Voice::Init(bool b1) {
         if (mReverbEnable) {
             XAUDIO2_SEND_DESCRIPTOR desc2;
             desc2.Flags = 0;
-            desc2.pOutputVoice = TheXboxSynth->GetReverbDmVoice();
+            desc2.pOutputVoice = TheXboxSynth->GetReverbVoice();
             descs.push_back(desc2);
             mReverbVoiceConnected = true;
         }

@@ -41,20 +41,21 @@ public:
     virtual void EnableLevels(bool);
     virtual void RequirePushToTalk(bool, int);
 
-    IXAudio2MasteringVoice *GetMasteringVoice() const { return mMasteringVoice; }
-    IXAudio2Voice *GetReverbDmVoice() const { return mReverbDmVoice; }
-    IXAudio2 *GetXAudio2() { return mXAudio2; }
-
-    const std::vector<IXAudio2SubmixVoice *> &GetHeadsetSubmixes() const {
-        return mHeadsetSubmix;
-    }
-
-    CriticalSection *GetVoiceDestructionCS() { return &mVoiceDestructionCS; }
-
-    void SetGlobalReverbPreset(const char *);
+    bool HeadsetOutputEnabled() { return !mHeadsetSubmix.empty(); }
     IXAudio2SubmixVoice *GetHeadsetSubmix(int);
-    void RemoveFxSend(FxSend360 *);
+    // public: void EnableChat(int32_t, bool);
+    // public: int32_t GetChatData(int32_t, void*, int32_t);
+    // public: void SignalPlaybackStarted();
+    // public: bool GetPlaybackStarted();
+    IXAudio2 *GetXAudio2() { return mXAudio2; }
+    IXAudio2MasteringVoice *GetMasteringVoice() { return mMasteringVoice; }
+    // public: IXAudio2SubmixVoice* GetMasteringDmVoice();
+    IXAudio2SubmixVoice *GetReverbVoice() { return mReverbDmVoice; }
+    void SetGlobalReverbPreset(const char *);
     void AddFxSend(FxSend360 *);
+    void RemoveFxSend(FxSend360 *);
+    CriticalSection *GetVoiceDestructionCS() { return &mVoiceDestructionCS; }
+    bool DebugXAudio() const { return mXAudioDebugMode; }
 
 private:
     void UpdateDolby();

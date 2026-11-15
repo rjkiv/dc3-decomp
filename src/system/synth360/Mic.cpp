@@ -347,8 +347,7 @@ void MicManagerXbox::Init() {
     HRESULT hr = XHV2CreateEngine(&initParams, &mWorkerThread, &mXHV);
     DX_ASSERT(hr, 0xCD);
 
-    auto &headsetSubmixes = TheXboxSynth->GetHeadsetSubmixes();
-    if (!headsetSubmixes.empty()) {
+    if (TheXboxSynth->HeadsetOutputEnabled()) {
         for (int i = 0; i < 4; i++) {
             HRESULT hr =
                 TheXboxSynth->GetHeadsetSubmix(i)->GetEffectParameters(0, &initParams, 4);

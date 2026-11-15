@@ -460,29 +460,36 @@ void Synth360::SetupHeadsetSubmixes() {
         mXAudio2->CreateSubmixVoice(&mHeadsetSubmix[i], 1, 48000, 0, 0, 0, &chain);
     }
     std::vector<XAUDIO2_SEND_DESCRIPTOR> audioDescs;
-    XAUDIO2_SEND_DESCRIPTOR audioDesc;
-    audioDesc.Flags = 0;
     for (int i = 0; i < 4; i++) {
-        audioDesc.pOutputVoice = mHeadsetSubmix[i];
+        XAUDIO2_SEND_DESCRIPTOR audioDesc = { 0, mHeadsetSubmix[i] };
         audioDescs.push_back(audioDesc);
     }
     IXAudio2SourceVoice *v;
-    WAVEFORMATEX wav = { 1, 1, 48000, 96000, 2, 16, 0 };
+
+    WAVEFORMATEX wav;
+    wav.wFormatTag = 1;
+    wav.nChannels = 1;
+    wav.wBitsPerSample = 16;
+    wav.nBlockAlign = 2;
+    wav.nSamplesPerSec = 48000;
+    wav.nAvgBytesPerSec = 96000;
+    wav.cbSize = 0;
+
     XAUDIO2_VOICE_SENDS sends = { audioDescs.size(), &audioDescs[0] };
     HRESULT hr = mXAudio2->CreateSourceVoice(&v, &wav, 2, 2, nullptr, &sends, nullptr);
     MILO_ASSERT(SUCCEEDED(hr), 0x30A);
 
-    static BYTE sAudioData[0x100];
+    static BYTE silence[256];
     XAUDIO2_BUFFER buffer;
     buffer.Flags = 0;
     memset(&buffer.AudioBytes, 0, sizeof(buffer) - sizeof(buffer.Flags)); // terrible
-    buffer.AudioBytes = sizeof(sAudioData);
-    buffer.pAudioData = sAudioData;
-    buffer.PlayBegin = 0;
-    buffer.PlayLength = 0;
+    buffer.AudioBytes = sizeof(silence);
+    buffer.pAudioData = silence;
+    buffer.LoopCount = 255;
     buffer.LoopBegin = 0;
     buffer.LoopLength = 0;
-    buffer.LoopCount = 255;
+    buffer.PlayBegin = 0;
+    buffer.PlayLength = 0;
     buffer.pContext = nullptr;
     hr = mHeadsetSeedVoice->SubmitSourceBuffer(&buffer, nullptr);
     MILO_ASSERT(SUCCEEDED(hr), 0x319);

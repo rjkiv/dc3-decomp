@@ -181,7 +181,7 @@ void FxSend360::CreateVoice(int channel1, int channel2) {
         descs.push_back(desc);
     }
     if (mThis->GetReverbEnable()) {
-        XAUDIO2_SEND_DESCRIPTOR desc2 = { 0, TheXboxSynth->GetReverbDmVoice() };
+        XAUDIO2_SEND_DESCRIPTOR desc2 = { 0, TheXboxSynth->GetReverbVoice() };
         descs.push_back(desc2);
     }
 
@@ -243,19 +243,13 @@ void FxSend360::UpdateVoiceMatrices() {
             const float floats7[12] = {
                 reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
             };
-            mVoices[0]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 2, 6, floats7, 0
-            );
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 2, 6, floats7, 0);
             const float floats8[6] = { 0, 0, reverbMix, 0, 0, 0 };
-            mVoices[1]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 1, 6, floats8, 0
-            );
+            mVoices[1]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 1, 6, floats8, 0);
             const float floats9[12] = {
                 0, 0, 0, 0, 0, 0, 0, 0, reverbMix, 0, 0, reverbMix
             };
-            mVoices[2]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 2, 6, floats9, 0
-            );
+            mVoices[2]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 2, 6, floats9, 0);
         }
 
     } break;
@@ -264,9 +258,7 @@ void FxSend360::UpdateVoiceMatrices() {
         mInputVoice->SetOutputMatrix(mVoices[0], 6, 1, floats, 0);
         if (mThis->GetReverbEnable()) {
             const float floats2[6] = { 0, 0, reverbMix, 0, 0, 0 };
-            mVoices[0]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 1, 6, floats2, 0
-            );
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 1, 6, floats2, 0);
         }
 
     } break;
@@ -278,9 +270,7 @@ void FxSend360::UpdateVoiceMatrices() {
             const float floats2[12] = {
                 reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
             };
-            mVoices[0]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 2, 6, floats2, 0
-            );
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 2, 6, floats2, 0);
         }
 
     }
@@ -315,19 +305,13 @@ void FxSend360::UpdateVoiceMatrices() {
             const float floats7[12] = {
                 reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
             };
-            mVoices[0]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 2, 6, floats7, 0
-            );
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 2, 6, floats7, 0);
             const float floats8[6] = { 0, 0, reverbMix, 0, 0, 0 };
-            mVoices[1]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 1, 6, floats8, 0
-            );
+            mVoices[1]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 1, 6, floats8, 0);
             const float floats9[12] = {
                 0, 0, 0, 0, 0, 0, 0, 0, reverbMix, 0, 0, reverbMix
             };
-            mVoices[2]->SetOutputMatrix(
-                TheXboxSynth->GetReverbDmVoice(), 2, 6, floats9, 0
-            );
+            mVoices[2]->SetOutputMatrix(TheXboxSynth->GetReverbVoice(), 2, 6, floats9, 0);
         }
 
     } break;
