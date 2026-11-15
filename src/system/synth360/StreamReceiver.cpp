@@ -10,14 +10,16 @@
 #include "utl/Std.h"
 #include "xdk/xapilibi/xbox.h"
 
-StreamReceiver *New360Receiver(int i1, int i2, bool b3, int i4) {
-    return new StreamReceiver360(i2, i1, b3);
+static StreamReceiver *
+New360Receiver(int numBuffers, int sampleRate, bool slip, int ixChan) {
+    return new StreamReceiver360(sampleRate, numBuffers, slip);
 }
 
-StreamReceiver360::StreamReceiver360(int i1, int i2, bool b3)
-    : StreamReceiver(i2, b3), mVoice(0), mRefVoice(0), mSampleRate(i1), mNumBuffers(i2),
-      mVolume(1), mPan(0), mSpeed(1), mFxSend(0), mTagged(0) {
-    int size = i2 << 0xE;
+StreamReceiver360::StreamReceiver360(int sampleRate, int numBuffers, bool slipEnabled)
+    : StreamReceiver(numBuffers, slipEnabled), mVoiceBuffer(nullptr), mVoice(nullptr),
+      mRefVoice(nullptr), mSampleRate(sampleRate), mNumBuffers(numBuffers), mVolume(1),
+      mPan(0), mSpeed(1), mFxSend(nullptr), mTagged(false) {
+    int size = numBuffers * 16384;
     mVoiceBuffer = (char *)_MemAllocTemp(size, __FILE__, 0x33, "StreamBuffer", 0);
     mRefVoice = new Voice(false, 1, false);
     mRefVoice->SetData(mVoiceBuffer, size, 0);
@@ -63,7 +65,7 @@ void StreamReceiver360::SetADSR(const ADSRImpl &impl) {
     UpdateADSR();
 }
 
-void StreamReceiver360::SetSlipOffset(float off) {
+void StreamReceiver360::SetSlipOffset(float ms) {
     MILO_ASSERT(mSlipEnabled, 197);
     SlipStop();
     mVoice = new Voice(0, 1, 0);
@@ -73,7 +75,9 @@ void StreamReceiver360::SetSlipOffset(float off) {
     mVoice->SetData(mVoiceBuffer, mNumBuffers * 16384, 0);
     mVoice->SetLoopRegion(0, -1);
     mVoice->SetSampleRate(mSampleRate);
-    mVoice->SetStartSamp(GetPlayCursor());
+    int cursor = GetPlayCursor() / 2;
+    int i1 = (ms / 1000) * (float)mSampleRate;
+    mVoice->SetStartSamp(Mod(i1 + cursor, (mNumBuffers * 16384) / 2));
     mVoice->SetVolume(mVolume);
     mVoice->SetPan(mPan);
     mVoice->SetSpeed(mSpeed);
@@ -84,19 +88,14 @@ void StreamReceiver360::SetSlipOffset(float off) {
 
 void StreamReceiver360::Tag() {
     mTagged = true;
-    if (mVoice) {
-        if (mRefVoice) {
-            mVoice->Tag(1);
-            mRefVoice->Tag(2);
-        } else if (mVoice) {
-            mVoice->Tag(3);
-        } else {
-            mRefVoice->Tag(4);
-        }
-    }
-
-    if (mRefVoice)
+    if (mVoice && mRefVoice) {
+        mVoice->Tag(1);
+        mRefVoice->Tag(2);
+    } else if (mVoice) {
+        mVoice->Tag(3);
+    } else if (mRefVoice) {
         mRefVoice->Tag(4);
+    }
 }
 
 void StreamReceiver360::Poll() {

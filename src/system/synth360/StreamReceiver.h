@@ -7,7 +7,7 @@
 
 class StreamReceiver360 : public StreamReceiver {
 public:
-    StreamReceiver360(int, int, bool);
+    StreamReceiver360(int sampleRate, int numBuffers, bool slipEnabled);
     virtual ~StreamReceiver360();
     virtual void SetVolume(float);
     virtual void SetPan(float);
@@ -36,7 +36,7 @@ private:
 
     std::list<Voice *> mOldVoices; // 0x802c
     char *mVoiceBuffer; // 0x8034
-    Voice *mVoice; // 0x8038 - slip voice?
+    Voice *mVoice; // 0x8038
     Voice *mRefVoice; // 0x803c
     int mSampleRate; // 0x8040
     int mNumBuffers; // 0x8044

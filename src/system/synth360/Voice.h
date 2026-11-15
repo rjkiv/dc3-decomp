@@ -52,7 +52,7 @@ public:
     int GetLoopEnd() const { return mLoopEnd; }
     void SetStartSamp(int samp);
     int GetStartSamp() { return mStartSamp; }
-    void Tag(int i) { mTag = i; }
+    void Tag(int tag) { mTag = tag; }
     IXAudio2SourceVoice *GetVoice() { return mPoolVoice.xVoice; }
     void blockingStart(bool bAsynchronous);
     // public: void nonBlockingStart();
