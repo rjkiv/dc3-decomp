@@ -5,7 +5,9 @@
 
 class SampleInst360 : public SampleInst {
 public:
-    SampleInst360(class SynthSample360 *, bool, int, int);
+    SampleInst360(
+        class SynthSample360 *owner, bool loop, int loopStartSample, int loopEndSample
+    );
     virtual ~SampleInst360();
     virtual bool IsPlaying();
     virtual void SetFXCore(FXCore) {}
