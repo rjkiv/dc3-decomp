@@ -19,5 +19,5 @@ public:
 private:
     float mSumSquares[6]; // 0x60
     float mPeaks[6]; // 0x78
-    unsigned int mSampleCount; // 0x90
+    int mSampleCount; // 0x90
 };
