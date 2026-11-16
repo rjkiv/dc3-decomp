@@ -16,9 +16,13 @@ void HeadsetPlaybackEffect::DoProcess(
     unsigned int cFrames,
     unsigned int cChannels
 ) {
-    for (int i = 0; i < 4; i++) {
-        memcpy(pData, &mXferEffects[(mFrameNum % 2) * 256], sizeof(mXferEffects) * 64);
-        pData += 0x100;
+    // start at either the first or second half of HeadsetXferEffect::mData (float[512])
+    int offset = (mFrameNum % 2) * 256;
+    for (int i = 0; i < DIM(mXferEffects); i++) {
+        // copies either the first or second half of HeadsetXferEffect's mData field
+        memcpy(pData, &mXferEffects[i]->mData[offset], 256 * sizeof(float));
+        // then advance by that many bytes
+        pData += 256;
     }
     mFrameNum++;
 }

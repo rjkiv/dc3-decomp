@@ -12,6 +12,8 @@ DEFINE_CLSID(HeadsetXferEffect, B4D4C8AA, A20D, 40A1, 84, A7, 64, 19, 35, 51, A9
 
 class HeadsetXferEffect
     : public ATG::CSampleXAPOBase<HeadsetXferEffect, HeadsetXferEffectParams> {
+    friend class HeadsetPlaybackEffect;
+
 public:
     HeadsetXferEffect();
     virtual ~HeadsetXferEffect() {}

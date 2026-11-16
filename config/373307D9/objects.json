@@ -729,7 +729,7 @@
             "system/synth360/FxSendSynapse.cpp": "NonMatching",
             "system/synth360/FxSendWah.cpp": "Matching",
             "system/synth360/GainEffect.cpp": "Matching",
-            "system/synth360/HeadsetPlaybackEffect.cpp": "NonMatching",
+            "system/synth360/HeadsetPlaybackEffect.cpp": "Matching",
             "system/synth360/HeadsetXferEffect.cpp": "Matching",
             "system/synth360/MeterEffect.cpp": "NonMatching",
             "system/synth360/Mic.cpp": "NonMatching",

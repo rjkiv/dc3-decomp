@@ -190,8 +190,12 @@ namespace ATG {
             OnSetParameters(*p);
         }
         virtual void OnSetParameters(const Params &) {}
-        virtual void
-        DoProcess(const Params &, float *__restrict, unsigned int, unsigned int) = 0;
+        virtual void DoProcess(
+            const Params &params,
+            float *__restrict pData,
+            unsigned int sampleCount,
+            unsigned int channelCount
+        ) = 0;
         const WAVEFORMATEX &WaveFormat() { return m_wfx; }
 
         Params m_parameters[3]; // 0x40
