@@ -5,12 +5,19 @@
 namespace DSP {
     class SpectralAnalysis {
     public:
-        void Analyze(const float *, float *);
-        void SetMode(unsigned int, unsigned int);
+        void Analyze(const float *pData, float *pAnalysis);
+        void SetMode(unsigned int sWindowLen, unsigned int sMaxAccurateLag);
 
-        unsigned int GetUnk0() const { return m_sWindowLen; }
+        unsigned int GetMaxLen() const { return m_sWindowLen; }
 
     protected:
+        void Magnitude(
+            unsigned int,
+            const float *__restrict,
+            const float *__restrict,
+            float *__restrict
+        );
+
         unsigned int m_sWindowLen; // 0x0
         unsigned int m_sFft; // 0x4
         unsigned int m_nBins; // 0x8

@@ -16,25 +16,36 @@ namespace {
     }
 }
 
+static const float PREFILTER_LOWPASS_FREQUENCY = 7862.0f;
+static const float PREFILTER_LOWPASS_Q = 0.707f;
+static const float PREFILTER_HIGHPASS_FREQUENCY = 340.0f;
+static const float PREFILTER_HIGHPASS_Q = 0.707f;
+static const float CLIPPING_AVERAGING_TIME = 8.16f;
+static const float CLIPPING_THRESHOLD = 0.5f;
+static const double LOG_2_INV = 1.442695040888954;
+
 DSP::Synapse::Synapse::Synapse(float rate)
     : m_sPitchDetectionStride(64), m_fSamplingRate(rate) {
     float f7 = m_fSamplingRate * 0.4f < 0 ? -0.5f : 0.5f;
     float f8 = m_fSamplingRate * 0.0015384615f < 0 ? -0.5f : 0.5f;
     float fvar1 = m_fSamplingRate * 0.016666668f < 0 ? -0.5f : 0.5f;
+    // 4 byte alignment
     unsigned int u25 = f7 + m_fSamplingRate * 0.4f;
+    u25 &= ~3;
     m_sMinPitchLag = (f8 + m_fSamplingRate * 0.0015384615f);
     m_sMaxPitchLag = (fvar1 + m_fSamplingRate * 0.016666668f);
     m_fInputDelay.resize(u25);
-    m_fDnInputDelay.resize(m_fInputDelay.size());
+    m_fDnInputDelay.resize(m_fInputDelay.size() / 4);
     m_iInputDelayOffset = 0;
     m_fGain = 1;
-    m_pPitchDetector =
-        new PitchDetector(m_fDnInputDelay, (m_sMinPitchLag + 3U) / 4, m_sMaxPitchLag / 4);
+    m_pPitchDetector.reset(
+        new PitchDetector(m_fDnInputDelay, (m_sMinPitchLag + 3U) / 4, m_sMaxPitchLag / 4)
+    );
     m_fTonality = 0;
     m_fEnergy = 0;
     m_fTonalityThreshold = 0.35f;
     m_fPitchLag = m_sMinPitchLag;
-    m_pPeakDetector = new PeakDetector(m_fInputDelay, m_sMinPitchLag, m_sMaxPitchLag);
+    m_pPeakDetector.reset(new PeakDetector(m_fInputDelay, m_sMinPitchLag, m_sMaxPitchLag));
     m_voices.resize(3);
     m_fTempOutputs.resize(m_voices.size());
     m_pTempOutputs.resize(m_voices.size());
@@ -42,17 +53,26 @@ DSP::Synapse::Synapse::Synapse(float rate)
         m_fTempOutputs[i].resize(0x2000);
         m_pTempOutputs[i] = &m_fTempOutputs[i][0];
     }
-    m_pGranularSynth =
-        new GranularSynth(m_fInputDelay, m_voices.size(), m_sMinPitchLag, m_sMaxPitchLag);
+    m_pGranularSynth.reset(
+        new GranularSynth(m_fInputDelay, m_voices.size(), m_sMinPitchLag, m_sMaxPitchLag)
+    );
     for (int i = 0; i < m_voices.size(); i++) {
+        m_pGranularSynth->SetVoiceFormatScaling(i, 0);
     }
-    float coeffs[8];
-    LowpassCoefficients(coeffs, m_fSamplingRate, 7862.0f, 0.707f);
-    m_pPreFilterLowpass = new Biquad(coeffs);
-    HighpassCoefficients(coeffs, m_fSamplingRate / 4, 340.0f, 0.707f);
-    m_pPreFilterHighpass = new Biquad(coeffs);
+    {
+        float coeffs[6];
+        LowpassCoefficients(
+            coeffs, m_fSamplingRate, PREFILTER_LOWPASS_FREQUENCY, PREFILTER_LOWPASS_Q
+        );
+        m_pPreFilterLowpass.reset(new Biquad(coeffs));
+        HighpassCoefficients(
+            coeffs, m_fSamplingRate / 4, PREFILTER_HIGHPASS_FREQUENCY, PREFILTER_HIGHPASS_Q
+        );
+        m_pPreFilterHighpass.reset(new Biquad(coeffs));
+    }
     m_fAvgSignal = 0;
-    m_kAvgSignalSmoothing = Time2IirA(0.008160001f, m_fSamplingRate / 4);
+    m_kAvgSignalSmoothing =
+        Time2IirA(CLIPPING_AVERAGING_TIME / 1000, m_fSamplingRate / 4);
     SetAttackSmoothing(30);
     SetReleaseSmoothing(80);
 }

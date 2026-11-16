@@ -13,7 +13,7 @@ namespace DSP {
                 float fLength; // 0x8
                 float fGain; // 0xc
                 double fOutStart; // 0x10
-                double fNextStart; // 0x18
+                double fOutNextStart; // 0x18
                 unsigned int iVoice; // 0x20
                 unsigned int iCrossfade; // 0x24
                 unsigned int uCrossfadeLength; // 0x28
@@ -33,9 +33,27 @@ namespace DSP {
             };
 
             GranularSynth(
-                const std::vector<float> &, unsigned int, unsigned int, unsigned int
+                const std::vector<float> &delayLine,
+                unsigned int uNumVoices,
+                unsigned int sMinPitchLag,
+                unsigned int sMaxPitchLag
             );
             ~GranularSynth();
+
+            // public: void ExtractGranules();
+            //  public: void Synthesize(uint32_t, float**);
+            //  public: void Flush();
+            //  public: void SetPitchLag(float);
+            //  public: void SetNewGranule(float);
+            //  public: void SetTonality(float);
+
+            void SetVoiceGain(unsigned int idx, float gain) {
+                m_voices[idx].fGain = gain;
+            }
+
+            void SetVoiceFormatScaling(unsigned int idx, float scaling) {
+                m_voices[idx].fFormantScaling = scaling;
+            }
 
             void SetVoiceEnabled(unsigned int idx, bool enabled) {
                 if (enabled && !m_voices[idx].bEnabled) {
@@ -47,9 +65,7 @@ namespace DSP {
                 m_voices[idx].bEnabled = enabled;
             }
 
-            void SetVoiceGain(unsigned int idx, float gain) {
-                m_voices[idx].fGain = gain;
-            }
+            //  public: void SetVoicePitchShiftRatio(uint32_t, float);
 
         private:
             const std::vector<float> &m_delayLine; // 0x0

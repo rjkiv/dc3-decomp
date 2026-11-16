@@ -15,16 +15,18 @@ namespace DSP {
             Synapse(float);
             ~Synapse();
 
-            void SetVoiceEnabled(unsigned int, bool);
-            void SetVoiceGain(unsigned int, float);
+            void ProcessInPlace(unsigned int, float *);
+            //   public: float GetSamplingRate() const;
+            //   public: uint32_t GetNumChannels() const;
             void SetVoiceTargetNote(unsigned int, float);
+            void SetVoiceGain(unsigned int, float);
+            void SetVoiceEnabled(unsigned int, bool);
             void SetVoiceTransposition(unsigned int, float);
             void SetVoiceAmount(unsigned int, float);
             void SetVoiceProximityEffect(unsigned int, float);
             void SetVoiceProximityFocus(unsigned int, float);
             void SetAttackSmoothing(float);
             void SetReleaseSmoothing(float);
-            void ProcessInPlace(unsigned int, float *);
 
         private:
             std::vector<float> m_fInputDelay; // 0x0

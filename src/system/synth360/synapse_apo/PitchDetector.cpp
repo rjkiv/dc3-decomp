@@ -6,8 +6,8 @@ DSP::Synapse::PitchDetector::PitchDetector(
     : m_delayLine(vec), m_sMinPitchLag(ui2), m_sMaxPitchLag(ui2), m_fPitchLag(0),
       m_fTonality(0), m_fEnergy(0) {
     m_spectralAnalysis.SetMode((float)m_sMaxPitchLag * 1.8f, m_sMaxPitchLag);
-    m_fTemp.resize(m_spectralAnalysis.GetUnk0());
-    m_fWin.resize(m_spectralAnalysis.GetUnk0());
+    m_fTemp.resize(m_spectralAnalysis.GetMaxLen());
+    m_fWin.resize(m_spectralAnalysis.GetMaxLen());
     m_fWin2.resize(m_sMaxPitchLag + 1);
 }
 
