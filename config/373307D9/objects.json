@@ -734,7 +734,7 @@
             "system/synth360/MeterEffect.cpp": "NonMatching",
             "system/synth360/Mic.cpp": "NonMatching",
             "system/synth360/PitchShiftEffect.cpp": "Matching",
-            "system/synth360/SampleInst.cpp": "NonMatching",
+            "system/synth360/SampleInst.cpp": "Matching",
             "system/synth360/StreamReceiver.cpp": "Matching",
             "system/synth360/Synth.cpp": "NonMatching",
             "system/synth360/SynthSample.cpp": "Matching",

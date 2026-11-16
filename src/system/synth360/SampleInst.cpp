@@ -42,9 +42,7 @@ float SampleInst360::GetProgress() {
     if (mVoice->GetLoopStart() >= 0) {
         int sample_start = mVoice->GetStartSamp();
         samples -= sample_start;
-        int loopEnd = mVoice->GetLoopEnd();
-        loopEnd = (loopEnd == -1 ? mVoice->GetSampleCount() : loopEnd);
-        int loop_size = loopEnd - mVoice->GetLoopStart();
+        int loop_size = mVoice->GetLoopEnd() - mVoice->GetLoopStart();
         samples = (samples % loop_size) + sample_start;
     }
     return (samples * 1000.0f) / (mOwner->GetSampleRate() * mOwner->LengthMs());

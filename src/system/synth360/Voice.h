@@ -49,15 +49,13 @@ public:
     void EndLoop();
     void SetLoopRegion(int loopStart, int loopEnd);
     int GetLoopStart() const { return mLoopStart; }
-    int GetLoopEnd() const { return mLoopEnd; }
+    int GetLoopEnd() const { return mLoopEnd == -1 ? mNumSamples : mLoopEnd; }
     void SetStartSamp(int samp);
     int GetStartSamp() { return mStartSamp; }
     void Tag(int tag) { mTag = tag; }
     IXAudio2SourceVoice *GetVoice() { return mPoolVoice.xVoice; }
     void blockingStart(bool bAsynchronous);
     // public: void nonBlockingStart();
-
-    int GetSampleCount() const { return mNumSamples; } // not in pdb
 
     static bool HasPendingVoices();
     static int sHeadsetTarget;
