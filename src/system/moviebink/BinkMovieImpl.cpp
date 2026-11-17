@@ -789,9 +789,9 @@ void BinkMovieImpl::SetRect() {
     float f7, f9, f10;
     if (mWidth != 0) {
         MILO_ASSERT(mHeight != 0, 0x466);
-        f9 = mHeight;
+        f7 = mHeight;
         f10 = mWidth;
-        f7 = f9;
+        f9 = f7;
     } else {
         f10 = TheRnd.Width();
         f9 = TheRnd.Height();
