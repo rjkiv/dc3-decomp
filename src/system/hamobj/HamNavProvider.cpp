@@ -317,20 +317,32 @@ void HamNavProvider::SetHidden(int index, bool enabled) {
 
 DataNode HamNavProvider::OnSetEnabled(const DataArray *a) {
     const DataNode &node = a->Evaluate(2);
+    bool enabled;
     if (node.Type() == kDataInt) {
-        SetEnabled(node.Int(), a->Int(3));
+        enabled = a->Int(3);
+        int index = node.Int();
+        SetEnabled(index, enabled);
     } else {
-        SetEnabled(FindLabel(node.ForceSym()), a->Int(3));
+        int enabled2 = a->Int(3);
+        int index = FindLabel(node.ForceSym());
+        enabled = enabled2 != 0;
+        SetEnabled(index, enabled);
     }
     return 0;
 }
 
 DataNode HamNavProvider::OnSetHidden(const DataArray *a) {
     const DataNode &node = a->Evaluate(2);
+    bool hidden;
     if (node.Type() == kDataInt) {
-        SetHidden(node.Int(), a->Int(3));
+        hidden = a->Int(3);
+        int index = node.Int();
+        SetHidden(index, hidden);
     } else {
-        SetHidden(FindLabel(node.ForceSym()), a->Int(3));
+        int hidden2 = a->Int(3);
+        int index = FindLabel(node.ForceSym());
+        hidden = hidden2 != 0;
+        SetHidden(index, hidden);
     }
     return 0;
 }
