@@ -350,7 +350,7 @@
             "system/hamobj/HamMaster.cpp": "Matching",
             "system/hamobj/HamMove.cpp": "NonMatching",
             "system/hamobj/HamNavList.cpp": "NonMatching",
-            "system/hamobj/HamNavProvider.cpp": "NonMatching",
+            "system/hamobj/HamNavProvider.cpp": "Matching",
             "system/hamobj/HamPartyJumpData.cpp": "Matching",
             "system/hamobj/HamPhotoDisplay.cpp": "Matching",
             "system/hamobj/HamPhraseMeter.cpp": "Matching",
