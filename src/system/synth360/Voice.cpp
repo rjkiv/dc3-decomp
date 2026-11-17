@@ -12,11 +12,10 @@
 #include "xdk/XAPILIB.h"
 #include "xdk/xapilibi/handleapi.h"
 #include "xdk/xapilibi/synchapi.h"
+#include "xdk/xapilibi/sysinfoapi.h"
 #include "xdk/xaudio2/xaudio2.h"
 #include <list>
 #include <deque>
-
-static int s_TotalInUseVoices = 0;
 
 HANDLE gEvent = INVALID_HANDLE_VALUE;
 HANDLE gVoiceThread = INVALID_HANDLE_VALUE;
@@ -25,6 +24,8 @@ bool gShutdownVoiceThread = false;
 bool gHasPendingStopCommits = false;
 bool gCommitSyncVoices = false;
 bool gWasCommitSyncVoices = false;
+static int s_TotalInUseVoices = 0;
+static int s_TotalGCVoices = 0;
 int gCommitTag = 0;
 int gWasCommitTag = 0;
 int rolling = 0;
@@ -311,9 +312,10 @@ void Voice::SetData(const void *buffer, int bytes, int i) {
 }
 
 void Voice::SetSpeed(float f1) {
-    float speed = f1 > 0.01f ? f1 : 0.01f;
+    float speed = std::max(0.01f, f1);
     if (speed > 2 && mXMA) {
         MILO_NOTIFY_ONCE("can't pitch an XMA sound up more than one octave");
+        speed = 2;
     }
     mSpeed = speed;
     if (GetVoice()) {
@@ -332,8 +334,8 @@ void Voice::InitSourceBuffer(XAUDIO2_BUFFER &audio_buffer) {
             mLoopEnd = mNumSamples;
         }
         if (mXMA) {
-            mLoopStart -= (mLoopStart / 128) * 128;
-            mLoopEnd -= (mLoopEnd / 128) * 128;
+            mLoopStart -= (mLoopStart % 128);
+            mLoopEnd -= (mLoopEnd % 128);
         }
         audio_buffer.LoopCount = 0xff;
         audio_buffer.LoopBegin = mLoopStart;
@@ -374,29 +376,47 @@ bool Voice::HasPendingVoices() {
 
 bool Voice::IsPlaying() {
     START_AUTO_TIMER("voice_is_playing");
-    // yeah idk how to match this rn but hey 83 is good!
-    bool isPlaying;
     if (mState == kPendingStart) {
         return true;
+    } else if (!GetVoice()) {
+        return false;
+    } else if (mState == kStopped) {
+        return false;
+    } else if (mState == kPaused) {
+        return true;
     } else {
-        if (GetVoice() || mState == kStopped) {
-            isPlaying = false;
-        } else if (mState == kPaused) {
-            isPlaying = true;
+        XAUDIO2_VOICE_STATE voiceState;
+        GetVoice()->GetState(&voiceState, 0);
+        if (voiceState.BuffersQueued == 0 && voiceState.SamplesPlayed == 0) {
+            return false;
         } else {
-            XAUDIO2_VOICE_STATE *voiceState;
-            GetVoice()->GetState(voiceState, 0);
-            if (voiceState->BuffersQueued == 0 && voiceState->SamplesPlayed == 0) {
-                isPlaying = false;
-            } else {
-                XAUDIO2_FILTER_PARAMETERS *parameters;
-                if (TheXboxSynth->GetVoiceDestructionCS()->TryEnter()) {
-                    HRESULT hr = GetVoice()->GetEffectParameters(0, parameters, 16);
-                    TheXboxSynth->GetVoiceDestructionCS()->Exit();
-                    MILO_ASSERT(SUCCEEDED(hr), 0x2ff);
-                }
+            EnvelopeGeneratorParams params;
+            params.IsDone = 0;
+            if (TheXboxSynth->GetVoiceDestructionCS()->TryEnter()) {
+                HRESULT hr = GetVoice()->GetEffectParameters(0, &params, sizeof(params));
+                TheXboxSynth->GetVoiceDestructionCS()->Exit();
+                MILO_ASSERT(SUCCEEDED(hr), 0x2ff);
             }
+            return params.IsDone == 0;
         }
     }
-    return isPlaying;
+}
+
+void Voice::dispose(PoolVoice *pPoolVoice, unsigned int fmtHash) {
+    pPoolVoice->xVoice->FlushSourceBuffers();
+    if (mHasOutputVoices) {
+        XAUDIO2_VOICE_SENDS sends = { 0, nullptr };
+        pPoolVoice->xVoice->SetOutputVoices(&sends);
+        mHasOutputVoices = false;
+    }
+    pPoolVoice->tickCount = GetTickCount() - 500000;
+    {
+        CritSecTracker cst(&gVoiceGC);
+        s_voiceGC.push_back(*pPoolVoice);
+        s_TotalGCVoices++;
+        s_TotalInUseVoices--;
+    }
+    pPoolVoice->eg = nullptr;
+    pPoolVoice->egParams = nullptr;
+    pPoolVoice->xVoice = nullptr;
 }
