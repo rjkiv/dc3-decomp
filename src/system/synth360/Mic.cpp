@@ -8,9 +8,11 @@
 #include "os/CritSec.h"
 #include "os/Debug.h"
 #include "os/Joypad.h"
+#include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "rnddx9/Rnd.h"
 #include "synth/FxSend.h"
+#include "synth/Mic.h"
 #include "synth/MicClientMapper.h"
 #include "synth/MicManagerInterface.h"
 #include "synth/Synth.h"
@@ -273,6 +275,19 @@ void MicXbox::ReadChatBuffer(void *vdata, unsigned int size) {
     }
 }
 
+void MicXbox::Poll() {
+    if (mVoice && mVoice->IsPlaying()) {
+        // stuff and things
+    }
+    if (mChangeNotify) {
+        if (GetType() != mLastType) {
+            MicrophonesChangedMsg msg(mLastType != kDisconnected);
+            ThePlatformMgr.Handle(msg, false);
+            mLastType = GetType();
+        }
+    }
+}
+
 #pragma endregion MicXbox
 #pragma region MicManagerXbox
 
@@ -324,19 +339,15 @@ MicManagerXbox::~MicManagerXbox() {}
 void MicManagerXbox::Init() {
     MILO_ASSERT(this == sInstance, 0xB8);
 
-    HeadsetXferEffect *xferPtrs[6];
+    HeadsetXferEffect *xferPtrs[4];
     void *mode[2] = { _xhv_voicechat_mode, _xhv_loopback_mode };
 
-    for (int i = 0; i < 6; i++) {
-        xferPtrs[i] = 0;
-    }
-
-    XHV_INIT_PARAMS initParams;
+    XHV_INIT_PARAMS initParams = {};
     initParams.dwMaxLocalTalkers = 4;
-    initParams.localTalkerEnabledModes = &mode[0];
-    initParams.remoteTalkerEnabledModes = &mode[1];
-    initParams.dwNumRemoteTalkerEnabledModes = 1;
     initParams.dwMaxRemoteTalkers = 5;
+    initParams.localTalkerEnabledModes = mode;
+    initParams.remoteTalkerEnabledModes = mode;
+    initParams.dwNumRemoteTalkerEnabledModes = 1;
     initParams.dwNumLocalTalkerEnabledModes = 2;
     initParams.pfnMicrophoneRawDataReady = DataReadyCallback;
     initParams.bCustomVADProvided = true;
@@ -347,9 +358,12 @@ void MicManagerXbox::Init() {
 
     if (TheXboxSynth->HeadsetOutputEnabled()) {
         for (int i = 0; i < 4; i++) {
-            HRESULT hr =
-                TheXboxSynth->GetHeadsetSubmix(i)->GetEffectParameters(0, &initParams, 4);
+            HeadsetXferEffect *curEffect;
+            HRESULT hr = TheXboxSynth->GetHeadsetSubmix(i)->GetEffectParameters(
+                0, &curEffect, sizeof(curEffect)
+            );
             MILO_ASSERT(SUCCEEDED(hr), 0xd9);
+            xferPtrs[i] = curEffect;
         }
 
         HeadsetPlaybackEffect *effect = new HeadsetPlaybackEffect(xferPtrs);

@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Msg.h"
 #include "utl/Symbol.h"
 
 // forward decs
@@ -81,3 +82,8 @@ private:
     int mWriteIx; // 0xc
     int mReadIx; // 0x10
 };
+
+DECLARE_MESSAGE(MicrophonesChangedMsg, "microphones_changed")
+MicrophonesChangedMsg(bool activeMicRemoved) : Message(Type(), activeMicRemoved) {}
+bool WasActiveMicRemoved() const { return mData->Int(2); }
+END_MESSAGE
