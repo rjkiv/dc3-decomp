@@ -32,7 +32,7 @@
 #include <cmath>
 #include <cstring>
 
-MicManagerXbox *sInstance;
+MicManagerXbox *MicManagerXbox::sInstance;
 
 static float gNoiseThreshold = -10;
 static int gHoldFrames = 5;
@@ -40,9 +40,12 @@ static float gLowCut = 800.0f;
 static float gLocalGain = -3.0f;
 static float gRemoteGain = 3.0f;
 
-const static float kLagIdealWired = 1800.0f;
-const static XUID TheEnigmaticDoctorChoadstein = 0xDEADBEEFFACEF0;
-const static float kLagIdealWireless = 2700.0f;
+static const float kMax16 = 32767;
+static const float kLagIdealWireless = 2700.0f;
+static const XUID TheEnigmaticDoctorChoadstein = 0xDEADBEEFFACEF0;
+static const float kLagIdealWired = 1800.0f;
+static const float kLagDelta = 300;
+static const float kNetTimerSpoolMs = 100;
 
 #pragma region ChatReceiver
 
@@ -230,29 +233,23 @@ void MicXbox::AddData(void *data, int bytes) {
     MILO_ASSERT((bytes&1) == 0, 0x344);
 
     if (mOutputGain != 1.0f) {
-        int i = bytes / 2;
-        if (0 < i) {
-            short *s = (short *)data - 2;
-            while (i != 0) {
-                float f = floor(*s * mOutputGain + 0.5f);
-                i--;
-
-                s++;
-            }
+        for (int i = 0; i < bytes / 2; i++) {
+            short *sdata = (short *)data;
+            float floored = sdata[i] * mOutputGain;
+            floored = floorf(floored + 0.5f);
+            sdata[i] = Clamp(-32767.0f, kMax16, floored);
         }
-        // stuff
     }
 
     if (mVoice) {
         if (mPlaybackWritePtr < mPlaybackWritePtr + bytes) {
-            // is it 0???
-            XMemCpy(mPlaybackWritePtr, data, 0);
-            XMemCpy(mPlaybackBuffer, data, 0);
+            XMemCpy(mPlaybackWritePtr, data, bytes);
+            XMemCpy(mPlaybackBuffer, data, bytes);
         } else {
             XMemCpy(mPlaybackWritePtr, data, bytes);
+            mPlaybackWritePtr += bytes;
         }
-        // hmmmm
-        if (!mVoice->IsPlaying()) {
+        if (!mVoice->IsPlaying() && mPlaybackWritePtr - mPlaybackBuffer >= 0xF00) {
             mVoice->SetVolume(mVolume);
         }
     }
@@ -265,12 +262,13 @@ void MicXbox::AddData(void *data, int bytes) {
 void MicXbox::ReadChatBuffer(void *vdata, unsigned int size) {
     MILO_ASSERT(size < DIM(mPlaybackBuffer), 0x2d6);
     if (ExternalMicClientMgr::ConnectedForClient(this)) {
-        int val = size >> 1;
-        if (val * 3 >= mChatBuffer.size()) {
-            for (int i = 0; i != val; i++) {
-                // something
+        unsigned int val = size / sizeof(short);
+        if (mChatBuffer.size() >= val * 3) {
+            short *sdata = (short *)vdata;
+            for (unsigned int i = 0; i < val; i++) {
+                sdata[i] = mChatBuffer[i * 3];
             }
-            mChatBuffer.erase(mChatBuffer.begin());
+            mChatBuffer.erase(mChatBuffer.begin(), mChatBuffer.begin() + val * 3);
         }
     }
 }
@@ -429,7 +427,7 @@ void MicManagerXbox::OnDataReady(
     ChatReceiver *receiver = mChatReceivers[userIndex];
     MILO_ASSERT(receiver, 0x191);
     if (receiver->GetEnabled()) {
-        if (receiver->GetIXHV2Engine()->IsHeadsetPresent(receiver->GetPad())) {
+        if (receiver->IsHeadsetPresent()) {
             if (mPlayerUsingUSBChat == userIndex) {
                 mPlayerUsingUSBChat = -1;
             }
@@ -457,7 +455,7 @@ void MicManagerXbox::OnDataReady(
         }
     }
 
-    if (!receiver->GetIXHV2Engine()->IsSharedMicPresent(receiver->GetPad())) {
+    if (!receiver->IsSharedMicPresent()) {
         receiver->ProcessChatData(v, ul, i);
     } else {
         MicXbox *mic = (MicXbox *)TheSynth->GetMic(0);

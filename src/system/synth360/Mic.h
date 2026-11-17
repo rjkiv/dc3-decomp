@@ -15,18 +15,24 @@
 // size 0x58
 class ChatReceiver {
 public:
-    ChatReceiver(IXHV2Engine *, int);
+    ChatReceiver(IXHV2Engine *xhv, int pad);
     ~ChatReceiver();
-    void ActivateProcessing(bool);
-
-    IXHV2Engine *GetIXHV2Engine() const { return mXHV; }
-    int GetPad() { return mPad; }
-    bool GetEnabled() const { return mEnabled; }
 
     friend class MicManagerXbox;
 
+    void ActivateProcessing(bool activate);
+    void SetEnabled(bool enabled) { mEnabled = enabled; }
+    bool GetEnabled() const { return mEnabled; }
+    bool IsHeadsetPresent() const { return mXHV->IsHeadsetPresent(mPad); }
+    bool IsSharedMicPresent() const { return mXHV->IsSharedMicPresent(mPad); }
+    //   public: int32_t GetChatData(void*, int32_t);
+    //   public: void Poll();
+
 private:
     void ProcessChatData(void *, unsigned int, int *);
+    // void BufferNetData();
+    // bool IsUserTalking() const;
+    // float PercentTalking();
 
     IXHV2Engine *mXHV; // 0x0
     int mPad; // 0x4
@@ -79,15 +85,17 @@ public:
     virtual const Symbol &GetName() const { return mName; }
 
     void Poll();
-    void AddData(void *, int);
-    void OnMicConnected(unsigned long, bool, Symbol const &);
+    void AddData(void *data, int bytes);
+    void OnMicConnected(DWORD dwSampleRate, bool bIsWireless, const Symbol &symName);
     void OnMicDisconnected();
 
     friend class MicManagerXbox;
 
 private:
-    void ReadChatBuffer(void *, unsigned int);
-    static bool AddToBuffer(std::vector<short> &, void *, int, int *);
+    void ReadChatBuffer(void *vdata, unsigned int size);
+
+    static bool
+    AddToBuffer(std::vector<short> &buf, void *data, int bytes, int *droppedSamples);
 
     bool mIsWireless; // 0xc
     bool mRunning; // 0xd
@@ -100,7 +108,7 @@ private:
     RingBuffer mRingBufferRecent; // 0x302c
     RingBuffer mRingBufferContinuous; // 0x3040
     short mOutputBuffer[0x3000]; // 0x3054
-    float mVoiceSpeed; // 0x9054 - speed
+    float mVoiceSpeed; // 0x9054
     float mAvgLag; // 0x9058
     float mLastLag; // 0905c
     FxSend *mFxSend; // 0x9060
