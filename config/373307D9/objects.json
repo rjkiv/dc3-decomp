@@ -463,7 +463,7 @@
             "system/obj/DataArray.cpp": "Matching",
             "system/obj/DataFile.cpp": "Matching",
             "system/obj/DataFlex.c": "Matching",
-            "system/obj/DataFunc.cpp": "NonMatching",
+            "system/obj/DataFunc.cpp": "Matching",
             "system/obj/DataNode.cpp": "NonMatching",
             "system/obj/DataUtl.cpp": "Matching",
             "system/obj/Dir.cpp": "NonMatching",
