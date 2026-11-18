@@ -11,7 +11,7 @@ struct PoolVoice {
     IXAudio2SourceVoice *xVoice; // 0x0
     EnvelopeGenerator *eg; // 0x4
     EnvelopeGeneratorParams *egParams; // 0x8
-    WAVEFORMATEX fmt; // 0xc
+    WAVEFORMATEX wav; // 0xc
     DWORD tickCount; // 0x20
 };
 
@@ -77,7 +77,7 @@ private:
     void UpdateMix();
     // private: void UpdateSpeed();
     void SafeRestart();
-    // private: IXAudio2Voice* OutputVoice();
+    IXAudio2Voice *OutputVoice();
 
     unsigned int mFmtHash; // 0x0
     VoiceState mState; // 0x4

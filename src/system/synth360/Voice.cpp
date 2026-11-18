@@ -2,6 +2,7 @@
 #include "math/Utl.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
+#include "os/System.h"
 #include "os/Timer.h"
 #include "synth/FxSend.h"
 #include "synth360/EnvelopeGenerator.h"
@@ -13,12 +14,17 @@
 #include "xdk/xapilibi/handleapi.h"
 #include "xdk/xapilibi/synchapi.h"
 #include "xdk/xapilibi/sysinfoapi.h"
+#include "xdk/xapilibi/winbase.h"
+#include "xdk/xapilibi/winerror.h"
+#include "xdk/xaudio2/xapobase.h"
 #include "xdk/xaudio2/xaudio2.h"
+#include <cmath>
 #include <list>
 #include <deque>
 
 HANDLE gEvent = INVALID_HANDLE_VALUE;
 HANDLE gVoiceThread = INVALID_HANDLE_VALUE;
+float s_MaxVoiceFreqRatio = 4;
 
 bool gShutdownVoiceThread = false;
 bool gHasPendingStopCommits = false;
@@ -115,6 +121,14 @@ Voice::~Voice() {
     }
 }
 
+IXAudio2Voice *Voice::OutputVoice() {
+    if (mSend) {
+        return mSend->InputVoice();
+    } else {
+        return TheXboxSynth->GetMasteringVoice();
+    }
+}
+
 void Voice::Init(bool b1) {
     if (TheXboxSynth->GetMasteringVoice()) {
         if (!b1) {
@@ -128,13 +142,7 @@ void Voice::Init(bool b1) {
         }
         XAUDIO2_SEND_DESCRIPTOR desc;
         desc.Flags = 0;
-        IXAudio2Voice *iv;
-        if (mSend) {
-            iv = mSend->InputVoice();
-        } else {
-            iv = TheXboxSynth->GetMasteringVoice();
-        }
-        desc.pOutputVoice = iv;
+        desc.pOutputVoice = OutputVoice();
         std::vector<XAUDIO2_SEND_DESCRIPTOR> descs;
         if (desc.pOutputVoice) {
             descs.push_back(desc);
@@ -419,4 +427,155 @@ void Voice::dispose(PoolVoice *pPoolVoice, unsigned int fmtHash) {
     pPoolVoice->eg = nullptr;
     pPoolVoice->egParams = nullptr;
     pPoolVoice->xVoice = nullptr;
+}
+
+HRESULT Voice::createOrReuse(
+    PoolVoice *pPoolVoice,
+    unsigned int &fmtHash,
+    WAVEFORMATEX &format,
+    XAUDIO2_VOICE_SENDS *pSends
+) {
+    if (!TheXboxSynth->GetMasteringVoice()) {
+        return ERROR_SUCCESS;
+    } else {
+        MILO_ASSERT(pPoolVoice->eg == 0, 0x1C1);
+        pPoolVoice->eg = new EnvelopeGenerator();
+        MILO_ASSERT(mPoolVoice.egParams == 0, 0x1C3);
+        pPoolVoice->egParams = new EnvelopeGeneratorParams;
+
+        XAUDIO2_EFFECT_DESCRIPTOR fxi;
+        fxi.pEffect = static_cast<CXAPOBase *>(pPoolVoice->eg);
+        fxi.InitialState = false;
+        fxi.OutputChannels = mChannels;
+        XAUDIO2_EFFECT_CHAIN effectChain;
+        effectChain.EffectCount = 1;
+        effectChain.pEffectDescriptors = &fxi;
+        MemDoTempAllocations t;
+        {
+            CritSecTracker cst(TheXboxSynth->GetVoiceDestructionCS());
+            HRESULT hr = TheXboxSynth->GetXAudio2()->CreateSourceVoice(
+                &pPoolVoice->xVoice,
+                &format,
+                0,
+                s_MaxVoiceFreqRatio,
+                nullptr,
+                pSends,
+                &effectChain
+            );
+            if (hr != ERROR_SUCCESS) {
+                MEMORYSTATUS status;
+                char buffer[2048] = { 0 };
+                GlobalMemoryStatus(&status);
+                Hx_snprintf(
+                    buffer,
+                    sizeof(buffer),
+                    "XAudio2: CreateSourceVoice failed with 0x%X\n",
+                    hr
+                );
+                MemPrintOverview(-3, buffer + strlen(buffer));
+                MILO_FAIL(buffer);
+                return hr;
+            }
+        }
+        s_TotalInUseVoices++;
+        pPoolVoice->wav = format;
+        mHasOutputVoices = !pSends || pSends->SendCount > 0;
+        return ERROR_SUCCESS;
+    }
+}
+
+int Voice::GetAddr() {
+    if (GetVoice() && !mXMA) {
+        XAUDIO2_VOICE_STATE st;
+        GetVoice()->GetState(&st, 0);
+        unsigned int i4 = mStartSamp + st.SamplesPlayed;
+        if (mBuffer) {
+            unsigned int i1 = mBufferBytes / (mChannels * 2);
+            i4 = (i4 % i1) * mChannels;
+        } else {
+            i4 *= mChannels;
+        }
+        return i4 * 2;
+    } else {
+        return 0;
+    }
+}
+
+void Voice::InitVoiceParameters(XMA2WAVEFORMATEX &xma2Format, XAUDIO2_BUFFER buffer) {
+    if (mXMA) {
+        xma2Format.wfx.wFormatTag = 0x166;
+        xma2Format.wfx.nChannels = mChannels;
+        xma2Format.wfx.nSamplesPerSec = mSampleRate;
+        xma2Format.wfx.wBitsPerSample = 16;
+        xma2Format.wfx.cbSize = 0x22;
+        xma2Format.NumStreams = 1;
+        xma2Format.wfx.nBlockAlign =
+            (xma2Format.wfx.nChannels * xma2Format.wfx.wBitsPerSample) / 8;
+        if (mChannels == 1) {
+            xma2Format.ChannelMask = 4;
+        } else if (mChannels == 2) {
+            xma2Format.ChannelMask = 3;
+        } else if (mChannels == 5) {
+            xma2Format.ChannelMask = 0x60F;
+        }
+        xma2Format.SamplesEncoded = mNumSamples;
+        xma2Format.PlayBegin = buffer.PlayBegin;
+        xma2Format.PlayLength = buffer.PlayLength;
+        xma2Format.BytesPerBlock = 0x10000;
+        xma2Format.LoopBegin = buffer.LoopBegin;
+        xma2Format.LoopLength = buffer.LoopLength;
+        xma2Format.EncoderVersion = 4;
+        xma2Format.LoopCount = buffer.LoopCount;
+        xma2Format.BlockCount = ceilf(mBufferBytes / 65536.0f);
+    } else {
+        xma2Format.wfx.wFormatTag = 1;
+        xma2Format.wfx.nChannels = mChannels;
+        xma2Format.wfx.nSamplesPerSec = mSampleRate;
+        xma2Format.wfx.wBitsPerSample = 16;
+        xma2Format.wfx.nBlockAlign =
+            (xma2Format.wfx.nChannels * xma2Format.wfx.wBitsPerSample) / 8;
+        xma2Format.wfx.nAvgBytesPerSec =
+            xma2Format.wfx.nBlockAlign * xma2Format.wfx.nSamplesPerSec;
+        xma2Format.wfx.cbSize = 0;
+    }
+}
+
+void Voice::UpdateSends() {
+    if (GetVoice()) {
+        XAUDIO2_SEND_DESCRIPTOR desc;
+        desc.Flags = 0;
+        desc.pOutputVoice = OutputVoice();
+
+        XAUDIO2_VOICE_SENDS sends = { 1, &desc };
+
+        if (mReverbEnable) {
+            // FIXME: i called this "lmao" because it's gonna get destroyed
+            // once this branch goes out of scope
+            // this can't be what hmx wrote right? surely someone would've noticed this
+            XAUDIO2_SEND_DESCRIPTOR lmao[2];
+            lmao[0].Flags = 0;
+            lmao[0].pOutputVoice = TheXboxSynth->GetReverbVoice();
+            sends.SendCount = 1;
+            sends.pSends = lmao;
+            if (OutputVoice()) {
+                sends.SendCount = 2;
+            }
+        }
+
+        HRESULT hr;
+        if (!desc.pOutputVoice && !mReverbEnable) {
+            XAUDIO2_VOICE_SENDS nullSendList = { 0, nullptr };
+            hr = GetVoice()->SetOutputVoices(&nullSendList);
+            mHasOutputVoices = false;
+            mReverbVoiceConnected = false;
+        } else {
+            hr = GetVoice()->SetOutputVoices(&sends);
+            mHasOutputVoices = true;
+            if (mReverbEnable) {
+                mReverbVoiceConnected = true;
+            }
+        }
+        MILO_ASSERT(SUCCEEDED(hr), 0x462);
+        UpdateMix();
+    }
 }
