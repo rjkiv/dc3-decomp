@@ -621,7 +621,7 @@
             "system/rndobj/PostProcMgr.cpp": "Matching",
             "system/rndobj/PostProc_NG.cpp": "Matching",
             "system/rndobj/PropAnim.cpp": "NonMatching",
-            "system/rndobj/PropKeys.cpp": "NonMatching",
+            "system/rndobj/PropKeys.cpp": "Matching",
             "system/rndobj/Ribbon.cpp": "NonMatching",
             "system/rndobj/Rnd.cpp": "Matching",
             "system/rndobj/Rnd_NG.cpp": "Matching",

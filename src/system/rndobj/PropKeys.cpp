@@ -4,6 +4,7 @@
 #include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/DataUtl.h"
+#include "obj/Object.h"
 #include "obj/Utl.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"
@@ -291,10 +292,8 @@ void FloatKeys::SetFrame(float frame, float f2, float f3) {
     if (mProp && mTarget && size()) {
         float val;
         int idx;
-        if (mPropExceptionID != kHandleInterp) {
-            idx = FloatAt(frame, val);
-            mTarget->SetProperty(mProp, val * f3);
-        } else {
+        switch (mPropExceptionID) {
+        case kHandleInterp: {
             const Key<float> *prev;
             const Key<float> *next;
             float ref = 0;
@@ -304,11 +303,18 @@ void FloatKeys::SetFrame(float frame, float f2, float f3) {
             sInterpMessage[1] = next->value * f3;
             sInterpMessage[2] = ref;
             sInterpMessage[3] = next->frame;
-            if (idx >= 1)
+            if (idx >= 1) {
                 sInterpMessage[4] = (*this)[idx - 1].value * f3;
-            else
+            } else {
                 sInterpMessage[4] = 0;
+            }
             mTarget->Handle(sInterpMessage, true);
+            break;
+        }
+        default:
+            idx = FloatAt(frame, val);
+            mTarget->SetProperty(mProp, val * f3);
+            break;
         }
         mLastKeyFrameIndex = idx;
     }
@@ -543,7 +549,8 @@ int ObjectKeys::SetKey(float frame) {
 
 void ObjectKeys::SetToCurrentVal(int i) {
     if (mPropExceptionID != kDirEvent) {
-        (*this)[i].value = mTarget->Property(mProp)->GetObj();
+        Hmx::Object *prop = mTarget->Property(mProp)->GetObj();
+        (*this)[i].value = prop;
     }
 }
 
@@ -872,24 +879,24 @@ void SymbolKeys::SetFrame(float frame, float blend, float) {
         default:
             switch (mInterpolation) {
             case kStep: {
-                int loc8c = -1;
-                int loc90 = -1;
-                KeysLessEq(frame, loc8c, loc90);
-                if (loc8c != -1) {
-                    int i = loc8c;
+                int first = -1;
+                int last = -1;
+                std::vector<Symbol> symbols;
+                KeysLessEq(frame, first, last);
+                if (first != -1) {
                     if (mPlayAll) {
-                        MinEq(loc8c, mLastKeyFrameIndexMax + 1);
-                        i = loc8c;
+                        MinEq(first, mLastKeyFrameIndexMax + 1);
                     }
-                    for (; i <= loc90; i++) {
+                    for (int i = first; i <= last; i++) {
                         Key<Symbol> &cur = (*this)[i];
                         if (i < mLastKeyFrameIndexMin || i > mLastKeyFrameIndexMax) {
                             mTarget->SetProperty(mProp, cur.value);
                         }
+                        idx = i;
                     }
                 }
-                mLastKeyFrameIndexMin = loc8c;
-                mLastKeyFrameIndexMax = loc90;
+                mLastKeyFrameIndexMin = first;
+                mLastKeyFrameIndexMax = last;
                 break;
             }
             case kLinear: {
