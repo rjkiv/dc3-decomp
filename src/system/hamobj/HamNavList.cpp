@@ -866,11 +866,9 @@ void HamNavList::Poll() {
                      || !mListState.ScrollPastMinDisplay())
                     && mScrollSpeedIndicator->GetIsShowing()) {
                     mScrollSpeedIndicator->Show(false);
-                } else if (
-                    mRibbonMode == HamListRibbon::kRibbonSwell
-                    && !mScrollSpeedIndicator->GetIsShowing()
-                    && mListState.ScrollPastMinDisplay()
-                ) {
+                } else if (mRibbonMode == HamListRibbon::kRibbonSwell
+                           && !mScrollSpeedIndicator->GetIsShowing()
+                           && mListState.ScrollPastMinDisplay()) {
                     mScrollSpeedIndicator->Show(true);
                 } else {
                     mScrollSpeedIndicator->Update(
@@ -1422,42 +1420,51 @@ DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
         RealRefresh();
     }
 
-    if ((InControllerMode() || TheLoadMgr.EditMode()) && !IsAnimating() && mEnabled) {
-        if (!GesturingWithVoice() && TheUI->FocusComponent() == this) {
-            int direction = ScrollDirection(msg, false, true, 1);
-            if (direction != 0) {
-                int selected = mListState.Selected();
-                do { // actual do while loop??
-                    selected += direction;
-                    if (selected < 0 || selected >= mListState.NumShowing()) {
-                        return 0;
-                    }
-                } while (!mListState.Provider()->IsActive(selected));
+    if (!InControllerMode() && !TheLoadMgr.EditMode())
+        return DATA_UNHANDLED;
 
-                if (mListState.ScrollPastMinDisplay()) {
-                    if (selected < mListState.FirstShowing()) {
-                        mScrollBehavior.ScrollUp(false);
-                    } else if (
-                        selected
-                        >= mListState.FirstShowing() + HamListRibbon::sNumListSelectable
-                    ) {
-                        mScrollBehavior.ScrollDown(false);
-                    } else {
-                        SetHighlight(selected);
-                    }
-                } else {
-                    SetHighlight(selected);
-                }
+    if (IsAnimating())
+        return DATA_UNHANDLED;
+
+    if (!mEnabled)
+        return DATA_UNHANDLED;
+
+    if (GesturingWithVoice())
+        return DATA_UNHANDLED;
+
+    if (TheUI->FocusComponent() != this)
+        return DATA_UNHANDLED;
+
+    int direction = ScrollDirection(msg, false, true, 1);
+    if (direction != 0) {
+        int selected = mListState.Selected();
+        do { // actual do while loop??
+            selected += direction;
+            if (selected < 0 || selected >= mListState.NumShowing()) {
                 return 0;
             }
+        } while (!mListState.Provider()->IsActive(selected));
 
-            if (msg.GetAction() == kAction_Confirm) {
-                if (mEnableSelection) {
-                    SetSelecting(true);
-                }
-                return 0;
+        if (mListState.ScrollPastMinDisplay()) {
+            if (selected < mListState.FirstShowing()) {
+                mScrollBehavior.ScrollUp(false);
+            } else if (selected
+                       >= mListState.FirstShowing() + HamListRibbon::sNumListSelectable) {
+                mScrollBehavior.ScrollDown(false);
+            } else {
+                SetHighlight(selected);
             }
+        } else {
+            SetHighlight(selected);
         }
+        return 0;
+    }
+
+    if (msg.GetAction() == kAction_Confirm) {
+        if (mEnableSelection) {
+            SetSelecting(true);
+        }
+        return 0;
     }
     return DATA_UNHANDLED;
 }

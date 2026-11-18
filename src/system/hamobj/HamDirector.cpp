@@ -1494,7 +1494,7 @@ void HamDirector::EnableFacialAnimation() {
 
 Symbol HamDirector::ClosestMove() {
     Symbol out = mClip;
-    char buf[256];
+    char buf[272];
     Difficulty playerDiff = TheGameData->Player(0)->GetDifficulty();
     if (playerDiff != kDifficultyExpert) {
         if (mSongAnims[playerDiff]) {
