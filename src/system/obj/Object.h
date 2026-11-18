@@ -122,7 +122,7 @@ public:
     void operator=(const ObjRefConcrete &o) { SetObjConcrete(o); }
 
     void SetObjConcrete(T1 *obj);
-    void CopyRef(const ObjRefConcrete &);
+    NOTHROW void CopyRef(const ObjRefConcrete &);
     Hmx::Object *SetObj(Hmx::Object *root_obj);
     bool Load(BinStream &, bool, ObjectDir *);
 
