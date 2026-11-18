@@ -1284,7 +1284,9 @@ DEF_DATA_FUNC(DataReplaceObject) {
     bool copyDeep = array->Size() > 3 ? array->Int(3) : true;
     bool deleteFrom = array->Size() > 4 ? array->Int(4) : true;
     bool setProxyFile = array->Size() > 5 ? array->Int(5) : true;
-    ReplaceObject(array->GetObj(1), array->GetObj(2), copyDeep, deleteFrom, setProxyFile);
+    Hmx::Object *to = array->GetObj(2);
+    DataNode &from = array->Node(1);
+    ReplaceObject(from.GetObj(array), to, copyDeep, deleteFrom, setProxyFile);
     return 0;
 }
 
