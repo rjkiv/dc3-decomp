@@ -47,7 +47,76 @@ std::deque<PoolVoice> s_voiceGCInProgress;
 
 int Voice::sHeadsetTarget = -1;
 
-DWORD StartVoiceThreadEntry(void *);
+DWORD StartVoiceThreadEntry(void *) {
+    rolling++;
+    WaitForSingleObject(gEvent, -1);
+    while (!gShutdownVoiceThread) {
+        {
+            CritSecTracker cst(&gLockPendingLists);
+            gInProgressVoices = gPendingVoices;
+            gPendingVoices.clear();
+            gWasCommitSyncVoices = false;
+            if (gCommitSyncVoices) {
+                gCommitSyncVoices = false;
+                gWasCommitSyncVoices = true;
+                gWasCommitTag = gCommitTag;
+                gInProgressSyncVoices = gPendingSyncVoices;
+                gPendingSyncVoices.clear();
+            }
+        }
+        if (gInProgressVoices.size() != 0) {
+            FOREACH (it, gInProgressVoices) {
+                (*it)->blockingStart(true);
+            }
+            gInProgressVoices.clear();
+        }
+        if (gInProgressSyncVoices.size() != 0) {
+            FOREACH (it, gInProgressSyncVoices) {
+                (*it)->blockingStart(true);
+            }
+            gInProgressSyncVoices.clear();
+        }
+        if (gWasCommitSyncVoices && TheXboxSynth) {
+            HRESULT hr = TheXboxSynth->GetXAudio2()->CommitChanges(0);
+            MILO_ASSERT(SUCCEEDED(hr), 0x76);
+        }
+        {
+            CritSecTracker cst(&gVoiceGC);
+            int i = 0;
+            DWORD ticks = GetTickCount() - 500000;
+            for (auto it = s_voiceGC.begin(); it != s_voiceGC.end();) {
+                s64 beeg = ticks - it->tickCount;
+                if (beeg < 0) {
+                    beeg += 0x100000000;
+                }
+                if (beeg < 50 && beeg != 0) {
+                    break;
+                }
+                s_voiceGCInProgress.push_back(*it);
+                s_voiceGC.pop_front();
+                s_TotalGCVoices--;
+                i++;
+                it = s_voiceGC.begin();
+                if (i >= 4) {
+                    break;
+                }
+            }
+        }
+        {
+            CritSecTracker cst(TheXboxSynth->GetVoiceDestructionCS());
+            FOREACH (it, s_voiceGCInProgress) {
+                PoolVoice &cur = *it;
+                cur.xVoice->DestroyVoice();
+                RELEASE(cur.eg);
+                RELEASE(cur.egParams);
+            }
+        }
+        s_voiceGCInProgress.clear();
+        rolling++;
+        WaitForSingleObject(gEvent, -1);
+    }
+    return 0;
+}
 
 void StartSynchronizedVoices() {
     if (!gShutdownVoiceThread) {
