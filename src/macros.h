@@ -18,6 +18,7 @@
 #define NORETURN __declspec(noreturn)
 #define NOALIAS __declspec(noalias)
 #define RESTRICT __declspec(restrict)
+#define NOTHROW __declspec(nothrow)
 #else
 #define CDECL
 #define STDCALL
@@ -34,6 +35,7 @@
 #define NORETURN [[noreturn]]
 #define NOALIAS
 #define RESTRICT
+#define NOTHROW
 #endif
 
 // #define ROTATE_LEFT(x, i) (((x) << (i)) | ((x) >> ((sizeof((x)) * 8) - (i))))
