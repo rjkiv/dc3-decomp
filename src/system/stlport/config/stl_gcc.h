@@ -2,6 +2,9 @@
  * It is internal STLport header - DO NOT include it directly
  */
 
+// XXX: clangd is a piece of shit sometimes
+#define _STLP_NATIVE_INCLUDE_PATH xdk/LIBCMT
+
 /* Systems having GLIBC installed have different traits */
 #if defined (__linux__) || defined(__CYGWIN__)
 #  ifndef _STLP_USE_GLIBC
@@ -388,7 +391,7 @@ __GIVE_UP_WITH_STL(GCC_272);
                                               (__GNUC__ > 3))
 #        define _STLP_NATIVE_INCLUDE_PATH ../__GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__
 #      else
-#        define _STLP_NATIVE_INCLUDE_PATH xdk/LIBCMT
+#        define _STLP_NATIVE_INCLUDE_PATH ../include
 #      endif
 #    endif
 #  endif
