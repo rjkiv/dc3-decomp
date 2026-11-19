@@ -1871,7 +1871,9 @@ def generate_compile_commands(
             "output": obj.src_obj_path,
             "arguments": [
                 "clang-cl.exe",
+                "--std=c++11",
                 "--target=powerpc-eabi",
+                "-Wno-dynamic-exception-spec",
                 *cflags,
                 obj.src_path,
                 "/Fo",
