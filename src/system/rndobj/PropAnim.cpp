@@ -794,8 +794,8 @@ DataNode RndPropAnim::ForEachTarget(const DataArray *da) {
     }
     DataNode *var = da->Var(3);
     DataNode node(*var);
-    FOREACH (it, mPropKeys) {
-        *var = (*it)->mTarget.Ptr();
+    FOREACH (it, objList) {
+        *var = *it;
         for (int i = 4; i < da->Size(); i++) {
             da->Command(i)->Execute();
         }
