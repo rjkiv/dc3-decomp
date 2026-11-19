@@ -5,7 +5,6 @@
 #include "math/Mtx.h"
 #include "math/Utl.h"
 #include "math/Vec.h"
-#include "math/Vec.inl"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/PropSync.h"
@@ -1219,14 +1218,10 @@ void RndMesh::InstanceGeomOwnerBones() {
     } else if (!dynamic_cast<RndDir *>(Dir())) {
         MILO_NOTIFY("Cannot duplicate bones if parent Dir is not a RndDir.");
         return;
-    } else if (!mBones.empty()) {
+    } else if (IsSkinned()) {
         if (HasInstancedBones()) {
             DeleteBones(true);
-            if (mGeomOwner) {
-                mBones = mGeomOwner->mBones;
-            } else {
-                mBones.clear();
-            }
+            CopyBones(mGeomOwner);
         }
 
         RndTransformable *oldRoot = nullptr;
