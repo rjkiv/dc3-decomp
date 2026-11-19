@@ -236,6 +236,9 @@ public:
 
     int Width() const { return mWidth; }
     int Height() const { return mHeight; }
+    int Height() const volatile {
+        return mHeight;
+    } // needed to force correct load order in ConvertImagesForLinkPost
     int Order() const { return mOrder; }
     int RowBytes() const { return mRowBytes; }
     int Bpp() const { return mBpp; }
