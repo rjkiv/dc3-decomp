@@ -553,8 +553,7 @@ void RndFont::SetBitmapSize(const Vector2 &size) {
         mNormCellSize.resize(mMats.size());
     }
     for (int i = 0; i < mMats.size(); i++) {
-        RndMat *curMat = mMats[i];
-        RndTex *curTex = curMat ? curMat->DiffuseTex() : nullptr;
+        RndTex *curTex = mMats[i] ? mMats[i]->DiffuseTex() : nullptr;
         if (curTex && curTex->Width() && curTex->Height()) {
             mNormCellSize[i].x = mCellSize.x / (float)curTex->Width();
             mNormCellSize[i].y = mCellSize.y / (float)curTex->Height();
@@ -584,42 +583,46 @@ bool RndFont::CharWidthAdvanceCoords(
     return false;
 }
 
-void RndFont::SetCharInfo(CharInfo *info, RndBitmap &bmap, const Vector2 &v2, int i4) {
-    info->page = i4;
+void RndFont::SetCharInfo(CharInfo *info, RndBitmap &bmap, const Vector2 &pos, int page) {
+    info->page = page;
     if (mMonospace) {
+        info->normX = pos.x / (float)bmap.Width();
         info->charAdvance = 1;
         info->charWidth = 1;
-        info->normX = v2.x / (float)bmap.Width();
     } else {
-        int vx = v2.x;
-        int vy = v2.y;
-        int addx = mCellSize.x + v2.x;
-        int addy = mCellSize.y + v2.y;
-        int yPtr = addy;
+        int vx = pos.x;
+        int vy = pos.y;
+        int addx = mCellSize.x + pos.x;
+        int addy = mCellSize.y + pos.y;
         int i9 = vx;
-        while (i9 != addx && !bmap.ColumnNonTransparent(i9, vy, addy, &yPtr)) {
-            if (addx > vx) {
-                i9++;
-            } else {
-                i9--;
+        {
+            int lol;
+            while (i9 != addx && !bmap.ColumnNonTransparent(i9, vy, addy, &lol)) {
+                if (addx > vx) {
+                    i9++;
+                } else {
+                    i9--;
+                }
             }
         }
-        yPtr = i9;
         float f9 = i9;
         i9 = addx - 1;
-        while (i9 != vx - 1 && !bmap.ColumnNonTransparent(i9, vy, addy, &yPtr)) {
-            if (vx - 1 > addx - 1) {
-                i9++;
-            } else {
-                i9--;
+        {
+            int lol;
+            while (i9 != vx - 1 && !bmap.ColumnNonTransparent(i9, vy, addy, &lol)) {
+                if (vx - 1 > addx - 1) {
+                    i9++;
+                } else {
+                    i9--;
+                }
             }
         }
         float f10 = ((float)i9 + 1.0f) - f9;
         if (f10 <= 0) {
             float bW = bmap.Width();
+            info->normX = pos.x / bW;
             info->charAdvance = 0.25f;
             info->charWidth = 0.25f;
-            info->normX = v2.x / bW;
         } else {
             float bW = bmap.Width();
             info->normX = f9 / bW;
@@ -628,7 +631,7 @@ void RndFont::SetCharInfo(CharInfo *info, RndBitmap &bmap, const Vector2 &v2, in
             info->charAdvance = w;
         }
     }
-    info->normY = v2.y / (float)bmap.Height();
+    info->normY = pos.y / (float)bmap.Height();
     MILO_ASSERT(info->charWidth >= 0, 0x1A6);
 }
 
