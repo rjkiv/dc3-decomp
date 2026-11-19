@@ -317,6 +317,7 @@ DataNode KinectSharePanel::OnCleanup(DataArray *a) {
 }
 
 DataNode KinectSharePanel::OnUpload(DataArray *arr) {
+    DWORD dw;
     MILO_ASSERT(!mBuf && ! mPreviewBuf, 0x115);
     MILO_LOG(
         "KinectSharePanel::OnUpload() - mTex:[%d %d %d %d]\n",
@@ -326,14 +327,15 @@ DataNode KinectSharePanel::OnUpload(DataArray *arr) {
         mTex->PowerOf2()
     );
     ConvertImages();
-    mOverlapped.InternalContext = (DWORD_PTR)this;
+    mOverlapped.InternalContext = 0;
     mOverlapped.InternalHigh = 0;
     mOverlapped.InternalLow = 0;
+    auto *overlapped = &mOverlapped;
     mOverlapped.hEvent = CreateEventA(nullptr, true, false, "SocialNetworkImagePost");
     if (!mOverlapped.hEvent) {
         MILO_LOG("KinectSharePanel: mOverlapped.hEvent is null");
     } else {
-        mOverlapped.dwCompletionContext = 0;
+        mOverlapped.dwCompletionContext = (DWORD_PTR)this;
         mOverlapped.pCompletionRoutine = nullptr;
         mOverlapped.dwExtendedError = 0;
 
@@ -360,17 +362,16 @@ DataNode KinectSharePanel::OnUpload(DataArray *arr) {
         if (pActiveProfile) {
             padNum = pActiveProfile->GetPadNum();
         }
-        DWORD dw;
         DWORD res;
         if (PlatformMgr::sXShowCallback(dw)) {
             res = XShowNuiSocialNetworkImagePostUI(
-                dw, padNum, &mImagePostParams, &mOverlapped
+                dw, padNum, &mImagePostParams, overlapped
             );
             MILO_LOG(
                 "KinectSharePanel: XShowNuiSocialNetworkImagePostUI returns %x\n", res
             );
         } else {
-            res = XShowSocialNetworkImagePostUI(padNum, &mImagePostParams, &mOverlapped);
+            res = XShowSocialNetworkImagePostUI(padNum, &mImagePostParams, overlapped);
         }
 
         if (res == ERROR_IO_PENDING) {
