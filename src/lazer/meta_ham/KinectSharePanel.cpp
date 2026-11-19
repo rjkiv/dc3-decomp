@@ -231,6 +231,7 @@ DataNode KinectSharePanel::OnMsg(const RockCentralOpCompleteMsg &msg) {
 }
 
 DataNode KinectSharePanel::OnPostLink(DataArray *a) {
+    DWORD dw;
     MILO_ASSERT(!mBuf && ! mPreviewBuf, 0x163);
     MILO_LOG(
         "KinectSharePanel::OnUpload() - mTex:[%d %d %d %d]\n",
@@ -243,6 +244,7 @@ DataNode KinectSharePanel::OnPostLink(DataArray *a) {
     mOverlapped.InternalContext = 0;
     mOverlapped.InternalHigh = 0;
     mOverlapped.InternalLow = 0;
+    auto *overlapped = &mOverlapped;
     mOverlapped.hEvent = CreateEventA(nullptr, true, false, "SocialNetworkLinkPost");
     if (!mOverlapped.hEvent) {
         MILO_LOG("KinectSharePanel: mOverlapped.hEvent is null");
@@ -279,17 +281,15 @@ DataNode KinectSharePanel::OnPostLink(DataArray *a) {
         if (profile) {
             padnum = profile->GetPadNum();
         }
-        DWORD dw;
         DWORD res;
         if (PlatformMgr::sXShowCallback(dw)) {
-            res = XShowNuiSocialNetworkLinkPostUI(
-                dw, padnum, &mLinkPostParams, &mOverlapped
-            );
+            res =
+                XShowNuiSocialNetworkLinkPostUI(dw, padnum, &mLinkPostParams, overlapped);
             MILO_LOG(
                 "KinectSharePanel: XShowNuiSocialNetworkLinkPostUI returns %x\n", res
             );
         } else {
-            res = XShowSocialNetworkLinkPostUI(padnum, &mLinkPostParams, &mOverlapped);
+            res = XShowSocialNetworkLinkPostUI(padnum, &mLinkPostParams, overlapped);
         }
         if (res == ERROR_IO_PENDING) {
             mUploadStatus = Upload_InProgress;
