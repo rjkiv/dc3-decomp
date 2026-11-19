@@ -230,7 +230,26 @@ namespace Hmx {
         return out;
     }
 
-    Hmx::Matrix4 operator*(const Hmx::Matrix4 &, const Hmx::Matrix4 &);
+    Hmx::Matrix4 operator*(const Hmx::Matrix4 &m1, const Hmx::Matrix4 &m2) {
+        Hmx::Matrix4 out;
+        out(0, 0) = m1.Row4(0).Dot4(m2.Col4(0));
+        out(0, 1) = m1.Row4(0).Dot4(m2.Col4(1));
+        out(0, 2) = m1.Row4(0).Dot4(m2.Col4(2));
+        out(0, 3) = m1.Row4(0).Dot4(m2.Col4(3));
+        out(1, 0) = m1.Row4(1).Dot4(m2.Col4(0));
+        out(1, 1) = m1.Row4(1).Dot4(m2.Col4(1));
+        out(1, 2) = m1.Row4(1).Dot4(m2.Col4(2));
+        out(1, 3) = m1.Row4(1).Dot4(m2.Col4(3));
+        out(2, 0) = m1.Row4(2).Dot4(m2.Col4(0));
+        out(2, 1) = m1.Row4(2).Dot4(m2.Col4(1));
+        out(2, 2) = m1.Row4(2).Dot4(m2.Col4(2));
+        out(2, 3) = m1.Row4(2).Dot4(m2.Col4(3));
+        out(3, 0) = m1.Row4(3).Dot4(m2.Col4(0));
+        out(3, 1) = m1.Row4(3).Dot4(m2.Col4(1));
+        out(3, 2) = m1.Row4(3).Dot4(m2.Col4(2));
+        out(3, 3) = m1.Row4(3).Dot4(m2.Col4(3));
+        return out;
+    }
 
 }
 

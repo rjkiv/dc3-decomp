@@ -54,7 +54,10 @@ public:
     void SetEndCtrlPoint(int iEndCtrlPt);
     void PrepareShader(float iYOffset, float iYPerCtrlPt) const;
     void PrepareShader() const {
-        PrepareShader(Max(mStartCtrlPoint, 0) * mYPerCtrlPoint - mYOffset, mYPerCtrlPoint);
+        PrepareShader(
+            -((mStartCtrlPoint == -1 ? 0 : mStartCtrlPoint) * mYPerCtrlPoint - mYOffset),
+            mYPerCtrlPoint
+        );
     }
     int NumCtrlPts() const { return mPristineCtrlPoints.size(); }
     bool Manual() const { return mManual; }

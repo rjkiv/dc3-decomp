@@ -129,10 +129,17 @@ public:
         MILO_ASSERT_RANGE(i, 0, 4, 0x1AC);
         return *(&x + i);
     }
-    // public: float& operator[](int32_t);
+    float &operator[](int i) {
+        MILO_ASSERT_RANGE(i, 0, 4, 0x1AC);
+        return *(&x + i);
+    }
 
     // public: float Dot3(const Vector4&) const;
-    // public: float Dot4(const Vector4&) const;
+
+    float Dot4(const Vector4 &rhs) const {
+        return x * rhs.x + y * rhs.y + z * rhs.z + w * rhs.w;
+    }
+
     // public: void Zero();
     // public: const float* operator const float *() const;
     // public: bool operator==(const Vector4&) const;

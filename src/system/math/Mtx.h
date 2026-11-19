@@ -120,16 +120,20 @@ namespace Hmx {
         Vector4 &operator[](int idx) { return m[idx]; }
         const Vector4 &operator[](int idx) const { return m[idx]; }
 
+        const Vector3 &Row3(int idx) const { return m[idx].AsVector3(); }
+        Vector3 &Row3(int idx) { return m[idx].AsVector3(); }
         Vector3 Col3(int idx) const { return Vector3(m[0][idx], m[1][idx], m[2][idx]); }
+        const Vector4 &Row4(int idx) const { return m[idx]; }
+        Vector4 &Row4(int idx) { return m[idx]; }
+        Vector4 Col4(int idx) const {
+            return Vector4(m[0][idx], m[1][idx], m[2][idx], m[3][idx]);
+        }
 
-        // public: const Vector3& Row3(int32_t) const;
-        // public: Vector3& Row3(int32_t);
-        // public: const Vector4& Row4(int32_t) const;
-        // public: Vector4& Row4(int32_t);
-        // public: Vector4 Col4(int32_t) const;
         // public: Hmx::Matrix4 Transpose() const;
-        // public: const float& operator()(int32_t, int32_t) const;
-        // public: float& operator()(int32_t, int32_t);
+
+        const float &operator()(int x, int y) const { return m[x][y]; }
+        float &operator()(int x, int y) { return m[x][y]; }
+
         // public: const float* operator const float *() const;
 
         static const Hmx::Matrix4 &GetIdentity() { return sID; }

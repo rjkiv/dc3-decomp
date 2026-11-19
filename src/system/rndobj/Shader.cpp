@@ -84,7 +84,9 @@ void SetColorWriteMask(const ShaderOptions &opts, RndMat *mat) {
     bool hdr = opts.hdr;
     bool offscreen = TheNgRnd.Offscreen();
     bool alpha = mat->AlphaWrite();
-    alpha = !mat->ForceAlphaWrite() && hdr || offscreen || alpha;
+    if (!mat->ForceAlphaWrite()) {
+        alpha = hdr || offscreen || alpha;
+    }
     TheRenderState.SetColorWriteMask(
         alpha ? RndRenderState::kAllChannels : RndRenderState::kColorOnly
     );
@@ -170,7 +172,7 @@ void RndShader::Init() {
     sShaders[kAllWhiteShader] = &gShaderStandard;
 }
 
-void RndShader::SelectConfig(RndMat *mat, ShaderType shader_type, bool b3) {
+void RndShader::SelectConfig(RndMat *mat, ShaderType shader_type, bool precache) {
     MILO_ASSERT(shader_type >= ShaderType(0) && shader_type < kMaxShaderTypes, 0x1BB);
     if (TheRnd.DrawMode() == Rnd::kDrawShadowDepth) {
         shader_type = kShadowmapShader;
@@ -179,23 +181,28 @@ void RndShader::SelectConfig(RndMat *mat, ShaderType shader_type, bool b3) {
     } else if (TheShaderMgr.DepthVolume()) {
         shader_type = kDepthVolumeShader;
     }
-    if (!b3) {
+    if (!precache) {
         if (TheLoadMgr.EditMode() || !UsingCD()) {
             if (!DisplayMatShaderFlagsError(mat, shader_type)) {
+                bool metaMat = false;
                 if (mat && TheShaderMgr.GetShowMetaMatErrors()) {
-                    bool metaMat = !mat->GetMetaMaterial();
-                    if (metaMat) {
-                        shader_type = shader_type == kPostprocessShader
-                            ? kPostprocessErrorShader
-                            : kErrorShader;
-                    }
+                    metaMat = !mat->GetMetaMaterial();
                 }
+
+                if (metaMat) {
+                pick:
+                    shader_type = shader_type == kPostprocessShader
+                        ? kPostprocessErrorShader
+                        : kErrorShader;
+                }
+            } else {
+                goto pick;
             }
         }
     }
     RndShader *shader = sShaders[shader_type];
     MILO_ASSERT(shader, 0x1D3);
-    shader->Select(mat, shader_type, b3);
+    shader->Select(mat, shader_type, precache);
 }
 
 void RndShader::CheckForceCull(ShaderType s) {
