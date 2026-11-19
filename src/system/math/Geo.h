@@ -33,7 +33,14 @@ namespace Hmx {
         bool operator==(const Hmx::Rect &r) const {
             return x == r.x && y == r.y && w == r.w && h == r.h;
         }
-        bool operator!=(const Hmx::Rect &r) const { return !(*this == r); }
+
+        const Vector2 &AsVector2() const {
+            return reinterpret_cast<const Vector2 &>(*this);
+        }
+        Vector2 &AsVector2() { return reinterpret_cast<Vector2 &>(*this); }
+        Vector2 Center() const { return Vector2(x + w / 2, y + h / 2); }
+        float Right() const { return x + w; }
+        float Bottom() const { return y + h; }
     };
 
     class Polygon {

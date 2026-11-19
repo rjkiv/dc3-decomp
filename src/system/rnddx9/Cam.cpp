@@ -25,20 +25,24 @@ void DxCam::Select() {
     GetViewProjectXfms(xfm, mtx);
     SetViewport();
     if (mTargetTex) {
+        bool shadowmap = false;
         float f1 = 1;
-        if (mTargetTex->GetType() != RndTex::kShadowMap) {
+        if (mTargetTex->GetType() == RndTex::kShadowMap) {
+            shadowmap = true;
+        } else {
             f1 = 0;
         }
         DWORD color = 0;
         DWORD flags = 0;
-        if (mTargetTex->GetType() & 0x2 && !(mTargetTex->GetType() & 0x20)) {
+        bool check30 = mTargetTex->GetType() & 0x2 && !(mTargetTex->GetType() & 0x20);
+        if (check30) {
             flags |= 0x30;
         }
-        if (mTargetTex->GetType() != RndTex::kShadowMap) {
+        if (!shadowmap) {
             flags |= 0xF;
         }
         if (mTargetTex->GetType() == RndTex::kDepthVolumeMap) {
-            color |= 0xffffffffff000000;
+            color |= 0xff000000;
         }
 
         TheDxRnd.Device()->Clear(0, nullptr, flags, color, f1, 0);
@@ -56,11 +60,9 @@ void DxCam::Select() {
 }
 
 unsigned int DxCam::ProjectZ(float f) {
-    float fvar1 = Interp(
-        mZRange.x,
-        mZRange.y,
-        (mFarPlane / (mFarPlane - mNearPlane)) * ((f - mNearPlane) / f)
-    );
+    float n = mNearPlane;
+    float fvar1 =
+        Interp(mZRange.x, mZRange.y, (mFarPlane / (mFarPlane - n)) * ((f - n) / f));
     if (TheDxRnd.InverseZ() != 0) {
         fvar1 = 1.0f - fvar1;
     }
