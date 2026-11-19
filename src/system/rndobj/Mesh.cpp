@@ -5,6 +5,7 @@
 #include "math/Mtx.h"
 #include "math/Utl.h"
 #include "math/Vec.h"
+#include "math/Vec.inl"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/PropSync.h"
@@ -636,7 +637,7 @@ bool RndMesh::MakeWorldSphere(Sphere &s, bool zero) {
                 Multiply(it->pos, worldXfm, v50);
                 Vector3 v5c;
                 Subtract(v50, s.center, v5c);
-                s.radius = Max(s.radius, Dot(v5c, v5c));
+                s.radius = Max(s.radius, LengthSquared(v5c));
             }
             s.radius = sqrtf(s.radius);
             return true;
@@ -813,32 +814,48 @@ void RndMesh::LoadVertices(BinStreamRev &d) {
 }
 
 void RndMesh::SaveVertices(BinStream &bs) {
-    bool b3 = bs.Cached()
-        && (bs.GetPlatform() == kPlatformPS3 || bs.GetPlatform() == kPlatformXBox);
-    bool b1 = mMutable & 0x1F && mKeepMeshData;
-    bool b2 = IsVertexCompressionSupported(TheLoadMgr.GetPlatform()) && b3 && !b1;
-    bs << mVerts.size();
+    auto &verts = mVerts;
+    bool b3;
+    if (bs.Cached()
+        && (bs.GetPlatform() == kPlatformPS3 || bs.GetPlatform() == kPlatformXBox)) {
+        b3 = true;
+    } else {
+        b3 = false;
+    }
+
+    bool b1;
+    if ((mMutable & kVerts) > 0 || mKeepMeshData == true) {
+        b1 = true;
+    } else {
+        b1 = false;
+    }
+
+    bool b2;
+    if (IsVertexCompressionSupported(TheLoadMgr.GetPlatform()) && b3 == true && !b1) {
+        b2 = true;
+    } else {
+        b2 = false;
+    }
+
+    bs << verts.size();
     bool b7 = true;
     bs << b2;
     if (b2) {
-        int size = 0;
-        bool xbox;
+        unsigned int compressedSize = 0;
+        unsigned int compressedVersion = 0;
         if (TheLoadMgr.GetPlatform() != kPlatformXBox) {
-            unsigned int compressedSize = 0;
-            unsigned int compressedVersion = 0;
             MILO_FAIL("Unsupported platform for vertex compression");
-            MILO_ASSERT(compressedSize > 0, 0x339);
-            MILO_ASSERT(compressedVersion > 0, 0x33A);
-            xbox = false;
         } else {
-            size = 36;
-            xbox = true;
+            compressedSize = 36;
+            compressedVersion = 1;
         }
-        bs << size;
-        bs << (int)xbox;
+        MILO_ASSERT(compressedSize > 0, 0x339);
+        MILO_ASSERT(compressedVersion > 0, 0x33A);
+        bs << compressedSize;
+        bs << compressedVersion;
     }
     int i8 = 0;
-    for (Vert *it = mVerts.begin(); it != mVerts.end(); ++it) {
+    for (Vert *it = verts.begin(); it != verts.end(); ++it) {
         if (b3 && b2) {
             if (TheLoadMgr.GetPlatform() != kPlatformXBox) {
                 MILO_FAIL("Unsupported platform for vertex compression");
@@ -866,11 +883,11 @@ void FaceCenter(RndMesh *mesh, RndMesh::Face *face, Vector3 &v) {
 }
 
 void RndMesh::OnSync(int flags) {
-    if (mGeomOwner == this && !(flags & 0x80) && flags & 0x20) {
+    if (mGeomOwner == this && !(flags & kKeepPatches) && flags & kFaces) {
         mPatches.clear();
         if (PatchOkay(mVerts.size(), mFaces.size())) {
             mPatches.push_back(mFaces.size());
-        } else if (flags & 0x100) {
+        } else if (flags & kFastPatch) {
             int patch = 0;
             unsigned short globalMax = 0;
             unsigned short globalMin = -1;
@@ -908,8 +925,7 @@ void RndMesh::OnSync(int flags) {
                     } else if (sum == i17) {
                         Vector3 vcenter;
                         FaceCenter(this, it, vcenter);
-                        float dist = DistanceSquared(vcenter, ve0);
-                        if (MinEq(distsq, dist)) {
+                        if (MinEq(distsq, DistanceSquared(vcenter, ve0))) {
                             theFace = it;
                             i17 = sum;
                         }
@@ -1235,9 +1251,11 @@ void RndMesh::InstanceGeomOwnerBones() {
             curNewTrans->Copy(mGeomOwner->Bone(i), kCopyShallow);
             mBones[i].mBone = curNewTrans;
             int boneIdx = mGeomOwner->GetBoneIndex(mGeomOwner->Bone(i)->TransParent());
-            RndTransformable *parentToSet =
-                boneIdx == -1 ? newTrans : mGeomOwner->Bone(boneIdx);
-            mBones[i].mBone->SetTransParent(parentToSet, false);
+            if (boneIdx == -1) {
+                mBones[i].mBone->SetTransParent(newTrans, false);
+            } else {
+                mBones[i].mBone->SetTransParent(mGeomOwner->Bone(boneIdx), false);
+            }
         }
     }
 }
