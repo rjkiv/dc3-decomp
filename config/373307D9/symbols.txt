@@ -145013,6 +145013,7 @@ lbl_830A6498 = .data:0x830A6498; // type:object size:0x4 data:4byte
 lbl_830A649C = .data:0x830A649C; // type:object size:0x4 data:4byte
 sRemoveFrame = .data:0x830A64A0; // type:object size:0x1 data:byte
 sReplaceKey = .data:0x830A64A1; // type:object size:0x1 data:byte
+sReplaceFrame = .data:0x830A64A2; // type:object size:0x1 data:byte
 sFrameReplace = .data:0x830A64A4; // type:object size:0x4 align:4 data:float
 sKeyReplace = .data:0x830A64A8; // type:object size:0x4 data:4byte
 ?types@?5??SetType@RndPropAnim@@UAAXVSymbol@@@Z@4PAVDataArray@@A = .data:0x830A64B0; // type:object size:0x4 scope:global data:4byte

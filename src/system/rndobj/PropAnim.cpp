@@ -1,4 +1,5 @@
 #include "rndobj/PropAnim.h"
+#include "math/Rot.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -844,6 +845,104 @@ DataNode RndPropAnim::ForAllKeyframes(const DataArray *da) {
         }
     }
     return 0;
+}
+
+DataNode RndPropAnim::ForeachKeyframe(const DataArray *a) {
+    Hmx::Object *obj = a->Obj<Hmx::Object>(2);
+    DataArray *prop = a->Array(3);
+    DataNode *frameVar = a->Var(4);
+    DataNode *valueVar = a->Var(5);
+    PropKeys *keys = GetKeys(obj, prop);
+    if (!keys) {
+        return 0;
+    } else {
+        std::map<int, float> indexFrameMap;
+        for (int i = 0; i < keys->NumKeys(); i++) {
+            float frame = 0;
+            keys->FrameFromIndex(i, frame);
+            *frameVar = frame;
+            switch (keys->mKeysType) {
+            case PropKeys::kFloat:
+                *valueVar = (*keys->AsFloatKeys())[i].value;
+                break;
+            case PropKeys::kColor:
+                *valueVar = (*keys->AsColorKeys())[i].value.PackRgb();
+                break;
+            case PropKeys::kObject:
+                *valueVar = (*keys->AsObjectKeys())[i].value.Ptr();
+                break;
+            case PropKeys::kBool:
+                *valueVar = (*keys->AsBoolKeys())[i].value;
+                break;
+            case PropKeys::kQuat: {
+                Hmx::Quat q = (*keys->AsQuatKeys())[i].value;
+                *valueVar = DataArrayPtr(q.x, q.y, q.z, q.w);
+                break;
+            }
+            case PropKeys::kVector3: {
+                Vector3 v = (*keys->AsVector3Keys())[i].value;
+                *valueVar = DataArrayPtr(v.x, v.y, v.z);
+                break;
+            }
+            case PropKeys::kSymbol:
+                *valueVar = (*keys->AsSymbolKeys())[i].value;
+                break;
+            default:
+                *valueVar = 0;
+                break;
+            }
+            sReplaceFrame = false;
+            sRemoveFrame = false;
+            sReplaceKey = false;
+            for (int j = 6; j < a->Size(); j++) {
+                a->Command(j)->Execute();
+            }
+            if (sRemoveFrame) {
+                MILO_ASSERT(!sReplaceKey && !sReplaceFrame, 0x2D8);
+                keys->RemoveKey(i);
+                i--;
+            } else {
+                if (sReplaceKey) {
+                    sReplaceKey = false;
+                    switch (keys->mKeysType) {
+                    case PropKeys::kFloat:
+                        (*keys->AsFloatKeys())[i].value = sKeyReplace.Float();
+                        break;
+                    case PropKeys::kColor:
+                        (*keys->AsColorKeys())[i].value.UnpackRgb(sKeyReplace.Int());
+                        break;
+                    case PropKeys::kObject: {
+                        ObjectStage objStage(sKeyReplace.GetObj());
+                        (*keys->AsObjectKeys())[i].value = objStage;
+                        break;
+                    }
+                    case PropKeys::kBool:
+                        (*keys->AsBoolKeys())[i].value = sKeyReplace.Int();
+                        break;
+                    case PropKeys::kSymbol:
+                        (*keys->AsSymbolKeys())[i].value = sKeyReplace.Sym();
+                        break;
+                    default:
+                        MILO_NOTIFY(
+                            "%s can not replace key, unknown type", PathName(this)
+                        );
+                        break;
+                    }
+                }
+                if (sReplaceFrame) {
+                    indexFrameMap[i] = sFrameReplace;
+                    sReplaceFrame = false;
+                }
+            }
+        }
+        FOREACH (it, indexFrameMap) {
+            keys->ChangeFrame(it->first, it->second, false);
+        }
+        if (indexFrameMap.size() != 0) {
+            keys->ReSort();
+        }
+        return 0;
+    }
 }
 
 #pragma endregion
