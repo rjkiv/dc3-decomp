@@ -120,10 +120,9 @@ void KinectSharePanel::ConvertImages() {
     mBuf = MemAlloc(pixelBytes, __FILE__, 0x3B, "JpegWriter");
     MILO_ASSERT(mBuf != NULL, 0x3C);
     if (mBuf) {
-        int iref;
-        LoadBitmapIntoJpeg(pixels, w, h, bpp, mBuf, iref);
-        mBufLen = iref;
-        mImagePostParams.FullImageByteCount = iref;
+        LoadBitmapIntoJpeg(pixels, w, h, bpp, mBuf, pixelBytes);
+        mBufLen = pixelBytes;
+        mImagePostParams.FullImageByteCount = pixelBytes;
         mImagePostParams.pFullImage = (const BYTE *)mBuf;
     }
     {
@@ -145,7 +144,8 @@ void KinectSharePanel::ConvertImages() {
             unsigned char *previewPtr = (unsigned char *)mPreviewBuf;
             int area = bitmapa0.Height() * bitmapa0.Width();
             for (int i = 0; i < area; i++) {
-                previewPtr[i * 4] = -1;
+                *previewPtr = 255;
+                previewPtr += 4;
             }
         }
         mImagePostParams.PreviewImage.pBytes = (BYTE *)mPreviewBuf;
