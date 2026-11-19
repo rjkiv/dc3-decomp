@@ -211,22 +211,22 @@ namespace Hmx {
 
     inline Hmx::Matrix4 operator*(const Transform &xfm, const Hmx::Matrix4 &mtx4) {
         Hmx::Matrix4 out;
-        out.m[0].x = Dot(xfm.m.x, mtx4.Col3(0));
-        out.m[0].y = Dot(xfm.m.x, mtx4.Col3(1));
-        out.m[0].z = Dot(xfm.m.x, mtx4.Col3(2));
-        out.m[0].w = Dot(xfm.m.x, mtx4.Col3(3));
-        out.m[1].x = Dot(xfm.m.y, mtx4.Col3(0));
-        out.m[1].y = Dot(xfm.m.y, mtx4.Col3(1));
-        out.m[1].z = Dot(xfm.m.y, mtx4.Col3(2));
-        out.m[1].w = Dot(xfm.m.y, mtx4.Col3(3));
-        out.m[2].x = Dot(xfm.m.z, mtx4.Col3(0));
-        out.m[2].y = Dot(xfm.m.z, mtx4.Col3(1));
-        out.m[2].z = Dot(xfm.m.z, mtx4.Col3(2));
-        out.m[2].w = Dot(xfm.m.z, mtx4.Col3(3));
-        out.m[3].x = Dot(xfm.v, mtx4.Col3(0)) + mtx4.m[3].x;
-        out.m[3].y = Dot(xfm.v, mtx4.Col3(1)) + mtx4.m[3].y;
-        out.m[3].z = Dot(xfm.v, mtx4.Col3(2)) + mtx4.m[3].z;
-        out.m[3].w = Dot(xfm.v, mtx4.Col3(3)) + mtx4.m[3].w;
+        out(0, 0) = Dot(xfm.m.x, mtx4.Col3(0));
+        out(0, 1) = Dot(xfm.m.x, mtx4.Col3(1));
+        out(0, 2) = Dot(xfm.m.x, mtx4.Col3(2));
+        out(0, 3) = Dot(xfm.m.x, mtx4.Col3(3));
+        out(1, 0) = Dot(xfm.m.y, mtx4.Col3(0));
+        out(1, 1) = Dot(xfm.m.y, mtx4.Col3(1));
+        out(1, 2) = Dot(xfm.m.y, mtx4.Col3(2));
+        out(1, 3) = Dot(xfm.m.y, mtx4.Col3(3));
+        out(2, 0) = Dot(xfm.m.z, mtx4.Col3(0));
+        out(2, 1) = Dot(xfm.m.z, mtx4.Col3(1));
+        out(2, 2) = Dot(xfm.m.z, mtx4.Col3(2));
+        out(2, 3) = Dot(xfm.m.z, mtx4.Col3(3));
+        out(3, 0) = Dot(xfm.v, mtx4.Col3(0)) + mtx4(3, 0);
+        out(3, 1) = Dot(xfm.v, mtx4.Col3(1)) + mtx4(3, 1);
+        out(3, 2) = Dot(xfm.v, mtx4.Col3(2)) + mtx4(3, 2);
+        out(3, 3) = Dot(xfm.v, mtx4.Col3(3)) + mtx4(3, 3);
         return out;
     }
 

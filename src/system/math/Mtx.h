@@ -179,20 +179,11 @@ public:
     bool operator==(const Transform &tf) const { return m == tf.m && v == tf.v; }
     bool operator!=(const Transform &tf) const { return m != tf.m || v != tf.v; }
 
-    //   public: Vector3& operator[](int32_t);
-    //   public: const Vector3& operator[](int32_t) const;
-    //   public: const float*AsArray()[3] const;
-    //   public: float*AsArray()[3];
+    // public: Vector3& operator[](int32_t);
+    // public: const Vector3& operator[](int32_t) const;
+    // public: const float*AsArray()[3] const;
+    // public: float*AsArray()[3];
 
-    //   public: Transform operator*(const Hmx::Matrix3&) const;
-    //   public: Transform operator*(const Transform&) const;
-    //   public: Transform& operator*=(const Hmx::Matrix3&);
-    //   public: Transform& operator*=(const Transform&);
-    //   public: String Token(bool) const;
-    //   public: bool SetFromToken(const char*);
-    //   public: Transform& operator=(Transform&&);
-
-    //   public: static const Transform& GetZero();
     static const Transform &GetIdentity() { return sID; }
 };
 

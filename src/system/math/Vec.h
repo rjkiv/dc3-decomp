@@ -134,15 +134,18 @@ public:
         return *(&x + i);
     }
 
-    // public: float Dot3(const Vector4&) const;
-
+    float Dot3(const Vector4 &rhs) const { return x * rhs.x + y * rhs.y + z * rhs.z; }
     float Dot4(const Vector4 &rhs) const {
         return x * rhs.x + y * rhs.y + z * rhs.z + w * rhs.w;
     }
 
-    // public: void Zero();
+    void Zero() { x = y = z = w = 0; }
+
     // public: const float* operator const float *() const;
-    // public: bool operator==(const Vector4&) const;
+
+    bool operator==(const Vector4 &v) const {
+        return x == v.x && y == v.y && z == v.z && w == v.w;
+    }
 
     const Vector3 &AsVector3() const { return reinterpret_cast<const Vector3 &>(*this); }
     Vector3 &AsVector3() { return reinterpret_cast<Vector3 &>(*this); }
