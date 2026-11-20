@@ -15,6 +15,4 @@ public:
     REGISTER_OBJ(CursorPanel)
 
     CursorPanel();
-
-    static int sInt;
 };

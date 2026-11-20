@@ -2,6 +2,7 @@
 #include "flow/PropertyEventProvider.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/GestureMgr.h"
+#include "hamobj/Ham.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "math/Mtx.h"
@@ -18,8 +19,6 @@
 #include <cmath>
 #include <cstring>
 
-static int sInt = -1;
-
 CursorPanel::CursorPanel() {}
 
 CursorPanel::~CursorPanel() {}
@@ -30,7 +29,7 @@ void CursorPanel::Poll() {
     const DataNode *pCrownPlayerNode = TheHamProvider->Property(ui_crown_player);
     MILO_ASSERT(pCrownPlayerNode, 0x1f);
     int iPlayerSide = pCrownPlayerNode->Int();
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
         SkeletonSide side = TheGameData->Player(i)->Side();
         static Symbol player_present("player_present");
         bool present =
@@ -43,10 +42,11 @@ void CursorPanel::Poll() {
             pMat = LoadedDir()->Find<RndMat>("depth_buffer_right_crown.mat");
         }
         RndTex *tex = TheRockCentral.GetUtilityArt();
-        if (!tex) {
-            tex = pBufferLeftTex;
+        if (tex) {
+            pMat->SetDiffuseTex(tex);
+        } else {
+            pMat->SetDiffuseTex(pBufferLeftTex);
         }
-        pMat->SetDiffuseTex(tex);
 
         Transform trans = pMat->TexXfm();
         int skeletonID = TheGestureMgr->GetPlayerSkeletonID(i);
@@ -72,12 +72,10 @@ void CursorPanel::Poll() {
             trans.v.y = -hpos.y;
             npos.x = hpos.x - npos.x;
             npos.y = hpos.y - npos.y;
-            float tanned = atan2(npos.y, npos.x);
+            float tanned = atan2f(npos.y, npos.x);
             Vector3 e(0, 0, tanned + (PI / 2));
             MakeRotMatrix(e, trans.m, true);
-            trans.m.x *= 4;
-            trans.m.y *= 4;
-            trans.m.z *= 4;
+            Scale(Vector3(4, 4, 4), trans.m, trans.m);
             pMat->SetTexXfm(trans);
         } else {
             trans.v.x = 2;
