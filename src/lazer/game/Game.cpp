@@ -444,9 +444,8 @@ void Game::PostWaitJump() {
     if (mRealtime) {
         mGameInput->SetPostWaitJumpOffset(mJumpWaitMs);
     }
-    if (TheSongSequence.CurrentIndex() > 0
-        && !TheSongSequence.GetHaveReenteredCharacters()) {
-        TheSongSequence.SetHaveReenteredCharacters(true);
+    if (TheSongSequence.m_Current > 0 && !TheSongSequence.m_HaveReenteredCharacters) {
+        TheSongSequence.m_HaveReenteredCharacters = true;
         TheHamDirector->VenueEnter(TheHamDirector->GetVenueWorld());
     }
     if (!mHasIntro) {
@@ -471,7 +470,7 @@ bool Game::IsSongDefaultPlayerPlaying() {
 }
 
 void Game::LoadSong() {
-    if (!TheSongSequence.Done() && TheSongSequence.CurrentIndex() < 0) {
+    if (!TheSongSequence.Done() && TheSongSequence.m_Current < 0) {
         TheSongSequence.DoNext(true, false);
         return;
     }

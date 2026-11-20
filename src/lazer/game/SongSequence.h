@@ -9,44 +9,42 @@ class SongSequence : public RndPollable {
 public:
     // size 0x3c
     struct Entry {
-        Symbol unk0; // 0x0 - song shortname
-        Symbol unk4; // 0x4 - song shortname
-        Symbol unk8; // 0x8 - game mode
-        float unkc;
-        float unk10;
-        Symbol unk14; // 0x14 - hollaback config?
-        float unk18;
-        float unk1c;
-        bool unk20;
-        bool unk21;
-        Symbol mIntroCamShot; // 0x24
-        Symbol mOutroCamShot; // 0x28
-        Symbol unk2c; // 0x2c - crew1?
-        Symbol unk30; // 0x30 - crew2?
-        int unk34; // 0x34 - combined score across p1 and p2?
-        int unk38; // 0x38 - stars?
+        Symbol song_moves; // 0x0
+        Symbol song_audio; // 0x4
+        Symbol mode; // 0x8
+        float jump_start; // 0xc
+        float jump_end; // 0x10
+        Symbol config; // 0x14
+        float loop_start; // 0x18
+        float loop_end; // 0x1c
+        bool decoding; // 0x20
+        bool timey_wimey; // 0x21
+        Symbol intro_cam_shot; // 0x24
+        Symbol outro_cam_shot; // 0x28
+        Symbol crew_0_override; // 0x2c
+        Symbol crew_1_override; // 0x30
+        int total_score; // 0x34
+        int stars; // 0x38
     };
 
     SongSequence();
     virtual ~SongSequence();
     virtual DataNode Handle(DataArray *, bool);
 
+    void Init();
+    void Clear();
     bool Done() const;
+    // bool Empty() const;
+    void Add(const DataArray *);
+    // void Add(const Entry &);
+    bool DoNext(bool, bool);
+    void OnSongLoaded();
+    // void OnRhythmBattleComboFull();
     void LoadNextSongAudio();
     Symbol GetIntroCamShot() const;
     Symbol GetOutroCamShot() const;
-    void OnSongLoaded();
-    void Clear();
-    bool DoNext(bool, bool);
-    void Init();
-    void Add(const DataArray *);
-    int CurrentIndex() const { return m_Current; }
-    bool GetHaveReenteredCharacters() const { return m_HaveReenteredCharacters; }
-    void SetHaveReenteredCharacters(bool b) {
-        m_HaveReenteredCharacters = b;
-    } // 0x28 - venueEntered flag
 
-protected:
+    // oops! all public
     std::vector<Entry> m_Entries; // 0x8
     int m_Current; // 0x14
     float m_PrevChangeTime; // 0x18
