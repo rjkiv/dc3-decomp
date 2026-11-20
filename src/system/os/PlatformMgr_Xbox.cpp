@@ -662,25 +662,25 @@ void PlatformMgr::Init() {
 bool PlatformMgr::IsEthernetCableConnected() { return XNetGetEthernetLinkStatus() != 0; }
 
 void PlatformMgr::UpdateSigninState() {
-    XUID oldCache[4] = { mXuidCache[0], mXuidCache[1], mXuidCache[2], mXuidCache[3] };
+    XUID oldCache[4];
+    memcpy(oldCache, mXuidCache, sizeof(mXuidCache));
     mSigninSameGuest = 0;
     mSigninChangeMask = 0;
     mSigninMask = 0;
     for (int i = 0; i < 4; i++) {
-        if (XUserGetSigninState(i) == eXUserSigninState_NotSignedIn) {
-            mXuidCache[i] = 0;
-        } else {
+        if (XUserGetSigninState(i) != eXUserSigninState_NotSignedIn) {
             XUSER_SIGNIN_INFO info;
             memset(&info, 0, sizeof(XUSER_SIGNIN_INFO));
             mSigninMask |= 1 << i;
-            DWORD tmp = XUserGetSigninInfo(i, 2, &info);
-			XUID tmp2 = (tmp == 0) & info.xuid;
-			info.xuid = tmp2;
-			if (tmp2 == 0) {
-				tmp = XUserGetXUID(i, &info.xuid);
-				tmp2 = (tmp == 0) & info.xuid;
-			}
-			mXuidCache[i] = tmp2;
+            DWORD result = XUserGetSigninInfo(i, 2, &info);
+            info.xuid = (result == 0) ? info.xuid : 0;
+            if (info.xuid == 0) {
+                result = XUserGetXUID(i, &info.xuid);
+                info.xuid = (result == 0) ? info.xuid : 0;
+            }
+            mXuidCache[i] = info.xuid;
+        } else {
+            mXuidCache[i] = 0;
         }
         if (oldCache[i] != mXuidCache[i]) {
             mSigninChangeMask |= 1 << i;
