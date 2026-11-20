@@ -61,14 +61,16 @@ void PlaylistSongProvider::Text(
 
 Symbol PlaylistSongProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT(m_pPlaylist, 0x6d);
-    if (i_iData >= 0 && i_iData < NumData() && m_pPlaylist
-        && m_pPlaylist->IsValidSong(i_iData)) {
-        int songID = m_pPlaylist->GetSong(i_iData);
-        Symbol shortName = TheHamSongMgr.GetShortNameFromSongID(songID);
-        return shortName;
-    } else {
+    if (i_iData < 0) {
+        return gNullStr;
+    } else if (i_iData >= NumData()) {
+        return gNullStr;
+    } else if (!m_pPlaylist || !m_pPlaylist->IsValidSong(i_iData)) {
         return gNullStr;
     }
+    int songID = m_pPlaylist->GetSong(i_iData);
+    Symbol shortName = TheHamSongMgr.GetShortNameFromSongID(songID);
+    return shortName;
 }
 
 void PlaylistSongProvider::UpdateList(Playlist const *p, bool b) {

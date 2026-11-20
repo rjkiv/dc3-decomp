@@ -125,7 +125,7 @@
             "lazer/meta_ham/PassiveMessagesPanel.cpp": "Matching",
             "lazer/meta_ham/PassiveMessenger.cpp": "Matching",
             "lazer/meta_ham/Playlist.cpp": "Matching",
-            "lazer/meta_ham/PlaylistSongProvider.cpp": "NonMatching",
+            "lazer/meta_ham/PlaylistSongProvider.cpp": "Matching",
             "lazer/meta_ham/PlaylistSort.cpp": "Matching",
             "lazer/meta_ham/PlaylistSortByTypeCmp.cpp": "Matching",
             "lazer/meta_ham/PlaylistSortMgr.cpp": "Matching",
