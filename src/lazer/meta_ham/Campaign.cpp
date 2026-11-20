@@ -538,57 +538,50 @@ bool Campaign::UpdateEraSongUnlockInstructions(
         eraMovesMastered = movesRequired;
     }
     int i9 = Max(movesRequired - eraMovesMastered, 0);
-    if (i8 > 1) {
-        if (i9 > 1) {
-            static Symbol campaign_song_hint_both("campaign_song_hint_both");
-            i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_both, i8, i9);
-            return true;
-        } else if (i9 == 1) {
-            static Symbol campaign_song_hint_both_singular_move(
-                "campaign_song_hint_both_singular_move"
-            );
-            i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_both_singular_move, i8);
-            return true;
-        } else if (i9 == 0) {
-            static Symbol campaign_song_hint("campaign_song_hint");
-            i_pInstructionsLabel->SetTokenFmt(campaign_song_hint, i8);
-            return true;
-        }
+    if (i8 > 1 && i9 > 1) {
+        static Symbol campaign_song_hint_both("campaign_song_hint_both");
+        i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_both, i8, i9);
+        return true;
+    } else if (i8 > 1 && i9 == 1) {
+        static Symbol campaign_song_hint_both_singular_move(
+            "campaign_song_hint_both_singular_move"
+        );
+        i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_both_singular_move, i8);
+        return true;
+    } else if (i8 > 1 && i9 == 0) {
+        static Symbol campaign_song_hint("campaign_song_hint");
+        i_pInstructionsLabel->SetTokenFmt(campaign_song_hint, i8);
+        return true;
     }
-    if (i8 == 1) {
-        if (i9 > 1) {
-            static Symbol campaign_song_hint_both_singular_star(
-                "campaign_song_hint_both_singular_star"
-            );
-            i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_both_singular_star, i9);
-            return true;
-        }
-        if (i9 == 1) {
-            static Symbol campaign_song_hint_both_singular_both(
-                "campaign_song_hint_both_singular_both"
-            );
-            i_pInstructionsLabel->SetTextToken(campaign_song_hint_both_singular_both);
-            return true;
-        } else if (i9 == 0) {
-            static Symbol campaign_song_hint_singular("campaign_song_hint_singular");
-            i_pInstructionsLabel->SetTextToken(campaign_song_hint_singular);
-            return true;
-        }
-    } else if (i8 == 0) {
-        if (i9 > 1) {
-            static Symbol campaign_song_hint_moves("campaign_song_hint_moves");
-            i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_moves, i9);
-            return true;
-        }
-        if (i9 == 1) {
-            static Symbol campaign_song_hint_moves_singular(
-                "campaign_song_hint_moves_singular"
-            );
-            i_pInstructionsLabel->SetTextToken(campaign_song_hint_moves_singular);
-            return true;
-        }
+    if (i8 == 1 && i9 > 1) {
+        static Symbol campaign_song_hint_both_singular_star(
+            "campaign_song_hint_both_singular_star"
+        );
+        i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_both_singular_star, i9);
+        return true;
+    } else if (i8 == 1 && i9 == 1) {
+        static Symbol campaign_song_hint_both_singular_both(
+            "campaign_song_hint_both_singular_both"
+        );
+        i_pInstructionsLabel->SetTextToken(campaign_song_hint_both_singular_both);
+        return true;
+    } else if (i8 == 1 && i9 == 0) {
+        static Symbol campaign_song_hint_singular("campaign_song_hint_singular");
+        i_pInstructionsLabel->SetTextToken(campaign_song_hint_singular);
+        return true;
+    } else if (i8 == 0 && i9 > 1) {
+        static Symbol campaign_song_hint_moves("campaign_song_hint_moves");
+        i_pInstructionsLabel->SetTokenFmt(campaign_song_hint_moves, i9);
+        // why is there no return true here?
+    } else if (i8 == 0 && i9 == 1) {
+        static Symbol campaign_song_hint_moves_singular(
+            "campaign_song_hint_moves_singular"
+        );
+        i_pInstructionsLabel->SetTextToken(campaign_song_hint_moves_singular);
+        return true;
+    } else {
+        static Symbol campaign_song_hint_singular("campaign_song_hint_singular");
+        i_pInstructionsLabel->SetTextToken(campaign_song_hint_singular);
     }
-    static Symbol campaign_song_hint_singular("campaign_song_hint_singular");
-    i_pInstructionsLabel->SetTextToken(campaign_song_hint_singular);
     return true;
 }

@@ -51,7 +51,7 @@
             "lazer/meta_ham/Award.cpp": "Matching",
             "lazer/meta_ham/BlacklightPanel.cpp": "Matching",
             "lazer/meta_ham/CalibrationPanel.cpp": "Matching",
-            "lazer/meta_ham/Campaign.cpp": "NonMatching",
+            "lazer/meta_ham/Campaign.cpp": "Matching",
             "lazer/meta_ham/CampaignDiffSelectPanel.cpp": "Matching",
             "lazer/meta_ham/CampaignEra.cpp": "Matching",
             "lazer/meta_ham/CampaignMasterQuestCrewSelectPanel.cpp": "Matching",
