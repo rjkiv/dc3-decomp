@@ -236,6 +236,7 @@ public:
 
     int Width() const { return mWidth; }
     int Height() const { return mHeight; }
+    const unsigned short &HeightRef() const { return mHeight; }
     int Order() const { return mOrder; }
     int RowBytes() const { return mRowBytes; }
     int Bpp() const { return mBpp; }
