@@ -63,6 +63,7 @@ Symbol GetUnlockedOutfit(Symbol s1) {
 #pragma region MetaPerformer
 
 MetaPerformerHook *MetaPerformer::sScriptHook;
+bool MetaPerformer::sCheatFinale;
 
 MetaPerformer::MetaPerformer(const HamSongMgr &mgr, const char *)
     : mNumRestarts(0), mSongMgr(mgr), mInstarank(0), mNoFail(0), mGotNewHighScore(0),
@@ -1196,8 +1197,7 @@ void MetaPerformer::CalcCharacters(
             primaryPlayerChar = player2Char;
             secondaryPlayer = pPlayer1Data;
             secondaryPlayerChar = player1Char;
-        } else if (pPlayer1Data->TrackingAgeSeconds()
-                   >= pPlayer2Data->TrackingAgeSeconds()) {
+        } else if (pPlayer1Data->TrackingAgeSeconds() >= pPlayer2Data->TrackingAgeSeconds()) {
             primaryPlayer = pPlayer1Data;
             primaryPlayerChar = player1Char;
             secondaryPlayer = pPlayer2Data;
@@ -1211,13 +1211,13 @@ void MetaPerformer::CalcCharacters(
 
         CalcPrimarySongCharacter(data, primaryCrew, primaryChar, primaryOutfit);
 
-        if (secondaryPlayerChar != gNullStr || primaryPlayerChar != gNullStr) {
-            if (secondaryPlayerChar == gNullStr) {
-                if (!CharConflict(primaryPlayerChar, primaryChar)) {
-                    secondaryChar = primaryPlayerChar;
+        if (primaryPlayerChar != gNullStr || secondaryPlayerChar != gNullStr) {
+            if (primaryPlayerChar == gNullStr) {
+                if (!CharConflict(secondaryPlayerChar, primaryChar)) {
+                    secondaryChar = secondaryPlayerChar;
                     secondaryOutfit =
                         GetUnlockedOutfit(secondaryPlayer->GetPreferredOutfit());
-                    secondaryCrew = GetCrewForCharacter(primaryPlayerChar);
+                    secondaryCrew = GetCrewForCharacter(secondaryPlayerChar);
                     return;
                 }
             } else {
@@ -1282,7 +1282,7 @@ void MetaPerformer::HandleGameplayEnded(const EndGameResult &egr) {
 void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) {
     static Symbol score("score");
     int numPlayers = 0;
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
         HamPlayerData *pPlayerData = TheGameData->Player(i);
         MILO_ASSERT(pPlayerData, 0x189);
         Hmx::Object *pPlayerProvider = pPlayerData->Provider();
@@ -1304,7 +1304,7 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
         Difficulty eHighDifficulty = EasiestDifficulty();
         int songID = mSongMgr.GetSongIDFromShortName(song);
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             HamPlayerData *pPlayerData = TheGameData->Player(i);
             MILO_ASSERT(pPlayerData, 0x1ad);
             Hmx::Object *pPlayerProvider = pPlayerData->Provider();
@@ -1352,8 +1352,6 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
                         );
                     }
 
-                    // something with these static variables are making the beginning of
-                    // the function upset
                     static Symbol expert("expert");
                     bool isExpertUnlocked =
                         pProfile->IsDifficultyUnlockedForProfile(song, expert);
@@ -1364,6 +1362,7 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
                     static Symbol move_perfect("move_perfect");
                     int perfectCount = GetMovesPassedByType(i, move_perfect);
 
+                    bool noFlashcards = mCompletedSongWithNoFlashcards;
                     pProfile->UpdateScore(
                         songID,
                         pPlayerData,
@@ -1376,7 +1375,7 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
                         GetMovesPassed(i),
                         numPlayers,
                         false,
-                        mCompletedSongWithNoFlashcards
+                        noFlashcards
                     );
 
                     if (!isExpertUnlocked
@@ -1524,11 +1523,10 @@ bool MetaPerformer::CheckRecommendedPracticeMove(String moveName, int player) co
             }
         }
     }
-    if (!check && (float)val2 / (float)val1 <= 0.49f) {
-        return false;
-    } else {
+    if (check || (float)val2 / (float)val1 > 0.49f) {
         return true;
     }
+    return false;
 }
 
 void MetaPerformer::GetCurrentRecapMove(int &i1, int &i2) const {
