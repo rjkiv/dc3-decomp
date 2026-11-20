@@ -673,9 +673,14 @@ void PlatformMgr::UpdateSigninState() {
             XUSER_SIGNIN_INFO info;
             memset(&info, 0, sizeof(XUSER_SIGNIN_INFO));
             mSigninMask |= 1 << i;
-            XUserGetSigninInfo(i, 2, &info);
-            XUserGetXUID(i, &info.xuid);
-            mXuidCache[i] = 0;
+            DWORD tmp = XUserGetSigninInfo(i, 2, &info);
+			XUID tmp2 = (tmp == 0) & info.xuid;
+			info.xuid = tmp2;
+			if (tmp2 == 0) {
+				tmp = XUserGetXUID(i, &info.xuid);
+				tmp2 = (tmp == 0) & info.xuid;
+			}
+			mXuidCache[i] = tmp2;
         }
         if (oldCache[i] != mXuidCache[i]) {
             mSigninChangeMask |= 1 << i;
