@@ -232,7 +232,6 @@ void HelpBarPanel::SyncToPanel(UIPanel *panel) {
         }
         mNoButtons = true;
     }
-    const DataNode *prop = nullptr;
     if (mNavList) {
         if (!updatetert || updateback) {
             mNavList->SetHighButtonMode(false);
@@ -242,6 +241,7 @@ void HelpBarPanel::SyncToPanel(UIPanel *panel) {
     }
     static Symbol helpbar_confirm_label("helpbar_confirm_label");
     static Symbol helpbar_allow_controller("helpbar_allow_controller");
+    const DataNode *prop = nullptr;
     mControllerModeAllowed = true;
 
     if (!panel) {
