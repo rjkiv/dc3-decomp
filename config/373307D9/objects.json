@@ -88,7 +88,7 @@
             "lazer/meta_ham/HamProfile.cpp": "Matching",
             "lazer/meta_ham/HamScreen.cpp": "Matching",
             "lazer/meta_ham/HamSongMetadata.cpp": "Matching",
-            "lazer/meta_ham/HamSongMgr.cpp": "NonMatching",
+            "lazer/meta_ham/HamSongMgr.cpp": "Matching",
             "lazer/meta_ham/HamStarsDisplay.cpp": "Matching",
             "lazer/meta_ham/HamStoreFilterProvider.cpp": "Matching",
             "lazer/meta_ham/HamStoreOffer.cpp": "Matching",

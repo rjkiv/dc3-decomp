@@ -447,36 +447,37 @@ void HamSongMgr::InitializePlaylists() {
             mPlaylists.push_back(p);
         }
     }
-    std::map<Symbol, Playlist *> playlistMap;
-    char buffer[64];
+    std::map<Symbol, Playlist *> dynamiclPlaylists;
     FOREACH (it, TheHamSongMgr.mAllRankedSongs) {
         const HamSongMetadata *data = TheHamSongMgr.Data(*it);
         if (data->IsComplete() && !data->IsFake()
             && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
-            Symbol crewSym = GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
-            sprintf(buffer, "%d0s", data->YearReleased() / 10);
-            Symbol decadeSym = buffer;
-            char playlistBuffer[64];
-            if (playlistMap.find(crewSym) == playlistMap.end()) {
-                playlistMap[crewSym] = new Playlist();
-                sprintf(playlistBuffer, "%s_dynamic_playlist", crewSym.Str());
-                playlistMap[crewSym]->SetName(playlistBuffer);
+            const Symbol &crewSym =
+                GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
+            char decadeStr[8];
+            sprintf(decadeStr, "%d0s", data->YearReleased() / 10);
+            Symbol decadeSym = decadeStr;
+            char temp[128];
+            if (dynamiclPlaylists.find(crewSym) == dynamiclPlaylists.end()) {
+                dynamiclPlaylists[crewSym] = new Playlist();
+                sprintf(temp, "%s_dynamic_playlist", crewSym.Str());
+                dynamiclPlaylists[crewSym]->SetName(temp);
             }
-            if (playlistMap.find(decadeSym) == playlistMap.end()) {
-                playlistMap[decadeSym] = new Playlist();
-                sprintf(playlistBuffer, "%s_dynamic_playlist", decadeSym.Str());
-                playlistMap[decadeSym]->SetName(playlistBuffer);
-                playlistMap[decadeSym]->SetIsEra(true);
+            if (dynamiclPlaylists.find(decadeSym) == dynamiclPlaylists.end()) {
+                dynamiclPlaylists[decadeSym] = new Playlist();
+                sprintf(temp, "%s_dynamic_playlist", decadeSym.Str());
+                dynamiclPlaylists[decadeSym]->SetName(temp);
+                dynamiclPlaylists[decadeSym]->SetIsEra(true);
             }
-            playlistMap[crewSym]->AddSong(*it);
-            playlistMap[decadeSym]->AddSong(*it);
+            dynamiclPlaylists[crewSym]->AddSong(*it);
+            dynamiclPlaylists[decadeSym]->AddSong(*it);
         }
     }
-    FOREACH (it, playlistMap) {
+    FOREACH (it, dynamiclPlaylists) {
         mPlaylists.push_back(it->second);
     }
     int mask = 0;
-    FOREACH (it, playlistMap) {
+    FOREACH (it, dynamiclPlaylists) {
         mask |= GetDynamicPlaylistID(it->second->GetName());
     }
     for (int i = 0; i < 2; i++) {
