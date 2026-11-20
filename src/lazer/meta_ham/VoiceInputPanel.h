@@ -52,20 +52,12 @@ public:
     void ToggleBlacklight(bool);
 
 private:
-    Symbol ActiveVoiceContextSym();
-    void OnConfidenceChange(float);
+    void LoadVoiceContexts();
     void ActivateVoiceContext(Symbol);
     void DisableCurrentVoiceContext();
     void RestoreCurrentVoiceContext();
-    void LoadVoiceContexts();
-    VoiceContext *GetContext(Symbol s1) const {
-        FOREACH (it, mVoiceContexts) {
-            if ((*it)->mName == s1) {
-                return *it;
-            }
-        }
-        return nullptr;
-    }
+    Symbol ActiveVoiceContextSym();
+    void OnConfidenceChange(float);
 
     bool mBlacklightMode; // 0x3c
     std::vector<Symbol> mActiveSpeechRules; // 0x40

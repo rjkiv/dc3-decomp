@@ -156,7 +156,7 @@
             "lazer/meta_ham/Utl.cpp": "Matching",
             "lazer/meta_ham/VenueProvider.cpp": "Matching",
             "lazer/meta_ham/VoiceControlPanel.cpp": "Matching",
-            "lazer/meta_ham/VoiceInputPanel.cpp": "NonMatching",
+            "lazer/meta_ham/VoiceInputPanel.cpp": "Matching",
             "lazer/meta_ham/WeightInput.cpp": "Matching",
             "lazer/net_ham/ChallengeSystemJobs.cpp": "Matching",
             "lazer/net_ham/DataMinerJobs.cpp": "Matching",

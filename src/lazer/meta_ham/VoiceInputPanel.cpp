@@ -139,8 +139,8 @@ void VoiceInputPanel::OnConfidenceChange(float delta) {
     if (mActiveVoiceContext) {
         float newConf = delta + mActiveVoiceContext->mConfidenceThreshold;
         mActiveVoiceContext->mConfidenceThreshold = Clamp(0.0f, 1.0f, newConf);
-        if (TheSpeechMgr->Overlay()->Showing()) {
-            TheSpeechMgr->Overlay()->Print(MakeString(
+        if (TheSpeechMgr->mOverlay->Showing()) {
+            TheSpeechMgr->mOverlay->Print(MakeString(
                 "voice context %s, confidence: %f\n",
                 mActiveVoiceContext->mName.Str(),
                 mActiveVoiceContext->mConfidenceThreshold
@@ -161,26 +161,26 @@ void VoiceInputPanel::CreateSongSelectGrammar(Symbol language) const {
             TheSpeechMgr->UnloadGrammar("song_select_grammar");
         }
         TheSpeechMgr->CreateGrammar("song_select_grammar");
-        void *va0;
-        void *v98;
-        void *v94;
-        TheSpeechMgr->AddDynamicRule("song_select_grammar", "select_song", &v98);
+        void *initialState;
+        void *songSelectState;
+        TheSpeechMgr->AddDynamicRule("song_select_grammar", "select_song", &initialState);
         if (!TheHamUI.IsBlacklightMode()) {
+            void *xboxState;
             static Symbol voice_command_xbox("voice_command_xbox");
             TheSpeechMgr->AddDynamicRuleWord(
                 "song_select_grammar",
                 Localize(voice_command_xbox, nullptr, TheLocale),
                 gNullStr,
-                &v98,
-                &va0
+                &initialState,
+                &xboxState
             );
             static Symbol voice_command_song("voice_command_song");
             TheSpeechMgr->AddDynamicRuleWord(
                 "song_select_grammar",
                 Localize(voice_command_song, nullptr, TheLocale),
                 gNullStr,
-                &va0,
-                &v94
+                &xboxState,
+                &songSelectState
             );
         } else {
             static Symbol voice_command_song("voice_command_song");
@@ -188,8 +188,8 @@ void VoiceInputPanel::CreateSongSelectGrammar(Symbol language) const {
                 "song_select_grammar",
                 Localize(voice_command_song, nullptr, TheLocale),
                 gNullStr,
-                &v98,
-                &v94
+                &initialState,
+                &songSelectState
             );
         }
         const std::set<int> &songs = TheHamSongMgr.GetAvailableSongSet();
@@ -208,7 +208,7 @@ void VoiceInputPanel::CreateSongSelectGrammar(Symbol language) const {
                     "song_select_grammar",
                     (*pronsPtr)[i].c_str(),
                     data->ShortName().Str(),
-                    &v94,
+                    &songSelectState,
                     nullptr
                 );
             }
@@ -259,18 +259,28 @@ void VoiceInputPanel::CreatePlaylistEditorGrammar() const {
 }
 
 void VoiceInputPanel::ActivateVoiceContext(Symbol s1) {
-    VoiceContext *ctx;
-    if (!s1.Null() && (ctx = GetContext(s1), !ctx)) {
-        MILO_NOTIFY("Couldn't find voice context %s", s1.Str());
-    } else if (!TheSpeechMgr->Enabled()) {
+    std::vector<VoiceContext *>::iterator it;
+    if (!s1.Null()) {
+        for (it = mVoiceContexts.begin(); it != mVoiceContexts.end(); ++it) {
+            if ((*it)->mName == s1) {
+                break;
+            }
+        }
+        if (it == mVoiceContexts.end()) {
+            MILO_NOTIFY("Couldn't find voice context %s", s1.Str());
+            return;
+        }
+    }
+    if (!TheSpeechMgr->Enabled()) {
         MILO_NOTIFY(
             "----- VoiceInputPanel::ActivateVoiceContext() - speechMgr not enabled"
         );
+        return;
     } else {
         if (mActiveVoiceContext) {
             MILO_LOG("----- Deactivating voice context %s\n", mActiveVoiceContext->mName);
-            if (TheSpeechMgr->Overlay()->Showing()) {
-                TheSpeechMgr->Overlay()->Print(MakeString(
+            if (TheSpeechMgr->mOverlay->Showing()) {
+                TheSpeechMgr->mOverlay->Print(MakeString(
                     "Deactivating voice context %s\n", mActiveVoiceContext->mName
                 ));
             }
@@ -282,15 +292,15 @@ void VoiceInputPanel::ActivateVoiceContext(Symbol s1) {
             }
         }
         if (!s1.Null()) {
-            mActiveVoiceContext = ctx;
+            mActiveVoiceContext = *it;
             mActiveVoiceContext->SetActiveConfig(mBlacklightMode);
             int numGrammars = mActiveVoiceContext->mActiveConfig->mGrammars.size();
             for (int i = 0; i < numGrammars; i++) {
                 TheSpeechMgr->SetGrammarState(mActiveVoiceContext->GetGrammarSym(i), true);
             }
             MILO_LOG("----- Activating voice context %s\n", s1.Str());
-            if (TheSpeechMgr->Overlay()->Showing()) {
-                TheSpeechMgr->Overlay()->Print(MakeString(
+            if (TheSpeechMgr->mOverlay->Showing()) {
+                TheSpeechMgr->mOverlay->Print(MakeString(
                     "Activating voice context %s, confidence: %f\n",
                     s1.Str(),
                     mActiveVoiceContext->mConfidenceThreshold
@@ -319,7 +329,7 @@ DataNode VoiceInputPanel::OnMsg(const SpeechRecoMessage &msg) {
             within ? "recognized" : "not recognized",
             rule.Str()
         );
-        TheSpeechMgr->Overlay()->Print(within ? "recognized\n" : "not recognized\n");
+        TheSpeechMgr->mOverlay->Print(within ? "recognized\n" : "not recognized\n");
         LetterboxPanel *letter = TheHamUI.Letterbox();
         if (letter) {
             if (letter->InBlacklightTransition()) {

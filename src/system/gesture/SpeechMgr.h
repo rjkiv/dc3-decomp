@@ -34,7 +34,6 @@ public:
     bool SpeechSupported() const { return mHasLanguageSupport; }
     bool Recognizing() const { return mRecognizing; }
     float SpeechConfThresh() const { return mConfidenceThreshold; }
-    RndOverlay *Overlay() const { return mOverlay; }
     bool Enabled() const { return mEnabled; }
     int VoiceDirection() const { return mVoiceDirection; }
 
@@ -68,6 +67,8 @@ private:
     bool mHasLanguageSupport; // 0x3f
     float mConfidenceThreshold; // 0x40
     int mVoiceDirection; // 0x44
+public:
+    // yeah for whatever reason this specifically is public
     RndOverlay *mOverlay; // 0x48
 };
 
