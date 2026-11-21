@@ -84,9 +84,9 @@ HamDirector *TheHamDirector;
 OfflineCallback gOfflineCallback;
 std::map<Symbol, int> gMoveMergeMap;
 
-void unuseddancerskeletonfunclol(std::vector<DancerFrame> &frames) {
+void unuseddancerskeletonfunclol(std::vector<DancerFrame> frames) {
     frames.swap(std::vector<DancerFrame>());
-    frames.resize(69);
+    frames.resize(123);
 }
 
 float FrameToBeat(float frame) { return SecondsToBeat(frame / 30.0f); }
