@@ -856,6 +856,10 @@ void HamDirector::StartStopVisualizer() {
     }
 }
 
+NOINLINE void CopyPostProc(ObjPtr<RndPostProc> &dst, const ObjPtr<RndPostProc> &src) {
+    dst = src.Ptr();
+}
+
 void HamDirector::UpdatePlayerFreestyle(bool run) {
     if (run != mPlayerFreestyle) {
         static Symbol in_freestyle("in_freestyle");
@@ -863,8 +867,8 @@ void HamDirector::UpdatePlayerFreestyle(bool run) {
         mPlayerFreestyle = run;
         if (mPlayerFreestyle) {
             mVizNumSec = 0;
-            mPrevForcePostProc = mForcePostProc;
-            mForcePostProc = mVizStartPostProc;
+            CopyPostProc(mPrevForcePostProc, mForcePostProc);
+            CopyPostProc(mForcePostProc, mVizStartPostProc);
             mForcePostProcBlend = 0;
             mForcePostProcBlendRate = 0.625f;
             if (GetWorld()) {
