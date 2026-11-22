@@ -374,7 +374,7 @@
             "system/hamobj/MoveAsyncDetector.cpp": "Matching",
             "system/hamobj/MoveDir.cpp": "NonMatching",
             "system/hamobj/MoveGraph.cpp": "Matching",
-            "system/hamobj/MoveMgr.cpp": "NonMatching",
+            "system/hamobj/MoveMgr.cpp": "Matching",
             "system/hamobj/MoveParent.cpp": "Matching",
             "system/hamobj/MoveVariant.cpp": "Matching",
             "system/hamobj/OriginalChoreoRemixer.cpp": "NonMatching",

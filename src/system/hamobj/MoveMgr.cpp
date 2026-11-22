@@ -24,6 +24,10 @@
 
 MoveMgr *TheMoveMgr;
 
+const char *unusedmovemgrstringlol(int i, const char *c1, const char *c2) {
+    return MakeString("%d %s %s", i, c1, c2);
+}
+
 MoveMgr::MoveMgr() : mLayout(nullptr), mPrevMoveVariant(nullptr) {
     mMovesDir = nullptr;
     for (int i = 0; i < kNumDifficultiesDC2; i++) {
@@ -350,7 +354,8 @@ void MoveMgr::ComputePotentialMoves(std::set<const MoveParent *> &result, int iM
                 if (mRoutineParents[0][iMoveIndex - 1]) {
                     const MoveParent *prev = mRoutineParents[0][iMoveIndex - 1];
                     FOREACH (adj, prev->mNext) {
-                        if ((*adj)->IsValidForMiniGame()) {
+                        const MoveParent *cur = *adj;
+                        if (cur->IsValidForMiniGame()) {
                             result.insert(*adj);
                         }
                     }
