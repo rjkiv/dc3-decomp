@@ -317,7 +317,7 @@
             "system/gesture/StubCameraInput.cpp": "Matching",
             "system/gesture/WaveToTurnOnLight.cpp": "Matching",
             "system/hamobj/BustAMoveData.cpp": "Matching",
-            "system/hamobj/CamShotCatVO.cpp": "NonMatching",
+            "system/hamobj/CamShotCatVO.cpp": "Matching",
             "system/hamobj/CharCameraInput.cpp": "Matching",
             "system/hamobj/CharFeedback.cpp": "Matching",
             "system/hamobj/ClipPlayer.cpp": "NonMatching",
