@@ -231,7 +231,7 @@ void HamCamShot::StartAnim() {
         Target &target = *it;
         if (!target.mTarget.Null()) {
             auto cache = CreateTargetCache(target.mTarget);
-            Character *theChar = dynamic_cast<Character *>(cache->unk4);
+            Character *theChar = dynamic_cast<Character *>(cache->target);
             if (theChar) {
                 theChar->SetSelfShadow(target.mSelfShadow);
                 theChar->SetLodType((LODType)target.mForceLOD);
@@ -243,7 +243,7 @@ void HamCamShot::StartAnim() {
                 msg[4] = target.mForwardEvent;
                 HandleType(msg);
                 if (target.mEnvOverride) {
-                    cache->unk8 = theChar->GetEnv();
+                    cache->environment = theChar->GetEnv();
                     theChar->SetEnv(target.mEnvOverride);
                 }
             }
@@ -293,8 +293,8 @@ bool HamCamShot::IterateNextShot() {
 void HamCamShot::Target::Store(HamCamShot *shot) {
     if (!mTarget.Null()) {
         std::list<TargetCache>::iterator it = shot->CreateTargetCache(mTarget);
-        if (it->unk4) {
-            mTo = it->unk4->LocalXfm();
+        if (it->target) {
+            mTo = it->target->LocalXfm();
         }
         HamCamShot::sCache.erase(it);
     }
@@ -310,14 +310,14 @@ void HamCamShot::Target::UpdateTarget(Symbol s, HamCamShot *shot) {
 
 std::list<HamCamShot::TargetCache>::iterator HamCamShot::CreateTargetCache(Symbol s) {
     sCache.push_front(TargetCache());
-    sCache.front().unksym = s;
-    sCache.front().unk4 = FindTarget(s);
+    sCache.front().name = s;
+    sCache.front().target = FindTarget(s);
     return sCache.begin();
 }
 
 std::list<HamCamShot::TargetCache>::iterator HamCamShot::GetTargetCache(Symbol s) {
     FOREACH (it, sCache) {
-        if (s == it->unksym) {
+        if (s == it->name) {
             return it;
         }
     }
@@ -535,14 +535,14 @@ void HamCamShot::EndAnim() {
             Target &target = *it;
             if (!target.mTarget.Null()) {
                 auto cacheIt = GetTargetCache(target.mTarget);
-                if (target.mTeleport && target.mReturn && cacheIt->unk4) {
-                    TeleportTarget(cacheIt->unk4, cacheIt->unkxfm, true);
+                if (target.mTeleport && target.mReturn && cacheIt->target) {
+                    TeleportTarget(cacheIt->target, cacheIt->xfm, true);
                 }
-                Character *c = dynamic_cast<Character *>(cacheIt->unk4);
+                Character *c = dynamic_cast<Character *>(cacheIt->target);
                 if (c) {
                     c->SetLodType(kLODPerFrame);
                     if (target.mEnvOverride) {
-                        c->SetEnv(cacheIt->unk8);
+                        c->SetEnv(cacheIt->environment);
                     }
                 }
                 sCache.erase(cacheIt);
@@ -664,8 +664,8 @@ void HamCamShot::Reteleport(const Vector3 &vOffset, bool checkTeleportFlag, Symb
         if (!t11.mTarget.Null() && (!checkTeleportFlag || t11.mTeleport)
             && (s == gNullStr || s == t11.mTarget)) {
             auto cacheItr = CreateTargetCache(t11.mTarget);
-            if (cacheItr->unk4) {
-                cacheItr->unkxfm = cacheItr->unk4->LocalXfm();
+            if (cacheItr->target) {
+                cacheItr->xfm = cacheItr->target->LocalXfm();
                 Transform tfe0 = t6.mTo;
                 static Symbol player0("player0");
                 static Symbol player1("player1");
@@ -704,7 +704,7 @@ void HamCamShot::Reteleport(const Vector3 &vOffset, bool checkTeleportFlag, Symb
                 Transform tf120;
                 Multiply(tfe0, WorldXfm(), tf120);
                 tf120.v += vOffset;
-                TeleportTarget(cacheItr->unk4, tf120, false);
+                TeleportTarget(cacheItr->target, tf120, false);
             }
         }
     }

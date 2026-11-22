@@ -38,8 +38,8 @@ public:
               mFloorShadow(true) {
             mTo.Reset();
         }
-        void UpdateTarget(Symbol, HamCamShot *);
-        void Store(HamCamShot *);
+        void UpdateTarget(Symbol target, HamCamShot *shot);
+        void Store(HamCamShot *shot);
 
         /** "Symbolic name of target" */
         Symbol mTarget; // 0x0
@@ -69,12 +69,12 @@ public:
 
     // size 0x4c
     struct TargetCache {
-        TargetCache() : unk4(), unk8() { unkxfm.Reset(); }
+        TargetCache() : target(), environment() { xfm.Reset(); }
 
-        Symbol unksym; // 0x0 - target name?
-        RndTransformable *unk4; // 0x4 - target?
-        RndEnviron *unk8;
-        Transform unkxfm; // 0xc
+        Symbol name; // 0x0
+        RndTransformable *target; // 0x4
+        RndEnviron *environment; // 0x8
+        Transform xfm; // 0xc
     };
 
     // Hmx::Object
@@ -95,23 +95,31 @@ public:
     virtual void SetPreFrame(float, float);
     virtual CamShot *CurrentShot() { return mCurrentShot; }
 
-    RndTransformable *FindTarget(Symbol);
-    float GetTotalDurationSeconds();
-    float GetTotalDuration();
     void Store();
+    float GetTotalDuration();
+    float GetTotalDurationSeconds();
+    void TeleportTarget(RndTransformable *target, const Transform &t, bool ret);
+    bool TargetTeleportTransform(Symbol targetName, Transform &t);
+    ObjPtrList<HamCamShot> &GetNextShots() { return mNextShots; }
     HamCamShot *InitialShot();
     int GetNumShots();
-    void Reteleport(const Vector3 &, bool, Symbol);
-    bool TargetTeleportTransform(Symbol, Transform &);
-    void TeleportTarget(RndTransformable *, const Transform &, bool);
-
-    int MinTime() const { return mMinTime; }
-    int MaxTime() const { return mMaxTime; }
-    float ZeroTime() const { return mZeroTime; }
+    RndTransformable *FindTarget(Symbol target);
+    void Reteleport(const Vector3 &vOffset, bool checkTeleportFlag, Symbol onlyTeleport);
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(HamCamShot)
     REGISTER_OBJ(HamCamShot)
+
+    ObjList<Target> mTargets; // 0x284
+    /** "30fps reg: minimum time this shot can last,
+        DCuts: time past zero time in which the shot can be interupted" */
+    int mMinTime; // 0x290
+    /** "30fps maximum duration for this shot, 0 is infinite" */
+    int mMaxTime; // 0x294
+    /** "synchronization time for this camshot" */
+    float mZeroTime; // 0x298
+    /** "Flag to determine player configuration" */
+    PlayerFlag mPlayerFlag; // 0x29c
 
 private:
     DataNode OnTestDelta(DataArray *);
@@ -129,39 +137,28 @@ protected:
     }
     virtual void SetFrameEx(float, float);
 
-    void CheckNextShots();
+    std::list<TargetCache>::iterator CreateTargetCache(Symbol);
+    std::list<TargetCache>::iterator GetTargetCache(Symbol);
+    bool ListNextShots(std::list<HamCamShot *> &nextShots);
     void ResetNextShot();
+    bool IterateNextShot();
+    void CheckNextShots();
     void FlipTargetAnimGroups();
     void UpdateTargetsFlipped();
-    bool IterateNextShot();
-    bool ListNextShots(std::list<HamCamShot *> &);
     bool AreTargetsFlipped() const;
     void CreateFlippedShowHideList();
     Symbol GetFlipTarget(Symbol) const;
     HamCamShot::Target *GetFlipTarget(HamCamShot::Target *);
     RndDrawable *GetFlipCharacter(RndDrawable *);
 
-    std::list<TargetCache>::iterator CreateTargetCache(Symbol);
-    std::list<TargetCache>::iterator GetTargetCache(Symbol);
-
     static std::list<TargetCache> sCache;
 
-    ObjList<Target> mTargets; // 0x284
-    /** "30fps reg: minimum time this shot can last,
-        DCuts: time past zero time in which the shot can be interupted" */
-    int mMinTime; // 0x290
-    /** "30fps maximum duration for this shot, 0 is infinite" */
-    int mMaxTime; // 0x294
-    /** "synchronization time for this camshot" */
-    float mZeroTime; // 0x298
-    /** "Flag to determine player configuration" */
-    PlayerFlag mPlayerFlag; // 0x29c
     /** "Next camshots, in order" */
     ObjPtrList<HamCamShot> mNextShots; // 0x2a0
     ObjPtrList<HamCamShot>::iterator mNextIter; // 0x2b4
     ObjPtr<HamCamShot> mCurrentShot; // 0x2b8
     float mNextTotalDur; // 0x2cc
-    float mNextDur; // 0x2d0 - duration
+    float mNextDur; // 0x2d0
     bool mRecursing; // 0x2d4
     float mCachedTotalDuration; // 0x2d8
     bool mListingNextShots; // 0x2dc
@@ -170,6 +167,7 @@ protected:
         Not valid entries for a next shot." */
     ObjPtrList<RndAnimatable> mMasterAnims; // 0x2e0
     int mOriginalNumNextShots; // 0x2f4
+    // flip-relevant lists?
     ObjPtrList<RndDrawable> unk2f8; // 0x2f8
     ObjPtrList<RndDrawable> unk30c; // 0x30c
     ObjPtrList<RndDrawable> unk320; // 0x320

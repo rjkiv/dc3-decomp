@@ -2346,7 +2346,7 @@ void HamDirector::PlayNextShot() {
             HamCamShot *shot = mNextShot;
             mNextShot = nullptr;
             if (shot && strstr(shot->Category().Str(), "dc")) {
-                float frames = (float)shot->MinTime() + shot->ZeroTime();
+                float frames = (float)shot->mMinTime + shot->mZeroTime;
                 shot->ConvertFrames(frames);
                 mNextShotSec = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + frames;
             } else if (mCurShot && strneq(mCurShot->Category().Str(), "dc_", 3)) {
