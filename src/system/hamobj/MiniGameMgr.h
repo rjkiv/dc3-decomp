@@ -16,17 +16,18 @@ protected:
 public:
     virtual DataNode Handle(DataArray *, bool);
 
-    void GetMoveOptions(DataArray *, DataArray *);
-    void LoadMoveOptions(std::set<const MoveVariant *> &, bool);
-    void InitNTD(int);
-    void InitCascade(int, int);
+    void InitNTD(int numMovesNeeded);
+    void GetMoveOptions(DataArray *validArray, DataArray *invalidArray);
+    void
+    LoadMoveOptions(std::set<const MoveVariant *> &movesNeeded, bool load_transitions);
+    void InitCascade(int numMovesNeeded, int blockingFactor);
+    void GetCascadeMoveList(DataArray *defunct_moves, DataArray *out_moves);
     void UpdateCascadeMovePool(
-        MoveGraph &,
-        std::vector<const MoveVariant *> &,
-        std::vector<const MoveVariant *> &
+        MoveGraph &moveGraph,
+        std::vector<const MoveVariant *> &movePool,
+        std::vector<const MoveVariant *> &excludedMoves
     );
-    void LoadValidMoves(bool);
-    void GetCascadeMoveList(DataArray *, DataArray *);
+    void LoadValidMoves(bool load_transitions);
 
     static void Init();
 

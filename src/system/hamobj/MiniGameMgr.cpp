@@ -12,19 +12,18 @@ MiniGameMgr *TheMiniGameMgr;
 
 class CompareMoveVariantName {
 public:
-    CompareMoveVariantName(const DataNode &n) : mName(n) {}
+    CompareMoveVariantName(const DataNode &n) : mMoveVariantName(n) {}
 
     bool operator()(const MoveVariant *mv) {
         DataNode otherMV = mv->GetName();
-        if (otherMV.Equal(mName, nullptr, true)) {
+        if (otherMV == mMoveVariantName) {
             return true;
         } else {
             return false;
         }
     }
 
-private:
-    DataNode mName; // 0x0
+    DataNode mMoveVariantName; // 0x0
 };
 
 MiniGameMgr::MiniGameMgr() { mNumMovesNeeded = 2; }
@@ -83,33 +82,42 @@ void MiniGameMgr::InitCascade(int numMovesNeeded, int blockingFactor) {
 }
 
 void MiniGameMgr::UpdateCascadeMovePool(
-    MoveGraph &graph,
-    std::vector<const MoveVariant *> &allMoves,
-    std::vector<const MoveVariant *> &validMoves
+    MoveGraph &moveGraph,
+    std::vector<const MoveVariant *> &movePool,
+    std::vector<const MoveVariant *> &excludedMoves
 ) {
-    allMoves.clear();
-    FOREACH (it, graph.mNodes) {
+    movePool.clear();
+    FOREACH (it, moveGraph.mNodes) {
         const MoveVariant *mv = it->second->PickRandomVariant();
         if (mv->IsValidForMinigame()
-            && std::find(validMoves.begin(), validMoves.end(), mv) == validMoves.end()) {
-            allMoves.push_back(mv);
+            && std::find(excludedMoves.begin(), excludedMoves.end(), mv)
+                == excludedMoves.end()) {
+            movePool.push_back(mv);
         }
     }
-    std::random_shuffle(allMoves.begin(), allMoves.end());
-    for (int i = 0; i < 1; i++) {
-        for (auto it = allMoves.begin(); it != allMoves.end()
-             && allMoves.size() > mBlockingFactor + mNumMovesNeeded;) {
+    std::random_shuffle(movePool.begin(), movePool.end());
+
+    enum CascadePref {
+        kCascadePrefSameSong = 0,
+        kCascadePrefCount
+    };
+    for (int i = 0; i < kCascadePrefCount; i++) {
+        for (auto it = movePool.begin(); it != movePool.end()
+             && movePool.size() > mBlockingFactor + mNumMovesNeeded;) {
             const MoveVariant *mv = *it;
             bool b8 = true;
-            if (i != 0) {
-                MILO_ASSERT(0, 0xB3);
-            } else {
+            switch (i) {
+            case kCascadePrefSameSong:
                 b8 = mv->GetSongName() == TheGameData->GetSong();
+                break;
+            default:
+                MILO_ASSERT(0, 0xB3);
+                break;
             }
             if (b8) {
                 ++it;
             } else {
-                it = allMoves.erase(it);
+                it = movePool.erase(it);
             }
         }
     }
