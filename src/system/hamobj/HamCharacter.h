@@ -70,42 +70,46 @@ public:
     static void Init();
     static void Terminate();
 
-    void StartLoad(bool);
-    void SetTexBlendersActive(bool);
-    void SetLipsyncOffset(float);
-    void EnableFacialAnimation(CharLipSync *, float);
-    void SetBlinking(bool);
-    void SetCampaignVo(const char *);
-    void SetPropShowing(int prop, bool show);
-    String GetCampaignVo();
-    void SetOutfit(Symbol);
-    void SetOutfitDir(Symbol);
-    void UnloadAll();
-    String GetCampaignVoMilo();
     bool IsLoading();
-    bool InClipTest();
-    void SetIKEffectorWeights(float);
-    void ResyncLipSync(CharLipSync *);
-    void PlayBaseViseme();
-    void DisableFacialAnimation();
-    void ResetFacialAnimation();
-    void BlendInFaceOverrides(float);
-    void BlendOutFaceOverrides(float);
-    void SetFaceOverrideWeight(float);
-    float GetFaceOverrideWeight();
-    void SetUseCameraSkeleton(bool);
+    Symbol Outfit() const { return mOutfit; }
+    void SetOutfit(Symbol outfit);
+    void SetOutfitDir(Symbol dir);
+    void UnloadAll();
+    Waypoint *GetWaypoint() const { return mWaypoint; }
+    void BlendInFaceOverrides(float ms);
+    void BlendOutFaceOverrides(float ms);
+    void SetFaceOverrideWeight(float w);
+    void SetFaceOverrideClip(Symbol name, bool fail);
     Symbol GetFaceOverrideClip();
+    float GetFaceOverrideWeight();
+    void BlendInFaceOverrideClip(Symbol name, float weight, float blendMs);
     void ResetFaceOverrideBlending();
-    int SongAnimation();
+    // public: CharLipSyncDriver* GetLipSyncDriver();
+    void ResyncLipSync(CharLipSync *lipsync);
+    void PlayBaseViseme();
+    void EnableFacialAnimation(CharLipSync *lipsync, float songOffset);
+    void DisableFacialAnimation();
+    void SetBlinking(bool blinking);
+    void SetLipsyncOffset(float offset);
     ObjectDir *GetNeutralSkeleton();
-    void SetFaceOverrideClip(Symbol, bool);
+    int SongAnimation();
     HamDriver *SongDriver();
     HamRegulate *Regulator();
-    void BlendInFaceOverrideClip(Symbol, float, float);
-    Waypoint *GetWaypoint() const { return mWaypoint; }
+    bool InClipTest();
+    // public: void SetUsedRestStep(CharClip*);
+    // public: CharClip* UsedRestStep() const;
+    void SetUseCameraSkeleton(bool useSkel);
     bool UseCameraSkeleton() const { return mUseCameraSkeleton; }
+    void SetIKEffectorWeights(float weight);
+    void SetTexBlendersActive(bool active);
     void SetPollWhenHidden(bool poll) { mPollWhenHidden = poll; }
-    Symbol Outfit() const { return mOutfit; }
+    void SetCampaignVo(const char *pCampaignVO);
+    String GetCampaignVo();
+    // public: Hmx::Object* GetCampaignVoBank();
+    String GetCampaignVoMilo();
+
+    void StartLoad(bool async);
+    void ResetFacialAnimation();
 
     static bool sLoadVO;
     static const int kNumSkeletons = 13;
@@ -115,21 +119,21 @@ protected:
     virtual void AddedObject(Hmx::Object *);
     virtual void RemovingObject(Hmx::Object *);
 
-    bool GetPropShowing(int);
-    void ApplyBlendedSkeletons(HamDriver *, CharClip *, float);
-
     DataNode OnConfigureFileMerger(DataArray *);
     DataNode OnCamTeleport(DataArray *);
     DataNode OnPostDelete(DataArray *);
-    DataNode OnSoundPlay(const DataArray *);
     DataNode OnToggleInterestDebugOverlay(DataArray *);
+    DataNode OnSoundPlay(const DataArray *);
 
-    bool GetCrewCardShowing() const { return mCrewCard && mCrewCard->Showing(); }
     void SetCrewCardShowing(bool showing) {
         if (mCrewCard) {
             mCrewCard->SetShowing(showing);
         }
     }
+    bool GetCrewCardShowing() const { return mCrewCard && mCrewCard->Showing(); }
+    void SetPropShowing(int prop, bool show);
+    bool GetPropShowing(int prop);
+    void ApplyBlendedSkeletons(HamDriver *driver, CharClip *clip, float weight);
 
     static CharClip *sSkeletonClips[kNumSkeletons];
 
@@ -156,7 +160,7 @@ protected:
     /** "True if the internal TexBlenders are working." */
     bool mTexBlendersActive; // 0x319
     ObjPtrList<CharWeightable> mEffectors; // 0x31c
-    float mStoredSongOffset; // 0x330 - song offset?
+    float mStoredSongOffset; // 0x330
     ObjectDir *mNeutralSkelDir; // 0x334
     CharServoBone *mSkeletonBones; // 0x338
     ObjPtr<RndMesh> mCrewCard; // 0x33c

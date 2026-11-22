@@ -603,8 +603,14 @@ int HamCharacter::SongAnimation() {
     if (InClipTest()) {
         if (c && c->Dir()->Dir() != this) {
             return c->Property("clip_skeleton_index", false)->Int();
+        } else {
+            return -1;
         }
-    } else if (!mUseCameraSkeleton && !c) {
+    } else if (mUseCameraSkeleton) {
+        return -1;
+    } else if (c) {
+        return -1;
+    } else {
         if (SongDriver()) {
             c = SongDriver()->FirstClip();
             if (c) {
@@ -614,7 +620,6 @@ int HamCharacter::SongAnimation() {
         }
         return 0;
     }
-    return -1;
 }
 
 bool HamCharacter::GetPropShowing(int prop) {
