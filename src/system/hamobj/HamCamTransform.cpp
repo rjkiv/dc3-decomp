@@ -9,6 +9,7 @@
 #include "utl/Loader.h"
 #include "utl/Std.h"
 #include "world/CameraShot.h"
+#include "world/Crowd.h"
 
 HamCamTransform::HamCamTransform() : mAreas(this) {}
 
@@ -71,8 +72,9 @@ BinStream &operator<<(BinStream &bs, const TransformCrowd &c) {
 }
 
 void TransformCrowd::Save(BinStream &bs) const {
-    bs << mCrowd;
-    bs << mCrowdRotate;
+    CrowdRotate r = mCrowdRotate;
+    BinStream &stupid = bs << mCrowd;
+    stupid << r;
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, TransformCrowd &c) {
