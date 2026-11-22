@@ -14,7 +14,7 @@ typedef bool MoveVariantFunc(const MoveVariant *, void *);
  * MoveParents and MoveVariants as well as the routine itself written in DTA. */
 class MoveGraph : public Hmx::Object {
 private:
-    MoveParent *GetNonConstMoveParent(Symbol) const;
+    MoveParent *GetNonConstMoveParent(Symbol parentName) const;
 
 public:
     MoveGraph() { mNodes.clear(); }
@@ -28,24 +28,27 @@ public:
 
     void Clear();
     void CacheLinks();
-    MoveVariant *FindNonConstMoveByVariantName(Symbol) const;
-    const MoveVariant *FindMoveByVariantName(Symbol) const;
-    const MoveParent *GetMoveParent(Symbol s) const { return GetNonConstMoveParent(s); }
+    void ImportMoveData(DataArray *pMoveData);
+    const MoveParent *GetMoveParent(Symbol parentName) const {
+        return GetNonConstMoveParent(parentName);
+    }
+    MoveVariant *FindNonConstMoveByVariantName(Symbol variantName) const;
+    const MoveVariant *FindMoveByVariantName(Symbol variantName) const;
     bool FindVariantPair(
-        const MoveVariant *&,
-        const MoveVariant *&,
-        const MoveParent *,
-        const MoveParent *,
-        const MoveVariant *,
-        const MoveVariant *,
-        Symbol,
+        const MoveVariant *&res0,
+        const MoveVariant *&res1,
+        const MoveParent *p0,
+        const MoveParent *p1,
+        const MoveVariant *pref0,
+        const MoveVariant *pref1,
+        Symbol preferredSong,
         bool
     ) const;
-    bool HasVariantPair(const MoveParent *, const MoveParent *) const;
-    void
-    GatherVariants(std::vector<const MoveVariant *> *, MoveVariantFunc *, void *) const;
-    void ImportMoveData(DataArray *);
-    MoveGraph &operator=(const MoveGraph &);
+    bool HasVariantPair(const MoveParent *p0, const MoveParent *p1) const;
+    void GatherVariants(
+        std::vector<const MoveVariant *> *result, MoveVariantFunc *filter, void *userData
+    ) const;
+    MoveGraph &operator=(const MoveGraph &source);
 
     NEW_OBJ(MoveGraph);
     REGISTER_OBJ(MoveGraph);

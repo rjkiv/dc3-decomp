@@ -18,11 +18,16 @@ class CategoryData {
 public:
     Symbol name; // 0x0
     Symbol tokenName; // 0x4
+
+    bool operator==(const CategoryData &rhs) const {
+        return name == rhs.name && tokenName == rhs.tokenName;
+    }
 };
 
 class MoveChoiceSet {
 public:
-    MoveChoiceSet() {
+    MoveChoiceSet() { Clear(); }
+    void Clear() {
         for (int i = 0; i < kNumDifficulties; i++) {
             mMoves[i] = nullptr;
         }
@@ -33,10 +38,10 @@ public:
 
 class MoveMgr : public Hmx::Object {
 private:
-    void LoadCategoryData(const char *);
+    CategoryData GetCategoryByName(Symbol name);
+    void LoadCategoryData(const char *fileName);
     void LoadSubCategoryData();
     void SongInit();
-    CategoryData GetCategoryByName(Symbol);
 
     DataNode OnFindVariants(DataArray *);
 
@@ -48,55 +53,71 @@ protected:
 public:
     virtual DataNode Handle(DataArray *, bool);
 
-    void RegisterSongLayout(SongLayout *);
-    void UnRegisterSongLayout(SongLayout *);
-    Symbol PickRandomCategory();
-    void GenerateMoveChoice(
-        Symbol, std::vector<const MoveVariant *> &, std::vector<const MoveVariant *> &
-    );
-    void Clear();
-    bool HasRoutine() const;
-    void InsertMoveInSong(const MoveVariant *, int, int);
-    void SaveRoutine(DataArray *) const;
-    void PickRandomMoveSet(Symbol, int, DataArray *, DataArray *);
-    void ImportMoveData(const char *, bool);
-    void LoadMoveData(ObjectDir *);
-    const MoveVariant *GetRoutinePreferredVariant(int, int) const;
-    void LoadSongData();
-    void ComputePotentialMoves(std::set<const MoveParent *> &, int);
-    int ComputeRandomChoiceSet(int);
-    void ComputeLoadedMoveSet();
     void AutoFillParents();
-    void FillInRoutineAt(int, int);
-    void FillRoutineFromParents(int);
-    void FillRoutineFromVerses(int);
-    void FillRoutineFromReplacer(int);
-    void InitSong();
-    void PrepareNextChoiceSet(int);
-    void NextMovesToShow(DataArray *, int);
-    SongLayout *GetSongLayout();
-    Symbol PickRandomGenre();
-    const std::pair<const MoveVariant *, const MoveVariant *> *
-    GetRoutineMeasure(int, int) const;
-    void ResetRemixer();
-    void SaveRoutineVariants(DataArray *) const;
-    void LoadRoutineVariants(const DataArray *);
-    HamMove *FindHamMoveFromName(Symbol) const;
-    CharClip *FindCharClip(Symbol) const;
-    HamMove *FindHamMove(Symbol) const;
-    Difficulty GetMoveDifficulty(Symbol);
-    Symbol FindVariantNameFromHamMoveName(Symbol) const;
+    void Clear();
+    void ComputeLoadedMoveSet();
+    void ComputePotentialMoves(std::set<const MoveParent *> &result, int iMoveIndex);
+    int ComputeRandomChoiceSet(int iMoveIndex);
+    void FillInRoutineAt(int player, int measure);
+    void FillRoutineFromParents(int highest_measure);
+    void FillRoutineFromReplacer(int highest_measure);
+    void FillRoutineFromVerses(int highest_measure);
+    CharClip *FindCharClip(Symbol moveVariantOrParentName) const;
+    HamMove *FindHamMove(Symbol moveName) const;
+    HamMove *FindHamMoveFromName(Symbol hamMoveName) const;
+    Symbol FindVariantNameFromHamMoveName(Symbol hamMoveName) const;
+    // public: const MoveParent* FindParentMoveByExtName(const char*) const;
+    // public: void FinishGraphLoad();
+    void GenerateMoveChoice(
+        Symbol genre,
+        std::vector<const MoveVariant *> &rightChoice,
+        std::vector<const MoveVariant *> &wrongChoice
+    );
+    // public: Symbol GenerateMoveParentName(const char*, Symbol, int32_t, bool);
+    // public: const char* GetExtName(Symbol);
     Symbol GetGenreTokenName(Symbol);
-
+    Difficulty GetMoveDifficulty(Symbol);
+    // public: void GetRandomMoveSet(int32_t,
+    // std::vector<MoveVariant const *>& std::vector<MoveVariant const *>&);
+    const std::pair<const MoveVariant *, const MoveVariant *> *
+    GetRoutineMeasure(int aPlayer, int aMeasure) const;
+    const MoveVariant *GetRoutinePreferredVariant(int aPlayer, int aMeasure) const;
+    // public: Symbol GetPreferredSong() const;
     void SetPreferredSong(Symbol song) { mPreferredSong = song; }
+    SongLayout *GetSongLayout();
+    bool HasRoutine() const;
+    void ImportMoveData(const char *movesFileName, bool clear);
+    void InitSong();
+    void InsertMoveInSong(const MoveVariant *pMoveVariant, int iMeasure, int iPlayer);
+    // public: void InsertMoveInSong(const MoveVariant*, int32_t);
+    // public: bool IsGraphLoaded() const;
+    // public: void LoadRoutine(const DataArray*);
+    void LoadRoutineVariants(const DataArray *src);
+    void LoadSongData();
+    void LoadMoveData(ObjectDir *);
+    void NextMovesToShow(DataArray *result, int iMoveIndex);
+    Symbol PickRandomCategory();
+    // public: Symbol PickRandomEra();
+    Symbol PickRandomGenre();
+    void PickRandomMoveSet(
+        Symbol genre, int count, DataArray *rightArray, DataArray *wrongArray
+    );
+    void PrepareNextChoiceSet(int iMoveIndex);
+    // public: void PrintRoutine(int32_t) const;
+    void RegisterSongLayout(SongLayout *layout);
+    void UnRegisterSongLayout(SongLayout *layout);
+    void SaveRoutine(DataArray *result) const;
+    void SaveRoutineVariants(DataArray *result) const;
+    // public: void StartGraphLoad(const char*, bool, bool);
+    void ResetRemixer();
 
-    static void Init(const char *);
+    static void Init(const char *movesFileName);
 
     Keys<Symbol, Symbol> *mClipKeys[kNumDifficultiesDC2]; // 0x2c
     ObjectDir *mClipsDir; // 0x38
     Keys<Symbol, Symbol> *mExpertPracticeKeys; // 0x3c
     SongLayout *mLayout; // 0x40
-    SongLayout *mSongLayout; // 0x44
+    SongLayout *mSongLayout; // 0x44 - TODO rename this maybe
     Keys<Symbol, Symbol> *mMoveKeys[kNumDifficultiesDC2]; // 0x48
     std::map<int, MoveVariant *> mMoveLayout[kNumDifficultiesDC2]; // 0x54
     MoveDir *mMovesDir; // 0x9c

@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <climits>
 
+MoveMgr *TheMoveMgr;
+
 MoveMgr::MoveMgr() : mLayout(nullptr), mPrevMoveVariant(nullptr) {
     mMovesDir = nullptr;
     for (int i = 0; i < kNumDifficultiesDC2; i++) {
@@ -763,4 +765,32 @@ void MoveMgr::FillRoutineFromVerses(int highest_measure) {
         }
     }
     FillRoutineFromParents(highest_measure);
+}
+
+void MoveMgr::ComputeLoadedMoveSet() {
+    mMovesNeeded.clear();
+    unsigned int numChoices = mTempSongChoices.size();
+    unsigned int numRoutines = mRoutine[0].size();
+    int u4 = numRoutines > numChoices ? numRoutines : numChoices;
+    mRoutine[0].resize(u4);
+    mTempSongChoices.resize(u4);
+
+    auto routineIt = mRoutine[0].begin();
+    auto choiceIt = mTempSongChoices.begin();
+    for (int i = 0; i < u4; i++, routineIt++, choiceIt++) {
+        if (routineIt->first) {
+            mMovesNeeded.insert(routineIt->first);
+            if (routineIt->second && routineIt->second != routineIt->first) {
+                mMovesNeeded.insert(routineIt->second);
+            }
+        } else if (choiceIt->mMoves[0]) {
+            const MoveParent **moves = choiceIt->mMoves;
+            for (int j = 0; j < kNumDifficulties; j++) {
+                if (moves[j]) {
+                    MoveVariant *var = moves[j]->mMoveVariants.front();
+                    mMovesNeeded.insert(var);
+                }
+            }
+        }
+    }
 }
