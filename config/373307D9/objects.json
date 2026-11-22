@@ -325,7 +325,7 @@
             "system/hamobj/DanceRemixer.cpp": "NonMatching",
             "system/hamobj/DancerSequence.cpp": "Matching",
             "system/hamobj/DancerSkeleton.cpp": "Matching",
-            "system/hamobj/DetectFrame.cpp": "NonMatching",
+            "system/hamobj/DetectFrame.cpp": "Matching",
             "system/hamobj/Difficulty.cpp": "Matching",
             "system/hamobj/ErrorNode.cpp": "NonMatching",
             "system/hamobj/FilterQueue.cpp": "NonMatching",
