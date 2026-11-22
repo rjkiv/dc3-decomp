@@ -108,7 +108,7 @@ void FilterQueue::Poll(const SkeletonUpdateData &data) {
             );
             for (int i = 0; i < numNodes; i++) {
                 ErrorNode *n = nodes[i];
-                if (n->Type() & mf->Flags()) {
+                if (n->Type() & mf->NodeTypeFlags()) {
                     ErrorNodeInput node_input;
                     input->mFilterVersion->NodeInput(i, df, mode, node_input);
                     n->CalcError(frame_input, node_input, curOutFrame.mNodeErrors[i]);

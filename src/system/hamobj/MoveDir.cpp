@@ -1127,9 +1127,9 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float top_y) {
             const DancerSkeleton *skelPtr = nullptr;
             mVizDetectFrame = nullptr;
             if (mergeMovesProp) {
-                if (curMove->GetDancerSequence()) {
+                if (curMove->mDancerSeq) {
                     float f41 = f38 / 4;
-                    auto &dancerFrames = curMove->GetDancerSequence()->GetDancerFrames();
+                    auto &dancerFrames = curMove->mDancerSeq->GetDancerFrames();
                     int skelIdx = Round((float)dancerFrames.size() * f41);
                     skelPtr = &dancerFrames[skelIdx].mSkeleton;
                 }

@@ -23,6 +23,10 @@
 
 float HamMove::sMinFrameDistBeats = 0.2;
 
+const char *unusedhammovestrlol(const char *c1, const char *c2, int i) {
+    return MakeString("%s %s %d", c1, c2, i);
+}
+
 BinStream &operator<<(BinStream &bs, const Ham1NodeWeight &wt) {
     bs << wt.mPerfectDist << wt.mRate << wt.mAnglePerfectDist << wt.mAngleRate
        << wt.mHasError;
@@ -119,7 +123,7 @@ BinStream &operator>>(BinStreamRev &d, Ham2FrameWeight &wt) {
 
 void MoveFrame::Save(BinStream &bs) const {
     bs << mBeat;
-    bs << mFlags;
+    bs << mNodeTypeFlags;
     bs << kNumHam1Nodes;
     for (int i = 0; i < kNumMoveModes; i++) {
         for (int j = 0; j < kNumMoveMirrored; j++) {
@@ -147,9 +151,9 @@ void MoveFrame::Load(BinStreamRev &d) {
         MILO_FAIL("Versions less than 14 no longer supported");
     }
     if (d.rev > 0x2B) {
-        d >> mFlags;
+        d >> mNodeTypeFlags;
     } else {
-        mFlags = -1;
+        mNodeTypeFlags = -1;
     }
     int num_ham2_nodes = FilterVersion::NumHam2Nodes();
     int num_ham1_nodes = kNumHam1Nodes;
@@ -471,7 +475,8 @@ BEGIN_COPYS(HamMove)
         COPY_MEMBER(mSmallTex)
         COPY_MEMBER(mScored)
         COPY_MEMBER(mFinalPose)
-        FOREACH (it, mPropKeys) {
+        auto &keys = mPropKeys;
+        FOREACH (it, keys) {
             (*it)->SetTarget(this);
         }
         COPY_MEMBER(mTexState)
@@ -807,7 +812,8 @@ FilterVersionType HamMove::Version() const {
     if (move->mMoveFrames.empty()) {
         return kFilterVersionHam2;
     } else {
-        return move->mMoveFrames.front().Version();
+        int mask = (move->mMoveFrames.front().NodeTypeFlags() & 0x300000) >> 5;
+        return mask ? kFilterVersionHam1 : kFilterVersionHam2;
     }
 }
 

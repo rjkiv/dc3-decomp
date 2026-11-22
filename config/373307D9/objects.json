@@ -348,7 +348,7 @@
             "system/hamobj/HamList.cpp": "Matching",
             "system/hamobj/HamListRibbon.cpp": "Matching",
             "system/hamobj/HamMaster.cpp": "Matching",
-            "system/hamobj/HamMove.cpp": "NonMatching",
+            "system/hamobj/HamMove.cpp": "Matching",
             "system/hamobj/HamNavList.cpp": "Matching",
             "system/hamobj/HamNavProvider.cpp": "Matching",
             "system/hamobj/HamPartyJumpData.cpp": "Matching",

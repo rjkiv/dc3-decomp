@@ -149,9 +149,9 @@ MoveAsyncDetector::MoveAsyncDetector(MoveDir *md) : mDir(md) {
                         }
                     };
                     if (keyIdx == -1) {
-                        if (it->GetDancerSequence()) {
+                        if (it->mDancerSeq) {
                             const DancerFrame *curFrame =
-                                it->GetDancerSequence()->GetDancerFrames().begin();
+                                it->mDancerSeq->GetDancerFrames().begin();
                             const FilterVersion *curFv = it->FilterVer();
                             mDetectors.push_back(new MoveDetector(curFv, it, curFrame));
                         } else {
@@ -199,8 +199,8 @@ MoveDetector *MoveAsyncDetector::FindDetector(const HamMove *move) {
     auto range =
         std::equal_range(mDetectors.begin(), mDetectors.end(), move, MoveDetectorCmp());
     if (range.first == range.second) {
-        if (move->GetDancerSequence()) {
-            auto it = move->GetDancerSequence()->GetDancerFrames().begin();
+        if (move->mDancerSeq) {
+            auto it = move->mDancerSeq->GetDancerFrames().begin();
             MoveDetector *md = new MoveDetector(move->FilterVer(), move, it);
             mDetectors.push_back(md);
             std::sort(mDetectors.begin(), mDetectors.end(), MoveDetectorCmp());

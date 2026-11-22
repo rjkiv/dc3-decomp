@@ -19,28 +19,27 @@ enum MoveMirrored {
 
 class MoveFrame {
 public:
-    enum {
-        // for DC1
-        kNumHam1Nodes = 16
-    };
-    void Save(BinStream &) const;
-    void Load(BinStreamRev &);
-    const Ham1NodeWeight &NodeWeightHam1(int, MoveMode, MoveMirrored) const;
-    const Ham2FrameWeight &FrameWeight(MoveMirrored) const;
-    const Vector3 &NodeWeight(int, MoveMirrored) const;
-    const Vector3 &NodeInverseScale(int, MoveMirrored) const;
-    void SetNodeScale(int, MoveMirrored, const Vector3 &);
-    float QuantizedSeconds(float) const;
-    FilterVersionType Version() const {
-        unsigned int filterMask = (mFlags & 0x300000) >> 5;
-        return filterMask ? kFilterVersionHam1 : kFilterVersionHam2;
-    }
     float Beat() const { return mBeat; }
-    unsigned int Flags() const { return mFlags; }
+    int NodeTypeFlags() const { return mNodeTypeFlags; }
+    const Ham1NodeWeight &
+    NodeWeightHam1(int node, MoveMode mode, MoveMirrored mirror) const;
+    const Vector3 &NodeWeight(int node, MoveMirrored mirror) const;
+    const Vector3 &NodeInverseScale(int node, MoveMirrored mirror) const;
+    const Ham2FrameWeight &FrameWeight(MoveMirrored mirror) const;
+    float QuantizedSeconds(float move_start_beat) const;
+    // void Init(float);
+    // void SetNodeTypeFlags(int);
+    // void SetNodeWeight(int, MoveMirrored, const Vector3 &);
+    void SetNodeScale(int mode, MoveMirrored mirror, const Vector3 &scale);
+    // void SetFrameWeight(MoveMirrored, const Ham2FrameWeight&);
+    void Save(BinStream &d) const;
+    void Load(BinStreamRev &d);
+
+    static const int kNumHam1Nodes = 16; // for DC1
 
 private:
     float mBeat; // 0x0
-    unsigned int mFlags; // 0x4
+    int mNodeTypeFlags; // 0x4
     Ham1NodeWeight mHam1NodeWeights[kNumMoveModes][kNumMoveMirrored][kNumHam1Nodes]; // 0x8
     Vector3 mNodeWeights[kNumMoveMirrored][kMaxNumErrorNodes]; // 0x508
     Vector3 mNodeScales[kNumMoveMirrored][kMaxNumErrorNodes]; // 0x928
@@ -84,37 +83,52 @@ public:
     REGISTER_OBJ(HamMove)
     static float sMinFrameDistBeats;
 
-    void SetTexture(RndTex *);
-    bool IsRest() const;
-    bool IsFinalPose() const;
-    bool SuppressGuideGesture() const;
-    bool SuppressPracticeOptions() const;
-    void RefreshBarks();
-    float Confusability(const HamMove *) const;
     const char *DisplayName() const;
-    float AdjustNormalizedPercentToConfusability(float, float);
-    float ConfusabilityWithMoveDataArray(const DataArray *);
-    std::vector<MoveFrame> &GetMoveFrames();
-    const std::vector<MoveFrame> &GetMoveFrames() const;
-    MoveMirrored Mirrored() const;
-    void Update(const HamMove *);
-    const FilterVersion *FilterVer() const;
-    const std::vector<float> *RatingOverride() const;
-    float PSNRThreshold(MoveRating) const;
-    FilterVersionType Version() const;
-    float PSNRToDetectFrac(float) const;
-
-    bool Scored() const { return mScored; }
-    DancerSequence *GetDancerSequence() const { return mDancerSeq; }
     RndTex *Tex() const { return mTex; }
     RndTex *SmallTex() const { return mSmallTex; }
+    bool Scored() const { return mScored; }
+    bool IsRest() const;
+    bool IsFinalPose() const;
+    const std::vector<MoveFrame> &GetMoveFrames() const;
+    std::vector<MoveFrame> &GetMoveFrames();
+    //  public: HamMove* Mirror();
+    MoveMirrored Mirrored() const;
+    bool SuppressGuideGesture() const;
+    bool SuppressPracticeOptions() const;
+    //  public: bool OmitMinigame() const;
+    const std::vector<float> *RatingOverride() const;
+    //  public: bool ShoulderDisplacements() const;
+    float PSNRThreshold(MoveRating r) const;
+    float PSNRToDetectFrac(float psnr) const;
+    float Confusability(const HamMove *move) const;
+    //  public: bool Paradiddle();
+    //  public: Difficulty GetDifficulty();
+    FilterVersionType Version() const;
+    const FilterVersion *FilterVer() const;
+    void SetTexture(RndTex *tex);
+    //  public: void SetScored(bool);
+    //  public: void SetPSNRThresholds(float*);
+    //  public: void AddMoveFrame(const MoveFrame&);
+    //  public: void ClearConfusability();
+    //  public: void SetConfusability(const HamMove*, float);
+    void Update(const HamMove *altMove);
+    void RefreshBarks();
+    float
+    AdjustNormalizedPercentToConfusability(float normalized_pct, float confusability);
+    float ConfusabilityWithMoveDataArray(const DataArray *moves);
+    //  public: bool IsLoopable();
+    //  public: TextureState TexState() const;
+    // LocalizedName *FindName(Symbol);
 
 protected:
     HamMove();
 
+    float FindConfusabilty(const HamMove *move) const;
+    //  protected: float RangedDetectionFrac(int32_t, int32_t) const;
+    //  protected: float BeatWithinBar(float) const;
+    //  protected: const char* FindNameStr(Symbol);
+    void SetName(Symbol lang, const char *str);
     void SyncMirror();
-    float FindConfusabilty(const HamMove *) const;
-    void SetName(Symbol, const char *);
 
     /** "Move to mirror" */
     ObjPtr<HamMove> mMirror; // 0x30
@@ -154,6 +168,7 @@ protected:
     /** If true, members set in Update(const HamMove*)
         will not be overwritten from a call to Load(BinStream&). */
     bool mUpdateOverride; // 0xd0
+public:
     /** "id used when comparing to other moves" */
     Hmx::CRC mConfusabilityID; // 0xd4
     std::map<Hmx::CRC, float> mConfusabilities; // 0xd8

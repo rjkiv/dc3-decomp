@@ -92,7 +92,7 @@ float DetectFrame::LimbPSNR(const FilterVersion *filter_version, int limb_flags)
     float f13 = 0;
     float f12 = 0;
     int numNodes = filter_version->NumNodes();
-    unsigned int mfFlags = mMoveFrame->Flags();
+    unsigned int mfFlags = mMoveFrame->NodeTypeFlags();
     for (int i = 0; i < numNodes; i++) {
         ErrorNode *curErrorNode = filter_version->mNodes[i];
         if ((limb_flags == -1 || curErrorNode->GetFeedbackLimbs() & limb_flags)
