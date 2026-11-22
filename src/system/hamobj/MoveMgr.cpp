@@ -794,3 +794,74 @@ void MoveMgr::ComputeLoadedMoveSet() {
         }
     }
 }
+
+void MoveMgr::FillInRoutineAt(int player, int measure) {
+    const MoveParent *mp = mRoutineParents[player][measure];
+    if (mp) {
+        const MoveVariant *preferredMV = GetRoutinePreferredVariant(player, measure);
+        auto &pair = mRoutine[player].at(measure);
+        pair = std::make_pair(nullptr, nullptr);
+        if (measure > 0) {
+            auto &prevPair = mRoutine[player][measure - 1];
+            const MoveParent *prevParent = mRoutineParents[player][measure - 1];
+            const MoveVariant *prevPreferred =
+                GetRoutinePreferredVariant(player, measure - 1);
+            if (!prevPreferred) {
+                prevPreferred = prevPair.first;
+            }
+            if (!mWholeMoveGraph.FindVariantPair(
+                    prevPair.second,
+                    pair.first,
+                    prevParent,
+                    mp,
+                    prevPreferred,
+                    preferredMV,
+                    mPreferredSong,
+                    false
+                )) {
+                prevPair.second = prevPreferred ? prevPreferred : prevPair.first;
+            }
+        }
+        if (measure < mRoutineParents[player].size() - 1) {
+            auto &nextPair = mRoutine[player][measure + 1];
+            const MoveParent *nextParent = mRoutineParents[player][measure + 1];
+            const MoveVariant *nextPreferred =
+                GetRoutinePreferredVariant(player, measure + 1);
+            if (!mWholeMoveGraph.FindVariantPair(
+                    pair.second,
+                    nextPair.first,
+                    mp,
+                    nextParent,
+                    preferredMV,
+                    nextPreferred,
+                    mPreferredSong,
+                    false
+                )) {
+                nextPair.first = nextPreferred ? nextPreferred : nextPair.second;
+            }
+        }
+        if (!pair.first) {
+            pair.first = preferredMV;
+            if (!preferredMV) {
+                pair.first = pair.second;
+                if (!pair.second) {
+                    pair.first = mp->mMoveVariants.front();
+                    if (!mPreferredSong.Null()) {
+                        for (int i = 0; i < (int)mp->mMoveVariants.size(); i++) {
+                            if (mp->mMoveVariants[i]->mSongName == mPreferredSong) {
+                                pair.first = mp->mMoveVariants[i];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (!pair.second) {
+            pair.second = preferredMV;
+            if (!preferredMV) {
+                pair.second = pair.first;
+            }
+        }
+    }
+}
