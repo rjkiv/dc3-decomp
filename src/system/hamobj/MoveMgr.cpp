@@ -865,3 +865,42 @@ void MoveMgr::FillInRoutineAt(int player, int measure) {
         }
     }
 }
+
+int MoveMgr::ComputeRandomChoiceSet(int iMoveIndex) {
+    MILO_LOG("MoveMgr: compute moves for measure %d:\n", iMoveIndex);
+    if (mTempSongChoices.size() < iMoveIndex + 1) {
+        mTempSongChoices.resize(iMoveIndex + 1);
+    }
+    auto &choices = mTempSongChoices[iMoveIndex];
+    std::set<const MoveParent *> possibleMoves;
+    ComputePotentialMoves(possibleMoves, iMoveIndex);
+    int numPossibleMoves = possibleMoves.size();
+    if (numPossibleMoves == 0) {
+        return 0;
+    }
+    int indices[4];
+    int max = 4;
+    if (numPossibleMoves <= 4) {
+        max = numPossibleMoves;
+        for (int i = 0; i < numPossibleMoves; i++) {
+            indices[i] = i;
+        }
+    } else {
+        for (int i = 0; i < 4; i++) {
+            indices[i] = RandomInt(0, numPossibleMoves);
+        }
+        std::sort(&indices[0], &indices[4]);
+    }
+
+    int ret = 0;
+    int idx = 0;
+    for (auto it = possibleMoves.begin(); it != possibleMoves.end() && ret < max;
+         ++it, ++idx) {
+        if (idx >= indices[ret]) {
+            MILO_LOG("\t%s\n", (*it)->GetName());
+            choices.mMoves[ret] = *it;
+            ret++;
+        }
+    }
+    return ret;
+}
