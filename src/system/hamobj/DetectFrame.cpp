@@ -98,10 +98,16 @@ float DetectFrame::LimbPSNR(const FilterVersion *filter_version, int limb_flags)
         if ((limb_flags == -1 || curErrorNode->GetFeedbackLimbs() & limb_flags)
             && curErrorNode->Type() & mfFlags) {
             const Vector3 &nodeWeight = mMoveFrame->NodeWeight(i, mMirrored);
-            float dot = Dot(nodeWeight, mBestNodeErrors[i]);
+            const Vector3 &errors = mBestNodeErrors[i];
+            float dot = errors.x * nodeWeight.x;
+            dot += errors.z * nodeWeight.z;
+            dot += errors.y * nodeWeight.y;
             f12 += dot * dot;
-            f13 += Length(nodeWeight);
-        }
+            float squaredLen = nodeWeight.x * nodeWeight.x;
+            squaredLen += nodeWeight.y * nodeWeight.y;
+            squaredLen += nodeWeight.z * nodeWeight.z;
+            f13 += sqrtf(squaredLen);
+            }
     }
     if (f13 != 0) {
         float max_mse = 1;
