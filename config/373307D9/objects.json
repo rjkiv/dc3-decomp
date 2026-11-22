@@ -335,7 +335,7 @@
             "system/hamobj/Ham.cpp": "Matching",
             "system/hamobj/HamAudio.cpp": "NonMatching",
             "system/hamobj/HamBattleData.cpp": "Matching",
-            "system/hamobj/HamCamShot.cpp": "NonMatching",
+            "system/hamobj/HamCamShot.cpp": "Matching",
             "system/hamobj/HamCamTransform.cpp": "Matching",
             "system/hamobj/HamCharacter.cpp": "NonMatching",
             "system/hamobj/HamDirector.cpp": "Matching",

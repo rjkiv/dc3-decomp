@@ -717,8 +717,9 @@ void HamCamShot::FlipTargetAnimGroups() {
     auto it = mTargets.begin();
     for (; it != mTargets.end() && it->mTarget != player0; ++it)
         ;
-    auto it2 = mTargets.begin();
-    for (; it2 != mTargets.end() && it2->mTarget != player1; ++it2)
+    auto &t = mTargets;
+    auto it2 = t.begin();
+    for (; it2 != t.end() && it2->mTarget != player1; ++it2)
         ;
     if (it != mTargets.end()) {
         it->mTarget = player1;
@@ -762,24 +763,12 @@ void HamCamShot::UpdateTargetsFlipped() {
                          || (mPlayerFlag == kHamPlayer0 && targetIdx % 2 == 1))
                         && character) {
                         if (clips) {
-                            Hmx::Object *findIntro =
-                                clips->Find<Hmx::Object>("crewbattle_intro", false);
-
-                            if (findIntro) {
+                            if (clips->Find<Hmx::Object>("crewbattle_intro", false)) {
                                 t.mAnimGroup = crewbattle_intro;
-                            } else {
-                                findIntro =
-                                    clips->Find<Hmx::Object>("BattleIntro", false);
-                                if (findIntro) {
-                                    t.mAnimGroup = BattleIntro;
-                                } else {
-                                    findIntro = clips->Find<Hmx::Object>(
-                                        "crew_battle_intro", false
-                                    );
-                                    if (findIntro) {
-                                        t.mAnimGroup = crew_battle_intro;
-                                    }
-                                }
+                            } else if (clips->Find<Hmx::Object>("BattleIntro", false)) {
+                                t.mAnimGroup = BattleIntro;
+                            } else if (clips->Find<Hmx::Object>("crew_battle_intro", false)) {
+                                t.mAnimGroup = crew_battle_intro;
                             }
                         }
                     }
