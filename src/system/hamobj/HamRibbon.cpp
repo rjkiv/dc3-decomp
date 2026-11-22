@@ -1,6 +1,7 @@
 #include "hamobj/HamRibbon.h"
 #include "math/Mtx.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/File.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Mesh.h"
@@ -204,4 +205,179 @@ void HamRibbon::ConstructMesh() {
 
         mMesh->Sync(0x3f);
     }
+}
+
+void HamRibbon::UpdateChase() {
+    if (!mFollowA) {
+        return;
+    }
+    float seconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
+
+    if (seconds < mLastSeconds) {
+        mHistory.erase(mHistory.begin(), mHistory.end());
+    }
+    unsigned int numAdded = 0;
+
+    if (mActive) {
+        Vector3 back = mFollowA->WorldXfm().v;
+
+        if (mFollowB) {
+            Interp(back, mFollowB->WorldXfm().v, mFollowWeight, back);
+        }
+        unsigned int numExpired = 0;
+        unsigned int historySize = mHistory.size();
+
+        Key<Transform> *volatile *historyStart =
+            reinterpret_cast<Key<Transform> *volatile *>(&mHistory);
+
+        for (unsigned int i = 0; i < historySize; i++) {
+            unsigned int offset = i * sizeof(Key<Transform>);
+            unsigned int base = reinterpret_cast<unsigned int>(*historyStart);
+            Key<Transform> *entry = reinterpret_cast<Key<Transform> *>(offset + base);
+
+            if (entry->frame >= seconds - mDecay) {
+                break;
+            }
+            numExpired++;
+        }
+
+        for (unsigned int i = numExpired; i < mHistory.size(); i++) {
+            Key<Transform> *base = *historyStart;
+
+            unsigned int dstOffset = (i - numExpired) * sizeof(Key<Transform>);
+
+            Key<Transform> *dst = reinterpret_cast<Key<Transform> *>(
+                dstOffset + reinterpret_cast<unsigned int>(base)
+            );
+
+            *dst = base[i];
+        }
+        mHistory.resize(mHistory.size() - numExpired);
+
+        Key<Transform> key;
+        key.frame = 0.0f;
+        key.value = Transform::GetIdentity();
+
+        if (mHistory.size() == 0) {
+            key.frame = seconds;
+            key.value.v = back;
+            mHistory.push_back(key);
+        } else {
+            float minDistanceSq = mWidth * mWidth * 0.125f;
+            float step = mDecay / (float)mNumSegments;
+
+            while (seconds > mHistory.back().frame + step) {
+                Key<Transform> *last = &*(mHistory.end() - 1);
+                float lastFrame = last->frame;
+                key.frame = lastFrame + step;
+                Interp(last->value.v, back, step / (seconds - lastFrame), key.value.v);
+                float dz = last->value.v.z - key.value.v.z;
+                float dx = last->value.v.x - key.value.v.x;
+                float dy = last->value.v.y - key.value.v.y;
+                float distanceSq = dy * dy + (dx * dx + dz * dz);
+
+                if (distanceSq < minDistanceSq) {
+                    last->frame = key.frame;
+                } else {
+                    mHistory.push_back(key);
+                    numAdded++;
+                }
+            }
+        }
+    }
+
+    int start = (int)mHistory.size() - (int)numAdded;
+    Vector3 bisect;
+    float angle;
+
+    for (int i = start; (unsigned int)i < mHistory.size(); i++) {
+        if (i == 0) {
+            continue;
+        }
+
+        Key<Transform> *volatile *orientationStart =
+            reinterpret_cast<Key<Transform> *volatile *>(&mHistory);
+        unsigned int offset = (unsigned int)i * sizeof(Key<Transform>);
+        unsigned int base = reinterpret_cast<unsigned int>(*orientationStart);
+        Key<Transform> *cur = reinterpret_cast<Key<Transform> *>(offset + base);
+        Key<Transform> *prev = cur - 1;
+        Vector3 &currentPos = cur->value.v;
+        const Vector3 &previousPos = prev->value.v;
+        Vector3 dir;
+        dir.x = currentPos.x - previousPos.x;
+        dir.y = currentPos.y - previousPos.y;
+        dir.z = currentPos.z - previousPos.z;
+        Normalize(dir, dir);
+        angle = -1.0f;
+
+        if (i > 2) {
+            const Vector3 &olderPos = (cur - 2)->value.v;
+            Vector3 lastDir;
+            lastDir.x = previousPos.x - olderPos.x;
+            lastDir.y = previousPos.y - olderPos.y;
+            lastDir.z = previousPos.z - olderPos.z;
+            float dot = lastDir.x * dir.x;
+            dot += lastDir.z * dir.z;
+            dot += lastDir.y * dir.y;
+            angle = acosf(Clamp(0.0f, 1.0f, dot));
+            Vector3 back = lastDir;
+            Scale(back, -1.0f, back);
+            Interp(dir, back, 0.5f, bisect);
+            Normalize(bisect, bisect);
+        }
+        static Vector3 sUp(0.0f, 0.0f, 1.0f);
+        Transform localXfm;
+        Invert(prev->value, localXfm);
+        Vector3 toLocal;
+        Multiply(currentPos, localXfm, toLocal);
+        Transform lookAt = Transform::GetIdentity();
+        lookAt.LookAt(toLocal, sUp);
+        Transform t;
+        Multiply(lookAt, prev->value.m, t);
+        Normalize(t.m, t.m);
+        t.v = currentPos;
+
+        if (angle != -1.0f) {
+            Hmx::Matrix3 inv;
+            Invert(t.m, inv);
+            float bx = bisect.x;
+            float by = bisect.y;
+            float bz = bisect.z;
+            const volatile Hmx::Matrix3 &vInv = inv;
+            float localX = vInv.y.x * by;
+            float localZ = by * vInv.y.z;
+            float localY = vInv.y.y * by;
+            localX += inv.x.x * bx;
+            localZ += inv.x.z * bx;
+            localY += inv.x.y * bx;
+            localX += inv.z.x * bz;
+            localZ += bz * vInv.z.z;
+            localY += vInv.z.y * bz;
+
+            bisect.z = localZ;
+            bisect.y = localY;
+            bisect.x = Clamp(0.0f, 1.0f, localX);
+
+            float localAngle = acosf(bisect.x);
+            float invCos = 1.0f / cosf(angle * 0.5f);
+            float doubledAngle = localAngle * 2.0f;
+            float c = cosf(doubledAngle);
+
+            Hmx::Matrix3 skew;
+            skew.x.z = sinf(doubledAngle) * (1.0f - invCos) * 0.5f;
+            skew.x.y = 0.0f;
+            skew.y.x = 0.0f;
+            skew.y.y = 1.0f;
+            skew.y.z = 0.0f;
+            skew.z.y = 0.0f;
+            skew.z.x = skew.x.z;
+            float correction = invCos - 1.0f;
+            skew.x.x = (c + 1.0f) * correction * 0.5f + 1.0f;
+            skew.z.z = (1.0f - c) * correction * 0.5f + 1.0f;
+            Multiply(skew, t.m, t.m);
+        }
+        cur->value.m = t.m;
+    }
+    UpdateMesh();
+    mLastSeconds = seconds;
 }
