@@ -462,10 +462,10 @@ void PoseFatalities::AddFatal(int player) {
     mPoseStartBeat[player] = mBeat;
     if (InStrikeAPose() && !DataVarExists("debug_pose_char")) {
         int cur = mFatalityIndex[player];
-        int rand;
-        do {
+        int rand = RandomInt(1, 9);
+        while (rand == cur) {
             rand = RandomInt(1, 9);
-        } while (rand == cur);
+        }
         mFatalityIndex[player] = rand;
     } else {
         mFatalityIndex[player]++;
@@ -499,9 +499,10 @@ void PoseFatalities::AddFatal(int player) {
             ;
         randClip = *it;
     } else {
-        randClip = driver->FindClip(
-            MakeString("pose_fatalities_%s", GetOutfitCharacter(hChar->Outfit()))
-        );
+        const char *clipName =
+            MakeString("pose_fatalities_%s", GetOutfitCharacter(hChar->Outfit()));
+        CharClip *c = driver->FindClip(clipName);
+        randClip = c;
     }
 lab5548:
     if (randClip) {

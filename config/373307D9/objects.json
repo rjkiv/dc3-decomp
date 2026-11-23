@@ -380,7 +380,7 @@
             "system/hamobj/OriginalChoreoRemixer.cpp": "NonMatching",
             "system/hamobj/PhotoSpotlightPositioner.cpp": "Matching",
             "system/hamobj/Pose.cpp": "Matching",
-            "system/hamobj/PoseFatalities.cpp": "NonMatching",
+            "system/hamobj/PoseFatalities.cpp": "Matching",
             "system/hamobj/PracticeOptionsProvider.cpp": "Matching",
             "system/hamobj/PracticeSection.cpp": "Matching",
             "system/hamobj/RhythmBattle.cpp": "Matching",
