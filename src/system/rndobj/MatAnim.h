@@ -14,7 +14,7 @@ class RndMatAnim : public RndAnimatable {
 public:
     class TexPtr : public ObjPtr<RndTex> {
     public:
-        TexPtr(RndTex *tex = nullptr) : ObjPtr<RndTex>(sOwner, tex) {}
+        TexPtr(RndTex *tex = nullptr) : ObjPtr<RndTex>(nullptr, tex) { mOwner = sOwner; }
     };
 
     class TexKeys : public Keys<TexPtr, RndTex *> {
@@ -23,6 +23,7 @@ public:
         void operator=(const TexKeys &);
         int Add(RndTex *, float, bool);
 
+    private:
         Hmx::Object *mOwner;
     };
 

@@ -413,11 +413,6 @@ public:
     // bool AllSameValues() const;
 };
 
-template <class T1, class T2>
-BinStreamRev &operator>>(BinStreamRev &bs, Keys<T1, T2> &keys) {
-    return bs >> (std::vector<Key<T1> > &)keys;
-}
-
 /** Scale keyframes by a supplied multiplier.
  * @param [in] keys The collection of keys to multiply the frames of.
  * @param [in] scale The multiplier value.
