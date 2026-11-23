@@ -187,15 +187,17 @@ void RndMultiMesh::CollideList(const Segment &seg, std::list<Collision> &colls) 
                 if (mMesh->CollideShowing(seg, f, pl)) {
                     RndMultiMeshProxy *proxy = nullptr;
                     FOREACH (sit, sProxyPool) {
-                        proxy = sit->first;
-                        if (proxy->MultiMesh() == this && proxy->Index() == it)
+                        if (sit->first->MultiMesh() == this
+                            && sit->first->Index() == it) {
+                            proxy = sit->first;
                             break;
+                        }
                     }
                     if (!proxy) {
                         FOREACH (sit, sProxyPool) {
-                            if (stamp != sit->second) {
-                                proxy = sit->first;
-                                if (!proxy->Children().size()) {
+                            if (sit->second != stamp) {
+                                if (!sit->first->HasRefs()) {
+                                    proxy = sit->first;
                                     sit->second = stamp;
                                     break;
                                 }
