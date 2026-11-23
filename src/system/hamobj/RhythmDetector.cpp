@@ -679,22 +679,20 @@ void RhythmDetector::ProcessFrames() {
         float time = frames.front().mBeat;
         EraseNewerData(mRecordData.mFrameData, time);
         EraseNewerData(mFrameData, time);
-        Frame &f13 = mLastFrame;
         FOREACH (it, frames) {
-            Frame &cur = *it;
-            mFrameData.push_back(cur);
-            int i7 = f13.mBeat * 10;
-            int i11 = ((int)(cur.mBeat * 10) - i7) % 40;
+            mFrameData.push_back(*it);
+            int lastBeat = mLastFrame.mBeat * 10;
+            int curBeat = it->mBeat * 10;
+            int i11 = (curBeat - lastBeat) % 40;
             if (!mLastFrame.mJointVelocities.empty()) {
-                b2 = true;
                 for (int i = 0; i < i11; i++) {
-                    unk38.push_back(
-                        BlendFrameDataToBeat(f13, cur, (float)(i + i7 + 1) / 10)
-                    );
+                    unk38.push_back(BlendFrameDataToBeat(
+                        mLastFrame, *it, (float)(i + lastBeat + 1) / 10
+                    ));
+                    b2 = true;
                 }
             }
-            f13 = cur;
-            mLastFrame.mJointVelocities = cur.mJointVelocities;
+            mLastFrame = *it;
         }
         if (frames.size() > 1) {
             frames.pop_back();
@@ -716,18 +714,24 @@ void RhythmDetector::ProcessFrames() {
             int i7 = typeDef->FindInt(analyze_period_count);
             freqArr->Int(freqArr->Size() - 1); // whoopsies
             int i11 = freqArr->Int(freqArr->Size() - 1);
-            f1 = (float)i11 * (float)(i7 - 1) * 2;
+            float f7 = i7 - 1;
+            float f11 = i11;
+            f1 = f11 * f7 * 2;
         } else {
             f1 = 0;
         }
         auto found = mFrameData.end();
+        float beatThreshold = mFrameData.back().mBeat - f1;
         FOREACH (it, mFrameData) {
-            if (it->mBeat >= mFrameData.back().mBeat - f1) {
-                found = it;
+            if (it->mBeat >= beatThreshold) {
                 break;
+            } else {
+                found = it;
             }
         }
-        mFrameData.erase(found, mFrameData.end());
+        if (found != mFrameData.end()) {
+            mFrameData.erase(mFrameData.begin(), ++found);
+        }
         if (b2) {
             static Symbol blank("");
             AnalyzeData(
@@ -739,7 +743,7 @@ void RhythmDetector::ProcessFrames() {
                 false,
                 blank,
                 false,
-                mGraphVelX,
+                nullptr,
                 -1,
                 nullptr
             );

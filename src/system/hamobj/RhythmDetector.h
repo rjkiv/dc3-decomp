@@ -15,9 +15,8 @@
 class RhythmDetector : public RndPollable, public SkeletonCallback {
 public:
     struct Frame {
-        float mBeat; // 0x0 time created?
-        std::vector<Vector3> mJointVelocities; // 0x4 - could be vec<vec3> - ghidra
-                                               // doesnt make it clear
+        float mBeat; // 0x0
+        std::vector<Vector3> mJointVelocities; // 0x4
     };
 
     struct RecordData {
