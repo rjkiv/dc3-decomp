@@ -66,11 +66,13 @@ void RndScreenMask::DrawShowing() {
     if (TheRnd.DrawMode() == Rnd::kDrawNormal) {
         float fw = TheRnd.Width();
         float fh = TheRnd.Height();
-        if (RndCam::Current()->TargetTex()) {
+        RndCam *cur = RndCam::Current(); // stupid and
+        int tex = (int)cur->TargetTex(); // i hate it
+        if (tex) {
             fw = RndCam::Current()->TargetTex()->Width();
             fh = RndCam::Current()->TargetTex()->Height();
         }
-        if (!mUseCurrentRect && RndCam::Current()->TargetTex()) {
+        if (!mUseCurrentRect && tex) {
             if (RndCam::Current()->ScreenRect() == Hmx::Rect(0, 0, 1, 1)) {
                 // do nothing
             } else {
@@ -80,8 +82,8 @@ void RndScreenMask::DrawShowing() {
                 );
             }
         }
-        RndCam *cur = RndCam::Current();
-        if (!mUseCurrentRect && !cur->TargetTex()) {
+        if (!mUseCurrentRect && !RndCam::Current()->TargetTex()) {
+            cur = RndCam::Current();
             TheRnd.GetDefaultCam()->Select();
             Hmx::Rect inv = TheHiResScreen.InvScreenRect();
             Hmx::Rect rndRect;

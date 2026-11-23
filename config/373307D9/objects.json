@@ -626,7 +626,7 @@
             "system/rndobj/Rnd.cpp": "Matching",
             "system/rndobj/Rnd_NG.cpp": "Matching",
             "system/rndobj/SIVideo.cpp": "Matching",
-            "system/rndobj/ScreenMask.cpp": "NonMatching",
+            "system/rndobj/ScreenMask.cpp": "Matching",
             "system/rndobj/Set.cpp": "Matching",
             "system/rndobj/Shader.cpp": "NonMatching",
             "system/rndobj/ShaderMgr.cpp": "Matching",
