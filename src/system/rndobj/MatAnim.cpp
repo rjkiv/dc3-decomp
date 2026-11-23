@@ -1,9 +1,12 @@
 #include "rndobj/MatAnim.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/File.h"
 #include "rndobj/Anim.h"
+#include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
 #include "utl/BinStream.h"
+#include "utl/Loader.h"
 
 Hmx::Object *RndMatAnim::sOwner;
 
@@ -54,9 +57,9 @@ BEGIN_COPYS(RndMatAnim)
     COPY_SUPERCLASS(Hmx::Object)
     COPY_SUPERCLASS(RndAnimatable)
     COPY_MEMBER_FROM(m, mMat)
-    if (ty == kCopyShallow || (ty == kCopyFromMax && m->mKeysOwner != m))
+    if (ty == kCopyShallow || (ty == kCopyFromMax && m->mKeysOwner != m)) {
         mKeysOwner = m->mKeysOwner.Ptr();
-    else {
+    } else {
         sOwner = this;
         mKeysOwner = this;
         mColorKeys = m->mKeysOwner->mColorKeys;
@@ -107,7 +110,7 @@ BEGIN_LOADS(RndMatAnim)
         }
     }
     if (d.rev > 6) {
-        d >> mTransKeys >> mScaleKeys >> mRotKeys >> (Keys<TexPtr, RndTex *> &)mTexKeys;
+        d >> mTransKeys >> mScaleKeys >> mRotKeys >> mTexKeys;
     }
 END_LOADS
 
@@ -215,7 +218,33 @@ void RndMatAnim::LoadStage(BinStreamRev &d) {
         d >> mTransKeys >> mScaleKeys >> mRotKeys;
     }
     if (d.rev > 1) {
-        d >> (Keys<TexPtr, RndTex *> &)mTexKeys;
+        d >> mTexKeys;
+    }
+}
+
+void RndMatAnim::LoadStages(BinStreamRev &d) {
+    unsigned int numStages;
+    d >> numStages;
+    if (numStages != 0) {
+        bool oldeditmode = TheLoadMgr.EditMode();
+        TheLoadMgr.SetEditMode(true);
+        RndMatAnim *it = this;
+        int i = 1;
+        while (true) {
+            it->LoadStage(d);
+            if (i == numStages)
+                break;
+            else if (EndFrame()) {
+                const char *mnm = MakeString("%s_%d.mnm", FileGetBase(Name()), i);
+                MILO_NOTIFY("Splitting out %s from %s", mnm, PathName(this));
+                it = Dir()->New<RndMatAnim>(mnm);
+                const char *shaderName =
+                    MakeString("%s_%d", FileGetBase(mMat->Name()), i);
+                it->mMat = LookupOrCreateMat(shaderName, Dir());
+            }
+            i++;
+        }
+        TheLoadMgr.SetEditMode(oldeditmode);
     }
 }
 
