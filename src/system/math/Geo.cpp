@@ -431,6 +431,28 @@ bool Intersect(const Plane &plane, const Box &box) {
     return false;
 }
 
+bool Intersect(
+    const Vector3 &start, const Vector3 &dir, const Box &box, float &tMin, float &tMax
+) {
+    tMin = 1.1920929e-07;
+    tMax = 3.4028235e+38; // where tf do these numbers come from
+    for (unsigned int i = 0; i < 3; i++) {
+        float f1 = 1.0f / dir[i];
+        float f2 = (box.mMin[i] - start[i]) * f1;
+        float f3 = (box.mMax[i] - start[i]) * f1;
+        if (f2 > f3) {
+            float temp = f2;
+            f2 = f3;
+            f3 = temp;
+        }
+        tMin = Max(f2, tMin);
+        tMax = Min(f3, tMax);
+        if (tMin > tMax)
+            return false;
+    }
+    return true;
+}
+
 void Frustum::Set(float nearDist, float farDist, float yFov, float yRatio) {
     front.Set(0, 1, 0, -nearDist);
     back.Set(0, -1, 0, farDist);
