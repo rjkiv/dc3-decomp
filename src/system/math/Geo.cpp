@@ -401,6 +401,36 @@ bool Intersect(const Segment &seg, const Triangle &tri, bool b, float &out) {
     return true;
 }
 
+bool Intersect(const Plane &plane, const Box &box) {
+    Vector3 half(
+        (box.mMax.x - box.mMin.x) * 0.5f,
+        (box.mMax.y - box.mMin.y) * 0.5f,
+        (box.mMax.z - box.mMin.z) * 0.5f
+    );
+    Vector3 centre;
+    Add(box.mMin, half, centre);
+    Vector3 vExtents(box.mMax.x - centre.x, box.mMax.y - centre.y, box.mMax.z - centre.z);
+
+    Vector3 vMinVal, vMaxVal;
+    const Vector3 &normal = plane.AsVector4().AsVector3();
+    for (unsigned int i = 0; i < 3; i++) {
+        if (normal[i] > 0.0f) {
+            vMinVal[i] = -vExtents[i];
+            vMaxVal[i] = vExtents[i];
+        } else {
+            vMinVal[i] = vExtents[i];
+            vMaxVal[i] = -vExtents[i];
+        }
+    }
+    if (plane.Dot(vMinVal) > 0.0f)
+        return false;
+
+    if (plane.Dot(vMaxVal) >= 0.0f)
+        return true;
+
+    return false;
+}
+
 void Frustum::Set(float nearDist, float farDist, float yFov, float yRatio) {
     front.Set(0, 1, 0, -nearDist);
     back.Set(0, -1, 0, farDist);
