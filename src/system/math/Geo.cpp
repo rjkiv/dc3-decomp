@@ -350,35 +350,34 @@ void Intersect(const Transform &trans, const Plane &plane, Hmx::Ray &ray) {
     }
 }
 
-bool Intersect(const Segment &seg, const Triangle &tri, bool b, float &out) {
+bool Intersect(const Segment &seg, const Triangle &tri, bool cull, float &dist) {
+    const Vector3 &triFrameX = tri.frame.x;
+    const Vector3 &triFrameY = tri.frame.y;
     Vector3 segDirection(
         seg.end.x - seg.start.x, seg.end.y - seg.start.y, seg.end.z - seg.start.z
     );
     const Vector3 &triFrameZ = tri.frame.z;
     float segDirDot = triFrameZ.x * segDirection.x + triFrameZ.y * segDirection.y
         + triFrameZ.z * segDirection.z;
-    if (fabs(segDirDot) < 0.0001f || b && segDirDot > 0.0f) {
+    if (fabs(segDirDot) < 0.0001f || cull && segDirDot > 0.0f) {
         return false;
     }
 
     Vector3 vec3A(
-        seg.start.x - tri.origin.x, seg.start.y - tri.origin.y, seg.start.z - tri.origin.z
+        seg.start.z - tri.origin.z, seg.start.x - tri.origin.x, seg.start.y - tri.origin.y
     );
-    float tempDot = triFrameZ.x * vec3A.x + triFrameZ.y * vec3A.y + triFrameZ.z * vec3A.z;
-    float t = -(tempDot / segDirDot);
-    out = t;
+    float tempDot =
+        -(triFrameZ.y * vec3A.z + (triFrameZ.z * vec3A.x + triFrameZ.x * vec3A.y));
+    float t = tempDot / segDirDot;
+    dist = t;
     if (t < 0.0f || t > 1.0f) {
         return false;
     }
 
-    Vector3 vec3B(
-        (seg.start.x + segDirection.x * t) - tri.origin.x,
-        (seg.start.y + segDirection.y * t) - tri.origin.y,
-        (seg.start.z + segDirection.z * t) - tri.origin.z
-    );
-
-    const Vector3 &triFrameX = tri.frame.x;
-    const Vector3 &triFrameY = tri.frame.y;
+    Vector3 scaled, hit, vec3B;
+    Scale(segDirection, t, scaled);
+    Add(seg.start, scaled, hit);
+    Subtract(hit, tri.origin, vec3B);
 
     float dotXX =
         triFrameX.x * triFrameX.x + triFrameX.y * triFrameX.y + triFrameX.z * triFrameX.z;
