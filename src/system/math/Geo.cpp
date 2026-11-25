@@ -321,11 +321,21 @@ void MultiplyEq(BSPNode *n, const Transform &t) {
 }
 
 void Intersect(const Hmx::Ray &s1, const Hmx::Ray &s2, Vector2 &v) {
-    float cross = Cross(s2.dir, s1.dir);
+    float base1X = s1.base.x;
+    float base1Y = s1.base.y;
+    float base2X = s2.base.x;
+    float base2Y = s2.base.y;
+    float dir1X = s1.dir.x;
+    float dir2X = s2.dir.x;
+    float dir1Y = s1.dir.y;
+    float dir2Y = s2.dir.y;
+
+    float cross = dir1Y * dir2X - dir2Y * dir1X;
     if (cross != 0) {
-        Vector2 baseDiff(s1.base.x - s2.base.x, s1.base.y - s2.base.y);
-        cross = Cross(baseDiff, s1.dir) / cross;
-        v.Set(cross * s2.dir.x + s2.base.x, cross * s2.dir.y + s2.base.y);
+        float baseX = base1X - base2X;
+        float baseY = base2Y - base1Y;
+        cross = (baseX * dir1Y + baseY * dir1X) / cross;
+        v.Set(cross * dir2X + base2X, cross * dir2Y + base2Y);
     } else {
         v = s1.base;
     }
@@ -448,6 +458,147 @@ bool Intersect(
         tMax = Min(f3, tMax);
         if (tMin > tMax)
             return false;
+    }
+    return true;
+}
+
+bool Intersect(const Segment &seg, const Sphere &s) {
+    float startZ = seg.start.z;
+    float startX = seg.start.x;
+    float startY = seg.start.y;
+    float endZ = seg.end.z;
+    float endX = seg.end.x;
+    float endY = seg.end.y;
+    float centreZ = s.center.z;
+    float centreX = s.center.x;
+    float centreY = s.center.y;
+    Vector3 toCentre(centreX - startX, centreY - startY, centreZ - startZ);
+    Vector3 dir;
+    Subtract(seg.end, seg.start, dir);
+    float dirSq = LengthSquared(dir);
+    if (dirSq == 0.0f) {
+        return false;
+    }
+    float t = (dir.y * toCentre.y + dir.z * toCentre.z + dir.x * toCentre.x) / dirSq;
+    t = Clamp(0.0f, 1.0f, t);
+    Interp(seg.start, seg.end, t, dir);
+    Vector3 diff;
+    Subtract(dir, s.center, diff);
+    float rad = s.radius;
+    if (LengthSquared(diff) > rad * rad) {
+        return false;
+    }
+    return true;
+}
+
+void TriangleBoxProjectHelper(
+    const Vector3 &axis,
+    const Vector3 &v0,
+    const Vector3 &v1,
+    const Vector3 &v2,
+    float &dot0,
+    float &dot1,
+    float &dot2
+) {
+    float z = axis.z;
+    float p1 = z * v1.z;
+    float p2 = z * v2.z;
+    float p0 = z * v0.z;
+
+    float x = axis.x;
+    p1 += x * v1.x;
+    p2 += x * v2.x;
+    p0 += x * v0.x;
+
+    float y = axis.y;
+    p1 += y * v1.y;
+    p2 += y * v2.y;
+    p0 += y * v0.y;
+
+    dot0 = p0;
+    dot1 = p1;
+    dot2 = p2;
+}
+
+bool Intersect(const Triangle &tri, const Box &box) {
+    float halfX = (box.mMax.x - box.mMin.x) * 0.5f;
+    float halfY = (box.mMax.y - box.mMin.y) * 0.5f;
+    float halfZ = (box.mMax.z - box.mMin.z) * 0.5f;
+    Vector3 vert1;
+    vert1 = tri.origin;
+    Vector3 vert2, vert3;
+    Add(tri.origin, tri.frame.x, vert2);
+    Add(tri.origin, tri.frame.y, vert3);
+    Vector3 centre(box.mMin.x + halfX, box.mMin.y + halfY, box.mMin.z + halfZ);
+    Vector3 vert3Vec;
+    Subtract(vert3, centre, vert3Vec);
+    Vector3 vert1Vec(vert1.x - centre.x, vert1.y - centre.y, vert1.z - centre.z);
+    Vector3 vert2Vec(vert2.x - centre.x, vert2.y - centre.y, vert2.z - centre.z);
+    float minX = Min(vert1Vec.x, vert2Vec.x);
+    float maxX = Max(vert1Vec.x, vert2Vec.x);
+    MinEq(minX, vert3Vec.x);
+    MaxEq(maxX, vert3Vec.x);
+    if (minX > halfX || maxX < -halfX) {
+        return false;
+    }
+    float minY = Min(vert1Vec.y, vert2Vec.y);
+    float maxY = Max(vert1Vec.y, vert2Vec.y);
+    MinEq(minY, vert3Vec.y);
+    MaxEq(maxY, vert3Vec.y);
+    if (minY > halfY || maxY < -halfY) {
+        return false;
+    }
+    float minZ = Min(vert1Vec.z, vert2Vec.z);
+    float maxZ = Max(vert1Vec.z, vert2Vec.z);
+    MinEq(minZ, vert3Vec.z);
+    MaxEq(maxZ, vert3Vec.z);
+    if (minZ > halfZ || maxZ < -halfZ) {
+        return false;
+    }
+    Plane triPlane(vert1Vec, tri.frame.z);
+    if (!Intersect(triPlane, box)) {
+        return false;
+    }
+    Vector3 edge0(
+        vert2Vec.x - vert1Vec.x, vert2Vec.y - vert1Vec.y, vert2Vec.z - vert1Vec.z
+    );
+    Vector3 edge1(
+        vert3Vec.x - vert2Vec.x, vert3Vec.y - vert2Vec.y, vert3Vec.z - vert2Vec.z
+    );
+    Vector3 edge2(
+        vert1Vec.x - vert3Vec.x, vert1Vec.y - vert3Vec.y, vert1Vec.z - vert3Vec.z
+    );
+    Vector3 unkVec1[9] = {
+        Vector3(0.0f, -edge0.z, edge0.y), Vector3(0.0f, -edge1.z, edge1.y),
+        Vector3(0.0f, -edge2.z, edge2.y), Vector3(edge0.z, 0.0f, -edge0.x),
+        Vector3(edge1.z, 0.0f, -edge1.x), Vector3(edge2.z, 0.0f, -edge2.x),
+        Vector3(-edge0.y, edge0.x, 0.0f), Vector3(-edge1.y, edge1.x, 0.0f),
+        Vector3(-edge2.y, edge2.x, 0.0f),
+    };
+    float unkFloatArr[9];
+    for (unsigned int i = 0; i < 9; i++) {
+        float f1 = unkVec1[i][0];
+        if (f1 <= 0.0f) {
+            f1 = -f1;
+        }
+        float f2 = unkVec1[i][1];
+        if (f2 <= 0.0f) {
+            f2 = -f2;
+        }
+        float projZ = unkVec1[i][2];
+        if (projZ <= 0.0f) {
+            projZ = -projZ;
+        }
+        unkFloatArr[i] = f2 * halfY + projZ * halfZ + f1 * halfX;
+        float dot0, dot1, dot2;
+        TriangleBoxProjectHelper(
+            unkVec1[i], vert1Vec, vert2Vec, vert3Vec, dot0, dot1, dot2
+        );
+        float maxDot = Max(dot0, Max(dot1, dot2));
+        float minDot = Min(dot0, Min(dot1, dot2));
+        if (maxDot < -unkFloatArr[i] || minDot > unkFloatArr[i]) {
+            return false;
+        }
     }
     return true;
 }
