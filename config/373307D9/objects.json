@@ -638,7 +638,7 @@
             "system/rndobj/SoftParticles.cpp": "Matching",
             "system/rndobj/Spline.cpp": "NonMatching",
             "system/rndobj/Tex.cpp": "Matching",
-            "system/rndobj/TexBlendController.cpp": "NonMatching",
+            "system/rndobj/TexBlendController.cpp": "Matching",
             "system/rndobj/TexBlender.cpp": "NonMatching",
             "system/rndobj/TexProc.cpp": "Matching",
             "system/rndobj/TexRenderer.cpp": "NonMatching",

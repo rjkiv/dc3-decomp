@@ -28,9 +28,10 @@ public:
     NEW_OBJ(RndTexBlendController)
     REGISTER_OBJ(RndTexBlendController)
 
-    BlendState GetBlendState(float &factor, float scale) const;
-    RndTex *GetOverrideMap() const { return mOverrideMap; }
+    BlendState GetBlendState(float &factor, const float scale) const;
     RndMesh *GetMesh() const { return mMesh; }
+    RndTex *GetOverrideMap() const { return mOverrideMap; }
+    void SetOverrideMap(RndTex *tex) { mOverrideMap = tex; }
 
 protected:
     RndTexBlendController();

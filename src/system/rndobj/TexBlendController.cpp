@@ -73,12 +73,14 @@ bool RndTexBlendController::IsValid() const {
         return false;
     }
     if (!mOverrideMap) {
-        if (mMinDistance > mReferenceDistance && mMaxDistance < mReferenceDistance) {
-            return mObject1 && mObject2 && mReferenceDistance > 0;
-        }
+        bool distCheck =
+            !(mMinDistance > mReferenceDistance && mMaxDistance < mReferenceDistance);
+        return mObject1 && mObject2 && mReferenceDistance > 0 && distCheck;
     }
     return true;
 }
+
+static const float kMinRatio = (1.0f / 255.0f);
 
 bool RndTexBlendController::GetCurrentDistance(float &dist) const {
     if (mObject1 && mObject2) {
@@ -111,4 +113,58 @@ void RndTexBlendController::UpdateAllDistances() {
     UpdateReferenceDistance();
     mMinDistance = mReferenceDistance * 0.5f;
     mMaxDistance = mReferenceDistance * 1.5f;
+}
+
+RndTexBlendController::BlendState
+RndTexBlendController::GetBlendState(float &factor, const float scale) const {
+    BlendState ret = kBlendStateNone;
+    factor = 0;
+    if (IsValid()) {
+        if (mOverrideMap) {
+            factor = 1;
+            ret = kBlendStateOverride;
+        } else {
+            float dist;
+            if (GetCurrentDistance(dist)) {
+                float ref;
+                bool refCheck;
+                if (mReferenceDistance > 0) {
+                    ref = mReferenceDistance;
+                    refCheck = true;
+                } else {
+                    ref = 0;
+                    refCheck = false;
+                }
+                if (refCheck) {
+                    if (dist < ref) {
+                        float f7 = ref - mMinDistance;
+                        if (f7 > 0) {
+                            ret = kBlendStateNear;
+                            ref -= Max(dist, mMinDistance);
+                            factor = ref / f7;
+                        }
+                    } else if (dist > ref) {
+                        float f7 = mMaxDistance - ref;
+                        if (f7 > 0) {
+                            ret = kBlendStateFar;
+                            ref = Min(dist, mMaxDistance) - ref;
+                            factor = ref / f7;
+                        }
+                    }
+                }
+            }
+            float fsq = factor * factor;
+            float fcubed = fsq * factor;
+            float tmp = fcubed * -2;
+            tmp += fsq * 3;
+            factor = tmp;
+        }
+    }
+    factor *= scale;
+    factor = Clamp(0.0f, 1.0f, factor);
+    factor = (unsigned char)(factor * 255.0f) * kMinRatio;
+    if (factor < kMinRatio) {
+        ret = kBlendStateNone;
+    }
+    return ret;
 }
