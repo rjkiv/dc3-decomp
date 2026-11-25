@@ -216,7 +216,7 @@ void HamRibbon::UpdateChase() {
     if (seconds < mLastSeconds) {
         mHistory.erase(mHistory.begin(), mHistory.end());
     }
-    unsigned int numAdded = 0;
+    int numAdded = 0;
 
     if (mActive) {
         Vector3 back = mFollowA->WorldXfm().v;
@@ -224,33 +224,22 @@ void HamRibbon::UpdateChase() {
         if (mFollowB) {
             Interp(back, mFollowB->WorldXfm().v, mFollowWeight, back);
         }
-        unsigned int numExpired = 0;
-        unsigned int historySize = mHistory.size();
+        int numExpired = 0;
+        int historySize = mHistory.size();
 
-        Key<Transform> *volatile *historyStart =
-            reinterpret_cast<Key<Transform> *volatile *>(&mHistory);
+        Key<Transform> *historyStart = reinterpret_cast<Key<Transform> *>(&mHistory);
 
-        for (unsigned int i = 0; i < historySize; i++) {
-            unsigned int offset = i * sizeof(Key<Transform>);
-            unsigned int base = reinterpret_cast<unsigned int>(*historyStart);
-            Key<Transform> *entry = reinterpret_cast<Key<Transform> *>(offset + base);
-
-            if (entry->frame >= seconds - mDecay) {
+        for (int i = 0; i < historySize; i++) {
+            const Key<Transform> &entry = mHistory[i];
+            if (entry.frame >= seconds - mDecay) {
                 break;
             }
             numExpired++;
         }
 
-        for (unsigned int i = numExpired; i < mHistory.size(); i++) {
-            Key<Transform> *base = *historyStart;
-
-            unsigned int dstOffset = (i - numExpired) * sizeof(Key<Transform>);
-
-            Key<Transform> *dst = reinterpret_cast<Key<Transform> *>(
-                dstOffset + reinterpret_cast<unsigned int>(base)
-            );
-
-            *dst = base[i];
+        for (int i = numExpired; i < mHistory.size(); i++) {
+            Key<Transform> *base = &mHistory[0];
+            base[i - numExpired] = base[i];
         }
         mHistory.resize(mHistory.size() - numExpired);
 
@@ -264,7 +253,7 @@ void HamRibbon::UpdateChase() {
             mHistory.push_back(key);
         } else {
             float minDistanceSq = mWidth * mWidth * 0.125f;
-            float step = mDecay / (float)mNumSegments;
+            float step = mDecay / mNumSegments;
 
             while (seconds > mHistory.back().frame + step) {
                 Key<Transform> *last = &*(mHistory.end() - 1);
@@ -286,20 +275,16 @@ void HamRibbon::UpdateChase() {
         }
     }
 
-    int start = (int)mHistory.size() - (int)numAdded;
+    int start = mHistory.size() - numAdded;
     Vector3 bisect;
     float angle;
 
-    for (int i = start; (unsigned int)i < mHistory.size(); i++) {
+    for (int i = start; i < mHistory.size(); i++) {
         if (i == 0) {
             continue;
         }
 
-        Key<Transform> *volatile *orientationStart =
-            reinterpret_cast<Key<Transform> *volatile *>(&mHistory);
-        unsigned int offset = (unsigned int)i * sizeof(Key<Transform>);
-        unsigned int base = reinterpret_cast<unsigned int>(*orientationStart);
-        Key<Transform> *cur = reinterpret_cast<Key<Transform> *>(offset + base);
+        Key<Transform> *cur = &mHistory[i];
         Key<Transform> *prev = cur - 1;
         Vector3 &currentPos = cur->value.v;
         const Vector3 &previousPos = prev->value.v;
