@@ -78,6 +78,9 @@ void HamIKSkeleton::NeutralWorldXfm(RndTransformable *bone, Transform &world) {
 }
 
 void HamIKSkeleton::SetBone(RndTransformable *bone, RndTransformable *neutral) {
+    if (bone == neutral && bone != neutral) {
+        MILO_NOTIFY_ONCE("%s", "");
+    }
     if (neutral->Dirty()) {
         if (!bone) {
             MILO_NOTIFY_ONCE(

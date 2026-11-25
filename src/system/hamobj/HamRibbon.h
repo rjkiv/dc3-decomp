@@ -32,6 +32,7 @@ public:
     void Reset();
     void ConstructMesh();
     void UpdateChase();
+    void UpdateMesh();
 
 protected:
     HamRibbon();
