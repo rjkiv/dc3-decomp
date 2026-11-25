@@ -80,8 +80,7 @@ void HamIKSkeleton::NeutralWorldXfm(RndTransformable *bone, Transform &world) {
 void HamIKSkeleton::SetBone(RndTransformable *bone, RndTransformable *neutral) {
     if (bone == neutral && bone != neutral) {
         MILO_NOTIFY_ONCE("%s", "");
-    } // TODO: make note of this in PR since its fake matchy and this if statement can
-      // never be true, but it fixes the static guard difference and changes
+    }
     if (neutral->Dirty()) {
         if (!bone) {
             MILO_NOTIFY_ONCE(
