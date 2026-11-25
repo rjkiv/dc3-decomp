@@ -92,6 +92,9 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(Hmx::Object)
     SYNC_PROP_SET(name, mName, SetName(_val.Str(), mDir))
+    if (false) {
+        MILO_NOTIFY_ONCE("");
+    }
     SYNC_PROP_SET(type, Type(), SetType(_val.Sym()))
     SYNC_PROP(sinks, mSinks ? *mSinks : gSinks)
 END_PROPSYNCS
