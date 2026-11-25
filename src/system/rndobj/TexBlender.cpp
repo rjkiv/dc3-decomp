@@ -1,5 +1,6 @@
 #include "rndobj/TexBlender.h"
 #include "Utl.h"
+#include "math/Geo.h"
 #include "math/Mtx.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -135,30 +136,35 @@ void RndTexBlender::DrawShowing() {
                     mOutputTexture->Width()
                 );
             }
-            std::vector<std::pair<RndTexBlendController *, float> > pairs1b0, pairs1c0,
-                pairs1d0;
+            std::vector<std::pair<RndTexBlendController *, float> > vNearList, vFarList,
+                vOverrideList;
+            float scale = mFactorScale;
             FOREACH (it, mControllerList) {
                 RndTexBlendController *curCtrlr = *it;
-                float second;
-                RndTexBlendController::BlendState state =
-                    curCtrlr->GetBlendState(second, mFactorScale);
-                switch (state) {
-                case 1:
-                    pairs1b0.push_back(std::make_pair(curCtrlr, second));
+                float factor;
+                switch (curCtrlr->GetBlendState(factor, scale)) {
+                case RndTexBlendController::kBlendStateNear:
+                    vNearList.push_back(std::make_pair(curCtrlr, factor));
                     break;
-                case 2:
-                    pairs1c0.push_back(std::make_pair(curCtrlr, second));
+                case RndTexBlendController::kBlendStateFar:
+                    vFarList.push_back(std::make_pair(curCtrlr, factor));
                     break;
-                case 3:
-                    pairs1d0.push_back(std::make_pair(curCtrlr, second));
+                case RndTexBlendController::kBlendStateOverride:
+                    vOverrideList.push_back(std::make_pair(curCtrlr, factor));
+                    break;
+                default:
                     break;
                 }
             }
-            if (mDirty || !pairs1b0.empty() || !pairs1c0.empty() || !pairs1d0.empty()
-                || mOutputTexState != 1) {
+
+            if (!mDirty && vNearList.empty() && vFarList.empty() && vOverrideList.empty()
+                && mOutputTexState == 1) {
+                return;
+            } else {
                 mDirty = false;
                 RndCam *cam = TheRnd.GetDefaultCam();
-                RndTex *targetTex = RndCam::Current()->TargetTex();
+                RndCam *cur = RndCam::Current();
+                RndTex *targetTex = cur->TargetTex();
                 if (targetTex) {
                     MILO_NOTIFY_ONCE(
                         "%s: Cannot render to texture (%s) while already rendering to texture (%s).",
@@ -176,88 +182,20 @@ void RndTexBlender::DrawShowing() {
                     TheNgRnd.DrawRect(
                         Hmx::Rect(0, 0, mOutputTexture->Width(), mOutputTexture->Height()),
                         work,
-                        (ShaderType)6,
+                        kDrawRectShader,
                         Hmx::Color(1, 1, 1),
                         nullptr,
                         nullptr
                     );
                     mOutputTexState = 1;
                 }
-                std::sort(pairs1b0.begin(), pairs1b0.end(), BlendSorter());
-                std::sort(pairs1c0.begin(), pairs1c0.end(), BlendSorter());
-                if (mNearMap && !pairs1b0.empty()) {
-                    mOutputTexState |= 2;
-                    RndMat *work = TheShaderMgr.GetWork();
-                    Transform xfm;
-                    xfm.Reset();
-                    TheShaderMgr.SetVConstant((VShaderConstant)4, Hmx::Matrix4(xfm));
-                    TheShaderMgr.SetTransform(xfm);
-                    SetupMaterial(work, mNearMap);
-                    work->SetBlend(BaseMaterial::kBlendSrcAlpha);
-                    float alpha = -1;
-                    FOREACH (it, pairs1b0) {
-                        RndTexBlendController *blendCtrlr = it->first;
-                        float f17 = it->second;
-                        if (f17 != alpha) {
-                            work->SetAlpha(f17);
-                            RndShader::SelectConfig(work, (ShaderType)0x16, false);
-                            alpha = f17;
-                        }
-                        RndMesh *mesh = blendCtrlr->GetMesh();
-                        if (mesh->IsSkinned()) {
-                            MILO_NOTIFY_ONCE(
-                                "%s: \"%s\" should not be a skinned mesh",
-                                PathName(this),
-                                mesh->Name()
-                            );
-                        }
-                        mesh->DrawFacesInRange(0, -1);
-                    }
-                    work->SetAlpha(1);
-                    if (RndCam::Current()) {
-                        TheShaderMgr.SetVConstant(
-                            (VShaderConstant)4, RndCam::Current()->ViewProj()
-                        );
-                    }
-                }
-                if (mFarMap && !pairs1c0.empty()) {
-                    mOutputTexState |= 4;
-                    RndMat *work = TheShaderMgr.GetWork();
-                    Transform xfm;
-                    xfm.Reset();
-                    TheShaderMgr.SetVConstant((VShaderConstant)4, Hmx::Matrix4(xfm));
-                    TheShaderMgr.SetTransform(xfm);
-                    SetupMaterial(work, mFarMap);
-                    work->SetBlend(BaseMaterial::kBlendSrcAlpha);
-                    float alpha = -1;
-                    FOREACH (it, pairs1c0) {
-                        RndTexBlendController *blendCtrlr = it->first;
-                        float f17 = it->second;
-                        if (f17 != alpha) {
-                            work->SetAlpha(f17);
-                            RndShader::SelectConfig(work, (ShaderType)0x16, false);
-                            alpha = f17;
-                        }
-                        RndMesh *mesh = blendCtrlr->GetMesh();
-                        if (mesh->IsSkinned()) {
-                            MILO_NOTIFY_ONCE(
-                                "%s: \"%s\" should not be a skinned mesh",
-                                PathName(this),
-                                mesh->Name()
-                            );
-                        }
-                        mesh->DrawFacesInRange(0, -1);
-                    }
-                    work->SetAlpha(1);
-                    if (RndCam::Current()) {
-                        TheShaderMgr.SetVConstant(
-                            (VShaderConstant)4, RndCam::Current()->ViewProj()
-                        );
-                    }
-                }
-                DrawBlendList(pairs1d0, (TexState)8);
+                std::sort(vNearList.begin(), vNearList.end(), BlendSorter());
+                std::sort(vFarList.begin(), vFarList.end(), BlendSorter());
+                DrawBlendList(vNearList, kTexState_Near);
+                DrawBlendList(vFarList, kTexState_Far);
+                DrawBlendList(vOverrideList, kTexState_Override);
                 cam->SetTargetTex(nullptr);
-                RndCam::Current()->Select();
+                cur->Select();
             }
         }
     }
@@ -276,26 +214,27 @@ RndMat *RndTexBlender::SetupMaterial(RndMat *mat, RndTex *tex) {
 }
 
 void RndTexBlender::DrawBlendList(
-    const std::vector<std::pair<RndTexBlendController *, float> > &pairs, TexState state
+    const std::vector<std::pair<RndTexBlendController *, float> > &list, TexState state
 ) {
     RndTex *which = state == 2 ? mNearMap : mFarMap;
-    if ((which || (state == 8)) && !pairs.empty()) {
+    if ((which || (state == kTexState_Override)) && !list.empty()) {
         mOutputTexState |= state;
         RndMat *work = TheShaderMgr.GetWork();
         Transform xfm;
         xfm.Reset();
-        TheShaderMgr.SetVConstant((VShaderConstant)4, Hmx::Matrix4(xfm));
+        auto &shaderMgr = TheShaderMgr;
+        shaderMgr.SetVConstant(kVShader_ViewProj, Hmx::Matrix4(xfm));
         TheShaderMgr.SetTransform(xfm);
         SetupMaterial(work, which);
         work->SetBlend(BaseMaterial::kBlendSrcAlpha);
         float f11 = -1;
-        FOREACH (it, pairs) {
+        FOREACH (it, list) {
             RndTexBlendController *blendCtrlr = it->first;
             float f12 = it->second;
-            if (state == 8) {
+            if (state == kTexState_Override) {
                 work->SetDiffuseTex(blendCtrlr->GetOverrideMap());
             }
-            if (f12 != f11 || state == 8) {
+            if (f12 != f11 || state == kTexState_Override) {
                 work->SetAlpha(f12);
                 RndShader::SelectConfig(work, kUnwrapUVShader, false);
                 f11 = f12;
@@ -312,7 +251,7 @@ void RndTexBlender::DrawBlendList(
         }
         work->SetAlpha(1);
         if (RndCam::Current()) {
-            TheShaderMgr.SetVConstant((VShaderConstant)4, RndCam::Current()->ViewProj());
+            TheShaderMgr.SetVConstant(kVShader_ViewProj, RndCam::Current()->ViewProj());
         }
     }
 }
