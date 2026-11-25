@@ -102,6 +102,108 @@ void RndMorph::Print() {
     TheDebug << "   intensity: " << mIntensity << "\n";
 }
 
+void RndMorph::SetFrame(float frame, float blend) {
+    RndAnimatable::SetFrame(frame, blend);
+    if (!mTarget || mPoses.empty())
+        return;
+    else {
+        float f1 = 1.0f;
+        bool b3 = true;
+        RndMesh::Vert *vertEnd = mTarget->Verts().end();
+        if (blend != 1.0f) {
+            b3 = false;
+            float scalar = 1.0f - blend;
+            for (RndMesh::Vert *it = mTarget->Verts().begin(); it != vertEnd; ++it) {
+                it->pos *= scalar;
+                if (mNormals) {
+                    it->norm *= scalar;
+                }
+            }
+        }
+        for (auto it = mPoses.rbegin(); it != mPoses.rend(); ++it) {
+            if (it->mesh) {
+                RndMesh::Vert *targetIt = mTarget->Verts().begin();
+                RndMesh::Vert *itVert = it->mesh->Verts().begin();
+                RndMesh::Vert *itVertEnd = it->mesh->Verts().end();
+                float intenseInterp;
+                if (it + 1 == mPoses.rend()) {
+                    intenseInterp = f1;
+                } else {
+                    intenseInterp = mIntensity * InterpWeight(it->weightKeys, frame);
+                    f1 = f1 - intenseInterp;
+                }
+                if (intenseInterp != 0) {
+                    intenseInterp *= blend;
+                    if (b3) {
+                        b3 = false;
+                        for (; targetIt != vertEnd && itVert != itVertEnd;
+                             ++targetIt, ++itVert) {
+                            Scale(itVert->pos, intenseInterp, targetIt->pos);
+                            if (mNormals) {
+                                Scale(itVert->norm, intenseInterp, targetIt->norm);
+                            }
+                        }
+                    } else {
+                        for (; targetIt != vertEnd && itVert != itVertEnd;
+                             ++targetIt, ++itVert) {
+                            ScaleAddEq(targetIt->pos, itVert->pos, intenseInterp);
+                            if (mNormals) {
+                                ScaleAddEq(targetIt->norm, itVert->norm, intenseInterp);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (mNormals) {
+            for (RndMesh::Vert *it = mTarget->Verts().begin(); it != vertEnd; ++it) {
+                Normalize(it->norm, it->norm);
+            }
+        }
+        mTarget->Sync(RndMesh::kVerts);
+    }
+}
+
+float RndMorph::EndFrame() {
+    float f4 = 0;
+    for (int i = 0; i < mPoses.size(); i++) {
+        auto &weightKeys = mPoses[i].weightKeys;
+        float cur;
+        if (weightKeys.size()) {
+            cur = weightKeys.back().frame;
+        } else {
+            cur = 0;
+        }
+        if (cur > f4) {
+            f4 = cur;
+        }
+    }
+    return f4;
+}
+
+float RndMorph::InterpWeight(const Keys<float, float> &weightKeys, float frame) {
+    const Key<float> *prev;
+    const Key<float> *next;
+    float r;
+
+    weightKeys.AtFrame(frame, prev, next, r);
+    if (prev) {
+        if (mSpline) {
+            float prevVal = prev->value;
+            float ret = 0;
+            if (prevVal || next->value) {
+                float f2 = prevVal * 2.0f - next->value * 2.0f;
+                ret = r * r * (f2 * r + f2 * -3.0f * 0.5f) + prevVal;
+            }
+            return ret;
+        } else {
+            return Interp(prev->value, next->value, r);
+        }
+    } else {
+        return 0;
+    }
+}
+
 DataNode RndMorph::OnSetIntensity(const DataArray *arr) {
     SetIntensity(arr->Float(2));
     return 0;
