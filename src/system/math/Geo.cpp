@@ -341,22 +341,20 @@ void Intersect(const Hmx::Ray &s1, const Hmx::Ray &s2, Vector2 &v) {
     }
 }
 
-void Intersect(const Transform &trans, const Plane &plane, Hmx::Ray &ray) {
-    Vector3 planeVec(plane.a, plane.b, plane.c);
-    float planeVecSquared =
-        planeVec.x * planeVec.x + planeVec.y * planeVec.y + planeVec.z * planeVec.z;
-    float scale = -(plane.d / planeVecSquared);
-    Vector3 scaledVec(planeVec.x * scale, planeVec.y * scale, planeVec.z * scale);
+void Intersect(const Transform &t, const Plane &p, Hmx::Ray &r) {
+    float planeVecSquared = p.c * p.c + p.b * p.b + p.a * p.a;
+    float scale = -(p.d / planeVecSquared);
+    Vector3 scaledVec(p.a * scale, p.b * scale, p.c * scale);
     Vector3 point;
-    MultiplyTranspose(scaledVec, trans, point);
-    float dotX = trans.m.x.x * plane.a + trans.m.x.y * plane.b + trans.m.x.z * plane.c;
-    float dotY = trans.m.y.x * plane.a + trans.m.y.y * plane.b + trans.m.y.z * plane.c;
-    float dotZ = trans.m.z.x * plane.a + trans.m.z.y * plane.b + trans.m.z.z * plane.c;
-    ray.dir.Set(dotX, dotY);
-    if (std::fabs(dotY) > std::fabs(dotX)) {
-        ray.base.Set(point.x + (dotZ / dotX) * point.z, point.y);
+    MultiplyTranspose(scaledVec, t, point);
+    const Vector3 &planeNormal = p.AsVector4().AsVector3();
+    Vector3 normal;
+    normal.Set(Dot(planeNormal, t.m.x), Dot(t.m.y, planeNormal), Dot(t.m.z, planeNormal));
+    r.dir.Set(normal.x, normal.y);
+    if (std::fabs(r.dir.y) > std::fabs(r.dir.x)) {
+        r.base.Set(point.x, point.y + (normal.z / normal.y) * point.z);
     } else {
-        ray.base.Set(point.x, point.y + (dotZ / dotY) * point.z);
+        r.base.Set(point.x + (normal.z / normal.x) * point.z, point.y);
     }
 }
 
