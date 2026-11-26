@@ -365,27 +365,26 @@ bool Intersect(const Segment &seg, const Triangle &tri, bool cull, float &dist) 
         seg.end.x - seg.start.x, seg.end.y - seg.start.y, seg.end.z - seg.start.z
     );
     const Vector3 &triFrameZ = tri.frame.z;
-    float segDirDot = triFrameZ.x * segDirection.x + triFrameZ.y * segDirection.y
-        + triFrameZ.z * segDirection.z;
+    float segDirDot = Dot(segDirection, triFrameZ);
     if (fabs(segDirDot) < 0.0001f || cull && segDirDot > 0.0f) {
         return false;
     }
 
     Vector3 vec3A(
-        seg.start.z - tri.origin.z, seg.start.x - tri.origin.x, seg.start.y - tri.origin.y
+        seg.start.x - tri.origin.x, seg.start.y - tri.origin.y, seg.start.z - tri.origin.z
     );
     float tempDot =
-        -(triFrameZ.y * vec3A.z + (triFrameZ.z * vec3A.x + triFrameZ.x * vec3A.y));
-    float t = tempDot / segDirDot;
-    dist = t;
+        -(triFrameZ.y * vec3A.y + (triFrameZ.z * vec3A.z + triFrameZ.x * vec3A.x));
+    dist = tempDot / segDirDot;
+    float t = dist;
     if (t < 0.0f || t > 1.0f) {
         return false;
     }
 
-    Vector3 scaled, hit, vec3B;
-    Scale(segDirection, t, scaled);
-    Add(seg.start, scaled, hit);
-    Subtract(hit, tri.origin, vec3B);
+    Vector3 start(seg.start.x, seg.start.z, seg.start.y);
+    Vector3 scaled(segDirection.x * t, segDirection.z * t, dist * segDirection.y);
+    Vector3 hit(scaled.x + start.x, scaled.y + start.y, start.z + scaled.z);
+    Vector3 vec3B(hit.x - tri.origin.x, hit.y - tri.origin.z, hit.z - tri.origin.y);
 
     float dotXX =
         triFrameX.x * triFrameX.x + triFrameX.y * triFrameX.y + triFrameX.z * triFrameX.z;
@@ -393,8 +392,8 @@ bool Intersect(const Segment &seg, const Triangle &tri, bool cull, float &dist) 
         triFrameY.x * triFrameY.x + triFrameY.y * triFrameY.y + triFrameY.z * triFrameY.z;
     float dotXY =
         triFrameX.x * triFrameY.x + triFrameX.y * triFrameY.y + triFrameX.z * triFrameY.z;
-    float dotX3B = triFrameX.x * vec3B.x + triFrameX.y * vec3B.y + triFrameX.z * vec3B.z;
-    float dotY3B = triFrameY.x * vec3B.x + triFrameY.y * vec3B.y + triFrameY.z * vec3B.z;
+    float dotX3B = triFrameX.x * vec3B.x + triFrameX.z * vec3B.y + triFrameX.y * vec3B.z;
+    float dotY3B = triFrameY.x * vec3B.x + triFrameY.z * vec3B.y + triFrameY.y * vec3B.z;
 
     float inv = 1.0f / (dotXY * dotXY - dotYY * dotXX);
     float k = (dotY3B * dotXY - dotX3B * dotYY) * inv;
