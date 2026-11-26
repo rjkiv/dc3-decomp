@@ -33,13 +33,18 @@ void RndSpline::CtrlPoint::Interp(const CtrlPoint &p1, const CtrlPoint &p2, floa
 #pragma endregion
 #pragma region RndSpline
 
-static const float sSplineFloats[3] = { 10, 10, 4 };
+static const float kDefaultCtrlPointSpacing = 10;
+static const float kDefaultPulseLength = 10;
+static const float kDefaultPulseAmplitude = 10;
+static const float kPulseMaxNormDist = 4;
+static const float kTestPulseTPerFrame = 0.033333335f;
 
 RndSpline::RndSpline()
-    : mManual(false), mPulseLength(sSplineFloats[0]), mPulseAmplitude(sSplineFloats[0]),
-      mStartCtrlPoint(-1), mEndCtrlPoint(-1), mYOffset(0),
-      mYPerCtrlPoint(sSplineFloats[0]), mDeformedCtrlPointsDirtyStart(0),
-      mDeformedCtrlPointsDirtyEnd(0), mPulse(0), mPulseT(-1000), mTestPulse(0) {}
+    : mManual(false), mPulseLength(kDefaultPulseLength),
+      mPulseAmplitude(kDefaultPulseAmplitude), mStartCtrlPoint(-1), mEndCtrlPoint(-1),
+      mYOffset(0), mYPerCtrlPoint(kDefaultCtrlPointSpacing),
+      mDeformedCtrlPointsDirtyStart(0), mDeformedCtrlPointsDirtyEnd(0), mPulse(0),
+      mPulseT(-1000), mTestPulse(0) {}
 
 BEGIN_HANDLERS(RndSpline)
     HANDLE(test_pulse, OnTestPulse)
@@ -135,7 +140,7 @@ END_LOADS
 
 void RndSpline::Poll() {
     if (mTestPulse && mPulse) {
-        mPulseT += 0.033333335f;
+        mPulseT += kTestPulseTPerFrame;
         if (mPulseT > (float)mPristineCtrlPoints.size()) {
             mTestPulse = false;
             mPulse = false;
@@ -198,33 +203,37 @@ void RndSpline::SyncDeformedDummyCtrlPoints(int iStartIndex, int iEndIndex) cons
     MILO_ASSERT(iStartIndex <= iEndIndex, 0x2C7);
     if (mDeformedCtrlPoints.size() >= 2) {
         if (mDeformedCtrlPointsDirtyStart && iStartIndex == 0) {
-            RndSpline *me = const_cast<RndSpline *>(this);
-            CtrlPoint &cur = me->mDeformedCtrlPoints[0];
-            CtrlPoint &next = me->mDeformedCtrlPoints[1];
-            me->mDeformedCtrlPointsDirtyStart = false;
+            CtrlPoint &cur = const_cast<RndSpline *>(this)->mDeformedCtrlPoints[0];
+            CtrlPoint &next = const_cast<RndSpline *>(this)->mDeformedCtrlPoints[1];
+            const_cast<RndSpline *>(this)->mDeformedCtrlPointsDirtyStart = false;
             Vector3 posDiff;
             Subtract(cur.mPos, next.mPos, posDiff);
-            Add(cur.mPos, posDiff, cur.mPos);
-            cur.mRoll = next.mRoll;
-            cur.mDirtyConstants = true;
+            Add(cur.mPos, posDiff, const_cast<RndSpline *>(this)->mDummyStart.mPos);
+            const_cast<RndSpline *>(this)->mDummyStart.mRoll = cur.mRoll;
+            const_cast<RndSpline *>(this)->mDeformedCtrlPoints[0].mDirtyConstants = true;
         }
-        if (mDeformedCtrlPointsDirtyEnd && mDeformedCtrlPoints.size() - 2 <= iEndIndex) {
-            RndSpline *me = const_cast<RndSpline *>(this);
-            CtrlPoint &last = me->mDeformedCtrlPoints[mDeformedCtrlPoints.size() - 1];
-            CtrlPoint &prev = me->mDeformedCtrlPoints[mDeformedCtrlPoints.size() - 2];
-            me->mDeformedCtrlPointsDirtyEnd = false;
+        int back = mDeformedCtrlPoints.size() - 1;
+        if (mDeformedCtrlPointsDirtyEnd && iEndIndex >= back - 1) {
+            CtrlPoint &last = const_cast<RndSpline *>(this)->mDeformedCtrlPoints[back];
+            CtrlPoint &prev =
+                const_cast<RndSpline *>(this)->mDeformedCtrlPoints[back - 1];
+            const_cast<RndSpline *>(this)->mDeformedCtrlPointsDirtyEnd = false;
             Vector3 posDiff;
             Subtract(last.mPos, prev.mPos, posDiff);
-            Add(last.mPos, posDiff, last.mPos);
+            Add(last.mPos, posDiff, const_cast<RndSpline *>(this)->mDummyEnd1.mPos);
+            const_cast<RndSpline *>(this)->mDummyEnd1.mRoll = last.mRoll;
             Subtract(mDummyEnd1.mPos, last.mPos, posDiff);
-            Add(mDummyEnd1.mPos, posDiff, (Vector3 &)mDummyEnd2.mPos);
-            prev.mDirtyConstants = true;
-            last.mDirtyConstants = true;
+            Add(mDummyEnd1.mPos, posDiff, const_cast<RndSpline *>(this)->mDummyEnd2.mPos);
+            const_cast<RndSpline *>(this)->mDummyEnd2.mRoll = mDummyEnd1.mRoll;
+            const_cast<RndSpline *>(this)->mDeformedCtrlPoints[back - 1].mDirtyConstants =
+                true;
+            const_cast<RndSpline *>(this)->mDeformedCtrlPoints[back].mDirtyConstants =
+                true;
         }
     }
 }
 
-void RndSpline::PrepareShader(float f1, float f2) const {
+void RndSpline::PrepareShader(float iYOffset, float iYPerCtrlPt) const {
     if (mDeformedCtrlPoints.size() >= 2) {
         int startCtrlPt = mStartCtrlPoint == -1 ? 0 : mStartCtrlPoint;
         int endCtrlPt =
@@ -241,11 +250,12 @@ void RndSpline::PrepareShader(float f1, float f2) const {
             TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant + 2), pt.mD);
         }
         TheShaderMgr.SetVConstant(
-            (VShaderConstant)0x19, Vector4(endCtrlPt - startCtrlPt, f1, 1.0f / f2, 0)
+            kVShader_SplineParams,
+            Vector4(endCtrlPt - startCtrlPt, iYOffset, 1.0f / iYPerCtrlPt, 0)
         );
         if (mPulse) {
             TheShaderMgr.SetVConstant(
-                (VShaderConstant)0x1A,
+                kVShader_SplinePulseParams,
                 Vector4(
                     mPulseT - startCtrlPt,
                     (mYPerCtrlPoint / mPulseLength) * 2.0f,

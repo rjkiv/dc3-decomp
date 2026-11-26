@@ -69,7 +69,7 @@ void CheckDistortionOpts(RndMat *mat, ShaderOptions &opts) {
 
 void CheckDistortion(RndMat *mat) {
     RndSpline *spline = RndSpline::GlobalDefaultSpline();
-    if (spline && !mat->NeverFitToSpline() && !spline->Manual()
+    if (spline && !mat->NeverFitToSpline() && !spline->IsManual()
         && spline->NumCtrlPts() >= 2U) {
         spline->PrepareShader();
     }
@@ -133,36 +133,36 @@ void CheckExtrude() {
 
 void RndShader::Init() {
     sShaders[kBloomShader] = &gShaderSimple;
-    sShaders[kDepthVolumeShader] = &gShaderDepthVolume;
     sShaders[kBloomGlareShader] = &gShaderSimple;
     sShaders[kBlurShader] = &gShaderSimple;
+    sShaders[kDepthVolumeShader] = &gShaderDepthVolume;
     sShaders[kDownsampleDepthShader] = &gShaderSimple;
+    sShaders[kDownsampleShader] = &gShaderSimple;
     sShaders[kDownsample4xShader] = &gShaderSimple;
     sShaders[kDrawRectShader] = &gShaderDrawRect;
-    sShaders[kDownsampleShader] = &gShaderSimple;
-    sShaders[kMultimeshShader] = &gShaderMultimesh;
-    sShaders[kFurShader] = &gShaderFur;
     sShaders[kErrorShader] = &gShaderSimple;
+    sShaders[kFurShader] = &gShaderFur;
     sShaders[kLineNozShader] = &gShaderSimple;
-    sShaders[kMovieShader] = &gShaderSimple;
-    sShaders[kMultimeshBBShader] = &gShaderMultimesh;
     sShaders[kLineShader] = &gShaderSimple;
-    sShaders[kShadowmapShader] = &gShaderSimple;
-    sShaders[kPostprocessErrorShader] = &gShaderSimple;
-    sShaders[kPlayerDepthVisShader] = &gShaderSimple;
+    sShaders[kMovieShader] = &gShaderSimple;
+    sShaders[kMultimeshShader] = &gShaderMultimesh;
+    sShaders[kMultimeshBBShader] = &gShaderMultimesh;
     sShaders[kParticlesShader] = &gShaderParticles;
-    sShaders[kPlayerDepthShellShader] = &gShaderSimple;
-    sShaders[kSyncTrackShader] = &gShaderSyncTrack;
+    sShaders[kPostprocessErrorShader] = &gShaderSimple;
+    sShaders[kPostprocessShader] = &gShaderPostProc;
+    sShaders[kShadowmapShader] = &gShaderSimple;
     sShaders[kStandardShader] = &gShaderStandard;
     sShaders[kStandardBBShader] = &gShaderStandard;
-    sShaders[kPostprocessShader] = &gShaderPostProc;
+    sShaders[kSyncTrackShader] = &gShaderSyncTrack;
+    sShaders[kSyncTrackChargeEffectShader] = &gShaderSyncTrack;
+    sShaders[kUnwrapUVShader] = &gShaderUnwrapUV;
+    sShaders[kVelocityCameraShader] = &gShaderVelocityCamera;
+    sShaders[kVelocityObjectShader] = &gShaderVelocity;
+    sShaders[kPlayerDepthVisShader] = &gShaderSimple;
+    sShaders[kPlayerDepthShellShader] = &gShaderSimple;
     sShaders[kPlayerDepthShell2Shader] = &gShaderSimple;
     sShaders[kDepthBuffer3DShader] = &gShaderSimple;
     sShaders[kYUVtoRGBShader] = &gShaderSimple;
-    sShaders[kSyncTrackChargeEffectShader] = &gShaderSyncTrack;
-    sShaders[kVelocityCameraShader] = &gShaderVelocityCamera;
-    sShaders[kUnwrapUVShader] = &gShaderUnwrapUV;
-    sShaders[kVelocityObjectShader] = &gShaderVelocity;
     sShaders[kYUVtoBlackAndWhiteShader] = &gShaderSimple;
     sShaders[kPlayerGreenScreenShader] = &gShaderSimple;
     sShaders[kPlayerDepthGreenScreenShader] = &gShaderSimple;

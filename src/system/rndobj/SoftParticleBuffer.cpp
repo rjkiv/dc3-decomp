@@ -110,6 +110,15 @@ void RndSoftParticleBuffer::BlurSurface() {
                                                       Vector2(0.25f, 1.5f),
                                                       Vector2(0.1f, 2.5f) };
 
+        // FIXME: need to use this
+        // static const float kBlurWeightOffset[5][2] = {
+        //     { 0.1f,  -1.5f },
+        //     { 0.25f, -0.5f },
+        //     { 0.3f,  0.5f  },
+        //     { 0.25f, 1.5f  },
+        //     { 0.1f,  2.5f  }
+        // };
+
         bool b1 = !(i & 1);
         for (unsigned int j = 0; j < 5; j++) {
             float f20 = kBlurWeightOffset[j].x;

@@ -50,8 +50,33 @@ public:
     REGISTER_OBJ(RndSpline)
     static RndSpline *GlobalDefaultSpline() { return sGlobalDefaultSpline; }
 
+    int NumCtrlPts() const { return mPristineCtrlPoints.size(); }
+    //  public: void AppendCtrlPoint(const RndSpline::CtrlPoint&);
+    //  public: void ClearCtrlPoints();
+    //  public: void ResetDeformedCtrlPoints();
+    //  public: const RndSpline::CtrlPoint& GetPristineCtrlPoint(int32_t) const;
+    //  public: void SetPristineCtrlPoint(int32_t, const RndSpline::CtrlPoint&);
+    const CtrlPoint &GetDeformedCtrlPoint(int iIndex) const;
+    void SetDeformedCtrlPoint(int index, const CtrlPoint &point) {
+        mDeformedCtrlPoints[index] = point;
+    }
+    bool IsManual() const { return mManual; }
+    void SetManual(bool manual) { mManual = manual; }
+    int GetStartCtrlPoint() const { return mStartCtrlPoint; }
+    int GetEndCtrlPoint() const { return mEndCtrlPoint; }
     void SetStartCtrlPoint(int iStartCtrlPt);
     void SetEndCtrlPoint(int iEndCtrlPt);
+    //  public: float YToT(float) const;
+    //  public: float GetYPerCtrlPoint() const;
+    //  public: void SetYOffset(float);
+    //  public: void SetYPerCtrlPoint(float);
+    //  public: void InterpPoint(float, Vector3*) const;
+    //  public: void InterpXfm(float, Transform*) const;
+    //  public: void DeformPoint(Vector3*, bool) const;
+    //  public: void DeformPoint(float, Vector3*, bool) const;
+    //  public: void DeformXfm(Transform*, bool) const;
+    //  public: void DeformXfm(float, Transform*, bool) const;
+    //  public: bool CanPrepareShader() const;
     void PrepareShader(float iYOffset, float iYPerCtrlPt) const;
     void PrepareShader() const {
         PrepareShader(
@@ -59,11 +84,11 @@ public:
             mYPerCtrlPoint
         );
     }
-    int NumCtrlPts() const { return mPristineCtrlPoints.size(); }
-    bool Manual() const { return mManual; }
     bool HasPulse() const { return mPulse; }
-
-    const CtrlPoint &GetDeformedCtrlPoint(int iIndex) const;
+    //  public: void SetPulse(float);
+    //  public: void RemovePulse();
+    void SetPulseLength(float len) { mPulseLength = len; }
+    void SetPulseAmplitude(float amp) { mPulseAmplitude = amp; }
 
 protected:
     RndSpline();
