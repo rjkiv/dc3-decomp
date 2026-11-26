@@ -320,6 +320,7 @@ void MultiplyEq(BSPNode *n, const Transform &t) {
     }
 }
 
+#pragma region Intersect
 void Intersect(const Hmx::Ray &s1, const Hmx::Ray &s2, Vector2 &v) {
     float base1X = s1.base.x;
     float base1Y = s1.base.y;
@@ -488,6 +489,233 @@ bool Intersect(const Segment &seg, const Sphere &s) {
     return true;
 }
 
+bool Intersect(const Transform &t, const Hmx::Polygon &p, const BSPNode *n) {
+    bool bPos = false;
+    bool bNeg = false;
+    Hmx::Ray r;
+    Vector3 &v = reinterpret_cast<Vector3 &>(r);
+    FOREACH (it, p.points) {
+        float yy = it->y;
+        float xx = it->x;
+        v.z = 0.0f;
+        v.x = xx;
+        v.y = yy;
+        Multiply(v, t, v);
+        float dot = v.z * n->plane.c;
+        dot += v.x * n->plane.a;
+        dot += r.base.y * n->plane.b;
+        dot += n->plane.d;
+        if (dot > 0.0f) {
+            bPos = true;
+        }
+        if (dot < 0.0f) {
+            bNeg = true;
+        }
+    }
+    for (;;) {
+        const BSPNode *child = nullptr;
+        if (!bNeg) {
+            child = n->front;
+            if (!child) {
+                return false;
+            }
+        } else if (!bPos) {
+            child = n->back;
+            if (!child) {
+                break;
+            }
+        } else {
+            if (!n->back) {
+                break;
+            }
+            Intersect(t, n->plane, r);
+            Hmx::Polygon splitPoly;
+            if (n->front) {
+                Clip(p, r, splitPoly);
+                if (Intersect(t, splitPoly, n->front)) {
+                    break;
+                }
+            }
+            float ny = -r.dir.y;
+            float nx = -r.dir.x;
+            r.dir.x = nx;
+            r.dir.y = ny;
+            Clip(p, r, splitPoly);
+            return Intersect(t, splitPoly, n->back);
+        }
+        if (Intersect(t, p, child)) {
+            break;
+        }
+        return false;
+    }
+    return true;
+}
+
+bool Intersect(const Vector3 &v, const BSPNode *n) {
+    MILO_ASSERT(n, 0x4ca);
+    float dist = n->plane.a * v.x + n->plane.b * v.y + n->plane.c * v.z + n->plane.d;
+    if (dist > 0.0f) {
+        if (n->front != nullptr) {
+            return Intersect(v, n->front);
+        }
+        return false;
+    }
+    if (n->back != nullptr) {
+        return Intersect(v, n->back);
+    }
+    return true;
+}
+
+float IntersectDistYZHelper(const Vector3 &v1, const Vector3 &v2, float y) {
+    return v1.z * v2.z + y * v2.y;
+}
+
+float IntersectDirYZHelper(float y, float z, const Vector3 &cross) {
+    return y * cross.y + z * cross.z;
+}
+
+float IntersectDirDotHelper(
+    const Vector3 &diff, const Vector3 &v2, const Vector3 &dir, Vector3 &cross2
+) {
+    float y = dir.y;
+    float z = dir.z;
+    Cross(diff, v2, cross2);
+    float res = IntersectDirYZHelper(y, z, cross2);
+    res += dir.x * cross2.x;
+    return res;
+}
+
+float IntersectDistDotHelper(const Vector3 &v1, const Vector3 &v2) {
+    float y = v1.y;
+    float res = IntersectDistYZHelper(v1, v2, y);
+    res += v1.x * v2.x;
+    return res;
+}
+
+Vector2 IntersectDotsHelper(
+    const Vector3 &start,
+    const Vector3 &v2,
+    const Vector3 &v3,
+    const Vector3 &cross,
+    Vector3 &diff,
+    float z
+) {
+    diff.z = start.z - v2.z;
+    diff.x = start.x - v2.x;
+    diff.y = start.y - v2.y;
+    Vector2 result;
+    result.x = diff.z * cross.z;
+    result.y = z * cross.z;
+    result.x += diff.x * cross.x;
+    result.y += v3.x * cross.x;
+    result.x += diff.y * cross.y;
+    result.y += v3.y * cross.y;
+    return result;
+}
+
+bool Intersect(
+    const Vector3 &start, const Vector3 &direction, const Triangle &tri, float &dist
+) {
+    const Vector3 &v2 = direction;
+    Vector3 cross, cross2;
+    Cross(v2, tri.frame.y, cross);
+    Vector3 diff;
+    Vector2 dots =
+        IntersectDotsHelper(start, tri.origin, tri.frame.x, cross, diff, tri.frame.x.z);
+    float d1 = dots.x;
+    float d2 = dots.y;
+    if (d1 < 0.0f || d1 > d2) {
+        return false;
+    }
+    float d3 = IntersectDirDotHelper(diff, tri.frame.x, v2, cross2);
+    if (d3 < 0.0f || d3 + d1 > d2) {
+        return false;
+    }
+    float t = IntersectDistDotHelper(tri.frame.y, cross2) / d2;
+    dist = t;
+    if (t < 1.1920929e-7f) {
+        return false;
+    }
+    return true;
+}
+
+float IntersectBSPDotYZHelper(const Plane &p, const Vector3 &v) {
+    return v.z * p.c + v.y * p.b;
+}
+
+float IntersectBSPDotHelper(const Plane &p, const Vector3 &v, float a) {
+    float result = IntersectBSPDotYZHelper(p, v);
+    result += a * v.x;
+    return result + p.d;
+}
+
+bool Intersect(const Segment &s, const BSPNode *n, float &dist, Plane &plane) {
+    MILO_ASSERT(n, 0x4e6);
+    float a = n->plane.a;
+    float startDot = IntersectBSPDotHelper(n->plane, s.start, a);
+    float endDot = IntersectBSPDotHelper(n->plane, s.end, a);
+    if (startDot >= 0.0f && endDot >= 0.0f) {
+        if (n->front != nullptr) {
+            return Intersect(s, n->front, dist, plane);
+        }
+    } else if (startDot <= 0.0f && endDot <= 0.0f) {
+        if (n->back != nullptr) {
+            return Intersect(s, n->back, dist, plane);
+        }
+        dist = 0.0f;
+        return true;
+    } else {
+        float d = 0.0f;
+        if (startDot - endDot != 0.0f) {
+            float t = startDot / (startDot - endDot);
+            Segment s1, s2;
+            Interp(s.start, s.end, t, s1.end);
+            s1.start = s.start;
+            s2.start = s1.end;
+            s2.end = s.end;
+            if (startDot > endDot) {
+                if (n->front != nullptr && Intersect(s1, n->front, d, plane)) {
+                    dist = t * d;
+                } else {
+                    if (n->back == nullptr) {
+                        dist = t;
+                    } else {
+                        if (!Intersect(s2, n->back, d, plane)) {
+                            return false;
+                        }
+                        dist = (1.0f - t) * d + t;
+                    }
+                }
+                if (d == 0.0f && dist != 0.0f) {
+                    plane = n->plane;
+                }
+                return true;
+            } else {
+                if (n->back == nullptr) {
+                    dist = 0.0f;
+                    return true;
+                }
+                if (Intersect(s1, n->back, d, plane)) {
+                    dist = t * d;
+                } else {
+                    if (n->front == nullptr) {
+                        return false;
+                    }
+                    if (!Intersect(s2, n->front, d, plane)) {
+                        return false;
+                    }
+                    dist = (1.0f - t) * d + t;
+                }
+                if (d == 0.0f && dist != 0.0f) {
+                    plane.Set(-n->plane.a, -n->plane.b, -n->plane.c, -n->plane.d);
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void TriangleBoxProjectHelper(
     const Vector3 &axis,
     const Vector3 &v0,
@@ -599,6 +827,8 @@ bool Intersect(const Triangle &tri, const Box &box) {
     }
     return true;
 }
+
+#pragma endregion
 
 void Frustum::Set(float nearDist, float farDist, float yFov, float yRatio) {
     front.Set(0, 1, 0, -nearDist);
