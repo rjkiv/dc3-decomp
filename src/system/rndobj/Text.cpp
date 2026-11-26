@@ -186,64 +186,57 @@ void RndText::FontMap::CleanupSyncMeshes() {
 }
 
 void RndText::FontMap::SetupCharacter(
-    unsigned short us2,
-    float &f3,
-    float f4,
+    unsigned short c,
+    float &x,
+    float baseZ,
     const StyleState &state,
-    unsigned short us6,
-    float circle,
+    unsigned short prevChar,
+    float circleCircumference,
     FitType fitType,
     float indentation
 ) {
-    if (fitType == 7 && us2 == 10) {
-        f3 += indentation;
+    if (fitType == kFitScrollMarqueeWrapAlways && c == 10) {
+        x += indentation;
     } else {
-        int i5 = font->CharPage(us2);
+        int i5 = font->CharPage(c);
         if (i5 < 0) {
             return;
         }
         Page *page = pages[i5];
-        float fc0, fbc;
+        float width, advance;
         if (!font->CharWidthAdvanceCoords(
-                us2, fc0, fbc, page->vertIt[0].tex, page->vertIt[2].tex
+                c, width, advance, page->vertIt[0].tex, page->vertIt[2].tex
             )) {
             return;
         }
 
-        float f11 = font->Kerning(us6, us2);
-        f3 += f11 + state.kerning * state.size;
-        if (fc0 > 0) {
-            f11 = fc0;
-        } else {
-            f11 = fbc;
-        }
+        x += font->Kerning(prevChar, c) + state.kerning * state.size;
+        width = width > 0 ? width : advance;
+
         float f8 = 0;
         if (font->Monospace()) {
-            f8 = Min((fbc - f11) / 2.0f, 0.0f);
+            f8 = Max((advance - width) / 2.0f, 0.0f);
         }
-        float fvar9 = state.size;
-        fc0 = fvar9 * f11;
-        f11 = fvar9 * f8;
-        if (fc0 <= 0) {
+        width = state.size * width;
+        float f11 = state.size * f8;
+        if (width <= 0) {
             return;
         }
-        float f13 = state.zOffset * fvar9 + f4;
+        float f13 = state.zOffset * state.size + baseZ;
         float aspect8 = font->AspectRatio();
-        float f10 = state.italics * fvar9;
-        page->vertIt->pos.Set(f10 + f11 + f3, 0, f13);
-        float fvar1 = f13 - (aspect8 * indentation);
-        reinterpret_cast<Vector3 &>(page->vertIt->tangent).Set((f11 + f3) - f10, 0, fvar1);
-        reinterpret_cast<Vector3 &>(page->vertIt[1].tangent)
-            .Set(((f11 + f3) - f10) + fc0, fvar1, 0);
-        reinterpret_cast<Vector3 &>(page->vertIt[2].tangent)
-            .Set(((f11 + f3) + fc0) + fvar1, 0, f13);
-        if (circle != 0) {
+        float f10 = state.italics * state.size;
+        float fvar1 = f13 - (aspect8 * state.size);
+        page->vertIt[0].pos.Set(f10 + f11 + x, 0, f13);
+        page->vertIt[0].tangent.AsVector3().Set((f11 + x) - f10, 0, fvar1);
+        page->vertIt[1].tangent.AsVector3().Set(((f11 + x) - f10) + width, 0, fvar1);
+        page->vertIt[2].tangent.AsVector3().Set(((f11 + x) + width) + f10, 0, f13);
+        if (circleCircumference != 0) {
             float fvar10 = (page->vertIt[2].tangent.x - page->vertIt[0].tangent.x) / 2
                 + page->vertIt[0].tangent.x;
-            Transform xfm = XfmOnCircleEdge(circle, fvar10);
+            Transform xfm = XfmOnCircleEdge(circleCircumference, fvar10);
             Vector3 tmp;
             Scale(xfm.m.x, fvar10, tmp);
-            xfm.v -= tmp;
+            Subtract(xfm.v, tmp, xfm.v);
             Multiply(page->vertIt[0].pos, xfm, page->vertIt[0].pos);
             Multiply(page->vertIt[1].pos, xfm, page->vertIt[1].pos);
             Multiply(page->vertIt[2].pos, xfm, page->vertIt[2].pos);
@@ -258,7 +251,7 @@ void RndText::FontMap::SetupCharacter(
             page->vertIt[3].color = state.textColor;
         // advance to the next set of 4 verts
         page->vertIt = &page->vertIt[4];
-        f3 += state.size * fbc;
+        x += state.size * advance;
     }
 }
 
@@ -332,56 +325,58 @@ void RndText::FontMap3d::CleanupSyncMeshes() {
 }
 
 void RndText::FontMap3d::SetupCharacter(
-    unsigned short us2,
-    float &f3,
-    float f4,
+    unsigned short c,
+    float &x,
+    float baseZ,
     const StyleState &state,
-    unsigned short us6,
-    float circle,
+    unsigned short prevChar,
+    float circleCircumference,
     FitType fitType,
     float indentation
 ) {
-    float f100, ffc;
-    RndMesh *localf8;
-    if (font->CharWidthAdvanceMesh(us2, f100, ffc, &localf8)) {
-        float kerning = font->Kerning(us6, us2);
-        f3 += (kerning + state.kerning) * state.size;
-        kerning = f100 > 0 ? f100 : ffc;
+    float width, advance;
+    RndMesh *pMesh;
+    if (font->CharWidthAdvanceMesh(c, width, advance, &pMesh)) {
+        x += (font->Kerning(prevChar, c) + state.kerning) * state.size;
+        width = width > 0 ? width : advance;
+
         float f5 = 0;
         if (font->Monospace()) {
-            f5 = Min((ffc - kerning) / 2, 0.0f);
+            f5 = Max((advance - width) / 2, 0.0f);
         }
-        float fvar6 = state.size;
-        f100 = fvar6 * kerning;
-        kerning = fvar6 * f5;
-        if (f100 > 0) {
-            f4 += state.zOffset * fvar6;
-            if (localf8 && meshIt != meshes.end()) {
+        float f6 = state.size * f5;
+        width *= state.size;
+
+        if (width > 0) {
+            baseZ += state.zOffset * state.size;
+            if (pMesh && meshIt != meshes.end()) {
                 RndMesh *it = *meshIt++;
-                it->SetGeomOwner(localf8);
+                it->SetGeomOwner(pMesh);
                 Transform tff0;
                 tff0.v = font->CharOriginOffset();
                 tff0.v *= state.size;
-                tff0.v.x += kerning + f3;
-                tff0.v.z += f4;
-                tff0.m.x.x = font->FontUnitInverse() * state.size;
-                tff0.m.x.y = tff0.m.x.x * 0;
-                tff0.m.x.z = tff0.m.x.y;
-                tff0.m.y.x = tff0.m.x.y;
-                tff0.m.y.y = tff0.m.x.x;
-                tff0.m.y.z = tff0.m.x.y;
-                tff0.m.z.x = tff0.m.x.y;
-                tff0.m.z.y = tff0.m.x.y;
-                tff0.m.z.z = tff0.m.x.x;
-                if (circle != 0) {
-                    float fvar = f100 / 2 + tff0.v.x;
-                    Transform tfa0 = XfmOnCircleEdge(circle, fvar);
+                tff0.v.x += f6 + x;
+                tff0.v.z += baseZ;
+                float scale = font->FontUnitInverse() * state.size;
+                tff0.m.x.x = scale;
+                tff0.m.y.y = scale;
+                tff0.m.z.z = scale;
+                scale *= 0;
+                tff0.m.x.y = scale;
+                tff0.m.x.z = scale;
+                tff0.m.y.x = scale;
+                tff0.m.y.z = scale;
+                tff0.m.z.x = scale;
+                tff0.m.z.y = scale;
+                if (circleCircumference != 0) {
+                    float fvar = width / 2 + tff0.v.x;
+                    Transform tfa0 = XfmOnCircleEdge(circleCircumference, fvar);
                     tff0.v.x -= fvar;
                     Multiply(tff0, tfa0, tff0);
                 }
                 it->SetLocalXfm(tff0);
             }
-            f3 += state.size * ffc;
+            x += state.size * advance;
         }
     }
 }
@@ -773,17 +768,15 @@ void RndText::Mats(std::list<class RndMat *> &mats, bool) {
 
 void RndText::DrawShowing() {
     SizeCheck();
-    int i11 = 0;
+    int numMaterials = 0;
     FOREACH (it, mFontMap) {
-        i11 += (*it)->NumMaterials();
+        numMaterials += (*it)->NumMaterials();
     }
-    // Hmx::Color *colors = (Hmx::Color *)_alloca(i11 * sizeof(Hmx::Color));
-    float *colors = (float *)_alloca(i11 * sizeof(Hmx::Color));
+    Hmx::Color *colors = (Hmx::Color *)_alloca(numMaterials * sizeof(Hmx::Color));
+    int colorIdx = 0;
     FOREACH (it, mFontMap) {
-        for (int i = 0; i < (*it)->NumMaterials(); i++) {
-            RndMat *mat = (*it)->Material(i);
-            Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
-            *curColor = mat->GetColor();
+        for (int i = 0; i < (*it)->NumMaterials(); colorIdx++, i++) {
+            colors[colorIdx] = (*it)->Material(i)->GetColor();
         }
     }
     bool b3 = false;
@@ -794,9 +787,7 @@ void RndText::DrawShowing() {
                 b3 = true;
                 FontMapBase *font = mFontMap[idx];
                 for (int i = 0; i < font->NumMaterials(); i++) {
-                    RndMat *mat = font->Material(i);
-                    Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
-                    mat->SetRGBA(*curColor);
+                    font->Material(i)->SetRGBA(it->fontColor);
                 }
             }
         }
@@ -809,8 +800,9 @@ void RndText::DrawShowing() {
         for (int i = 0; i < (*it)->NumMeshes(); i++) {
             RndMesh *curMesh = (*it)->Mesh(i);
             if (curMesh) {
+                UIManager *ui = TheUI;
                 if (sBlacklightModeEnabled && (*it)->IsBlacklight()
-                    && TheUI->BlacklightScreenEnabled()) {
+                    && ui->BlacklightScreenEnabled()) {
                     QueueBlacklightPacket(curMesh, mCloneOffset, mNumClones);
                 } else {
                     DrawMesh(curMesh, mCloneOffset, mNumClones);
@@ -819,11 +811,10 @@ void RndText::DrawShowing() {
         }
     }
     if (b3) {
+        colorIdx = 0;
         FOREACH (it, mFontMap) {
-            for (int i = 0; i < (*it)->NumMaterials(); i++) {
-                RndMat *mat = (*it)->Material(i);
-                Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
-                mat->SetColor(*curColor);
+            for (int i = 0; i < (*it)->NumMaterials(); colorIdx++, i++) {
+                (*it)->Material(i)->SetColor(colors[colorIdx]);
             }
         }
     }
@@ -1438,38 +1429,39 @@ RndText::ParseMarkup(const unsigned short *us1, StyleState &state, unsigned shor
     return p;
 }
 
-void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &vec) {
-    std::map<RndFontBase *, std::set<unsigned short> > fontMap;
-    std::vector<unsigned short> localUSVec;
-    bool b6 = false;
+void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &buffer) {
+    std::map<RndFontBase *, std::set<unsigned short> > missingChars;
+    std::vector<unsigned short> origBufferCopy;
+    bool copied = false;
     StyleState state(this, 1);
-    auto vecIt = vec.begin();
+    auto vecIt = buffer.begin();
     unsigned short curUS = *vecIt;
     while (curUS != 0) {
         curUS = *vecIt;
-        if (curUS == 0x3C && mMarkup) {
-            unsigned short ref = curUS;
-            vecIt = (unsigned short *)ParseMarkup(vecIt, state, ref);
+        if (curUS == '<' && mMarkup) {
+            vecIt = (unsigned short *)ParseMarkup(vecIt, state, curUS);
             vecIt--;
         } else if (curUS != 10 && state.fontMapIndex != -1) {
             FontMapBase *base = mFontMap[state.fontMapIndex];
             if (base) {
                 RndFontBase *font = base->Font();
                 if (font && !font->CharDefined(curUS)) {
-                    fontMap[font].insert(curUS);
-                    unsigned short shorts[] = { 0x25A1, 0x3F, 0x23, 0x2A, 0x21, 0x39 };
-                    for (int i = 0; i < 6; i++) {
-                        curUS = shorts[i];
-                        if (font->CharDefined(curUS)) {
+                    missingChars[font].insert(curUS);
+
+                    curUS = 0;
+                    unsigned short shorts[] = { 0x25A1, '?', '#', '*', '!', '9' };
+                    for (int i = 0; i < (int)DIM(shorts); i++) {
+                        unsigned short curShort = shorts[i];
+                        if (font->CharDefined(curShort)) {
+                            curUS = curShort;
                             break;
                         }
-                        curUS = 0;
                     }
                     if (curUS == 0) {
-                        std::vector<unsigned short> chars = font->Chars();
-                        for (int i = 0; i < chars.size(); i++) {
-                            unsigned short cur = chars[i];
-                            bool isSpace = cur == 0x20 || cur == 0xA0;
+                        std::vector<unsigned short> validChars = font->Chars();
+                        for (int i = 0; i < validChars.size(); i++) {
+                            unsigned short cur = validChars[i];
+                            bool isSpace = cur == ' ' || cur == 0xA0;
                             if (!isSpace) {
                                 curUS = cur;
                                 break;
@@ -1477,22 +1469,24 @@ void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &vec) {
                         }
                     }
                     if (curUS != 0) {
-                        if (!b6) {
-                            localUSVec = vec;
-                            b6 = true;
+                        if (!copied) {
+                            origBufferCopy = buffer;
+                            copied = true;
                         }
                         *vecIt = curUS;
                     }
                 }
             }
         }
+        curUS = *++vecIt;
     }
-    FOREACH (it, fontMap) {
+    FOREACH (it, missingChars) {
         RndFontBase *key = it->first;
+        auto &set = it->second;
         String outputStr = MakeString(
-            "%s:%s char%s (", PathName(this), TextToken(), it->second.size() > 1 ? "s" : ""
+            "%s:%s char%s (", PathName(this), TextToken(), set.size() > 1 ? "s" : ""
         );
-        FOREACH (charIt, it->second) {
+        FOREACH (charIt, set) {
             unsigned short curChar = *charIt;
             bool displayable =
                 !(curChar < 0x20 || curChar >= 0xFF || curChar == 0x25
@@ -1500,14 +1494,14 @@ void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &vec) {
 
             outputStr += MakeString(
                 "%s'%c' 0x%02X",
-                charIt == it->second.begin() ? ", " : "",
+                charIt == set.begin() ? "" : ", ",
                 displayable ? (char)curChar : '?',
                 curChar
             );
         }
         outputStr += MakeString(") missing from %s in string \"", PathName(key));
-        for (int i = 0; i < localUSVec.size(); i++) {
-            unsigned short curChar = localUSVec[i];
+        for (int i = 0; i < origBufferCopy.size(); i++) {
+            unsigned short curChar = origBufferCopy[i];
             if (curChar == 0) {
                 break;
             }
