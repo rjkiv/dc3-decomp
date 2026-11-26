@@ -94,42 +94,39 @@ void RndSoftParticleBuffer::BlurSurface() {
     work->SetBlend(BaseMaterial::kBlendSrc);
     work->SetZMode(BaseMaterial::kDisable);
     work->SetTexWrap(BaseMaterial::kClamp);
+
     for (unsigned int i = 0; i < 2; i++) {
         RndTex *curSurface = mSurfaces[i - 1 & 1];
         work->SetDiffuseTex(mSurfaces[i & 1]);
         curSurface->MakeDrawTarget();
-        Hmx::Rect blurRect(1, 1, curSurface->Width(), curSurface->Height());
-        float invw = 1 / blurRect.w;
-        float invh = 1 / blurRect.h;
+
+        float w = curSurface->Width();
+        float h = curSurface->Height();
+        float invw = 1 / w;
+        float invh = 1 / h;
+        Hmx::Rect blurRect(0, 0, w, h);
 
         static const float kBaseOffset = 0.5f;
-        // pdb says this is a float [5][2], but maybe they made it a Vector2 later on
-        static const Vector2 kBlurWeightOffset[5] = { Vector2(0.1f, -1.5f),
-                                                      Vector2(0.25f, -0.5f),
-                                                      Vector2(0.3f, 0.5f),
-                                                      Vector2(0.25f, 1.5f),
-                                                      Vector2(0.1f, 2.5f) };
-
-        // FIXME: need to use this
-        // static const float kBlurWeightOffset[5][2] = {
-        //     { 0.1f,  -1.5f },
-        //     { 0.25f, -0.5f },
-        //     { 0.3f,  0.5f  },
-        //     { 0.25f, 1.5f  },
-        //     { 0.1f,  2.5f  }
-        // };
+        static const float kBlurWeightOffset[5][2] = {
+            { 0.1f,  kBaseOffset * -3 },
+            { 0.25f, kBaseOffset * -1 },
+            { 0.3f,  kBaseOffset      },
+            { 0.25f, kBaseOffset * 3  },
+            { 0.1f,  kBaseOffset * 5  }
+        };
 
         bool b1 = !(i & 1);
         for (unsigned int j = 0; j < 5; j++) {
-            float f20 = kBlurWeightOffset[j].x;
+            float f20 = kBlurWeightOffset[j][0];
+            float blurY = kBlurWeightOffset[j][1];
             float x, y;
 
             if (b1) {
-                x = kBlurWeightOffset[j].y * invw;
-                y = kBaseOffset * invh;
+                x = blurY * invw;
+                y = invh * kBaseOffset;
             } else {
-                x = kBaseOffset * invh;
-                y = kBlurWeightOffset[j].y * invw;
+                x = invw * kBaseOffset;
+                y = blurY * invh;
             }
             TheShaderMgr.SetPConstant(
                 (PShaderConstant)(kPShader_BlurSampleOffsets + j), Vector4(x, y, 1, 1)
@@ -139,6 +136,7 @@ void RndSoftParticleBuffer::BlurSurface() {
                 Vector4(f20, f20, f20, f20)
             );
         }
+
         TheShaderMgr.SetNumTaps(5);
         TheNgRnd.DrawRect(blurRect, work, kBlurShader, Hmx::Color(), nullptr, nullptr);
         TheShaderMgr.SetNumTaps(1);
