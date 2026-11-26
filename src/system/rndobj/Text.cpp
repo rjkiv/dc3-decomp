@@ -23,6 +23,7 @@
 #include "utl/MemMgr.h"
 #include "utl/UTF8.h"
 #include "wordwrap.h"
+#include <cwchar>
 #include <set>
 
 bool RndText::sBlacklightModeEnabled = false;
@@ -1260,6 +1261,66 @@ void RndText::FitTextScroll() {
     }
 }
 
+void RndText::FitTextEllipsis() {
+    BuildFontMaps(true);
+    std::vector<Line> lines;
+    std::vector<unsigned short> buffer;
+    int len = ConvertTextToWide(mText.c_str(), buffer);
+    float *charWidths = (float *)_alloca((len + 5) * sizeof(float));
+    OnComputeCharWidths(buffer.begin(), charWidths, false);
+
+    Hmx::Rect r;
+
+    if (charWidths[len] > mWidth) {
+        int wlen = wcslen(L"...");
+        int max = len;
+        int min = 1;
+        while (max > min + 1) {
+            int mid = (min + max) >> 1;
+            if (charWidths[mid] >= mWidth) {
+                max = mid;
+            } else {
+                min = mid;
+            }
+        }
+        int bigLen = min + wlen;
+
+        unsigned short *u11 =
+            (unsigned short *)_alloca((min + wlen + 1) * sizeof(unsigned short));
+        memcpy(u11, buffer.begin(), min * 2);
+        if (mFixedLength > wlen + 1 && bigLen > mFixedLength) {
+            bigLen = mFixedLength;
+        }
+        int diff = bigLen - wlen;
+        wcscpy((wchar_t *)&u11[diff], L"...");
+        BuildFontMaps(true);
+        OnComputeCharWidths(u11, charWidths, false);
+        WrapText(u11, bigLen, charWidths, lines, r, 1);
+
+        while (diff > 1
+               && (lines.size() > 1 || r.w >= mWidth || wcschr(L" .,", u11[diff - 1]))) {
+            int i6 = bigLen-- * 0xe >> 4;
+            for (int i = bigLen; i >= i6; i--) {
+                if (u11[i] == 0x20) {
+                    bigLen = i + wlen;
+                    break;
+                }
+            }
+
+            diff = bigLen - wlen;
+            wcscpy((wchar_t *)&u11[diff], L"...");
+            BuildFontMaps(true);
+            OnComputeCharWidths(u11, charWidths, false);
+            WrapText(u11, bigLen, charWidths, lines, r, 1);
+        }
+
+    } else {
+        WrapText(buffer.begin(), len, charWidths, lines, r, 1);
+    }
+
+    ConstructMeshes(lines, r, 1);
+}
+
 void RndText::UpdateScrollOffsets() {
     float delta = TheTaskMgr.DeltaUISeconds();
     mScrollTimeMs += delta;
@@ -1608,6 +1669,61 @@ RndText::FontMapBase *RndText::AcquireFontMap(RndFontBase *fontBase) {
     found->SetFont(fontBase);
     found->ResetDisplayableChars();
     return found;
+}
+
+int RndText::ConvertTextToWide(
+    const char *utf8, stlpmtx_std::vector<unsigned short> &buffer
+) {
+    char empty = 0;
+    if (!utf8) {
+        utf8 = &empty;
+    }
+    int len = strlen(utf8);
+
+    {
+        MemDoTempAllocations tmp;
+        buffer.resize(len * 2 + 1);
+        buffer[0] = 0;
+    }
+
+    unsigned short *p = buffer.begin();
+
+    if (mCapsMode == kForceUpper) {
+        unsigned short ezkett;
+        DecodeUTF8(ezkett, "\xC3\x9F");
+        unsigned short *u4;
+        if (mFixedLength) {
+            u4 = p + mFixedLength;
+        } else {
+            u4 = nullptr;
+        }
+        for (; *utf8 != '\0' && p != u4; ++p) {
+            unsigned short w;
+            utf8 += DecodeUTF8(w, utf8);
+            if (w == ezkett) {
+                *p++ = 0x53;
+                if (p == u4)
+                    break;
+                *p = 0x53;
+            } else {
+                *p = WToUpper(w);
+            }
+        }
+    } else if (mCapsMode == kForceLower) {
+        while (*utf8 != '\0') {
+            unsigned short w;
+            utf8 += DecodeUTF8(w, utf8);
+            *p++ = WToLower(w);
+        }
+    } else {
+        while (*utf8 != '\0') {
+            utf8 += DecodeUTF8(*p++, utf8);
+        }
+    }
+
+    *p = 0;
+    ReplaceMissingCharacters(buffer);
+    return p - buffer.begin();
 }
 
 #pragma endregion
