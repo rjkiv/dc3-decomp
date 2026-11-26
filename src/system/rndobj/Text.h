@@ -454,5 +454,5 @@ protected:
     std::vector<FontMapBase *> mFontMap; // 0xa8
     Hmx::Rect mCachedRect; // 0xb4
     int mCachedNumLines; // 0xc4
-    float unkc8; // 0xc8 - not in the pdb!
+    float unkc8; // 0xc8 - not in the pdb! - text scale?
 };

@@ -989,16 +989,16 @@ void RndText::SetTextASCII(const char *cstr) {
 }
 
 void RndText::ConstructMeshes(
-    const std::vector<RndText::Line> &lines, const Hmx::Rect &rect, float f3
+    const std::vector<RndText::Line> &lines, const Hmx::Rect &rect, float scale
 ) {
-    unkc8 = f3;
+    unkc8 = scale;
     mCachedNumLines = lines.size();
     mCachedRect = rect;
     FOREACH (it, mFontMap) {
         (*it)->AllocateMeshes(this, mFixedLength);
     }
     if (mStyles[0].font) {
-        StyleState state(this, f3);
+        StyleState state(this, scale);
         for (int i = 0; i < lines.size(); i++) {
             const Line &curLine = lines[i];
             unsigned short usIt = 0;
@@ -1045,9 +1045,8 @@ void RndText::SizeCheck() {
                 RndMesh *curMesh = (*it)->Mesh(i);
                 if (curMesh) {
                     float fref;
-                    if (CalcScreenHeight(
-                            curFontBase->AspectRatio() * state.size, curMesh, fref
-                        )) {
+                    float f1 = curFontBase->AspectRatio() * state.size;
+                    if (CalcScreenHeight(f1, curMesh, fref)) {
                         float f11 = curFontBase->FontUnit() * curFontBase->AspectRatio();
                         float f10 = fref < 127.5f ? fref : 127.5f;
                         if ((f11 * 1.25f < f10 && (s6594 != this || s6590 < fref))) {
@@ -1177,96 +1176,91 @@ void RndText::UpdateText() {
 void RndText::FitTextJust() {
     BuildFontMaps(true);
     std::vector<RndText::Line> lines;
-    std::vector<unsigned short> wide;
-    float f9 = 1;
-    int ret = ConvertTextToWide(mText.c_str(), wide);
-    float *floats = (float *)_alloca((ret + 2) * sizeof(float));
-    OnComputeCharWidths(wide.begin(), floats, false);
+    std::vector<unsigned short> buffer;
+    float scale = 1;
+    int len = ConvertTextToWide(mText.c_str(), buffer);
+    float *charWidths = (float *)_alloca((len + 2) * sizeof(float));
+    OnComputeCharWidths(buffer.begin(), charWidths, false);
     Hmx::Rect rect;
-    WrapText(wide.begin(), ret, floats, lines, rect, 1);
-    float f10 = mStyles[0].size;
-    float f7 = 0.2f;
+    WrapText(buffer.begin(), len, charWidths, lines, rect, scale);
+    float max = mStyles[0].size;
+    float min = 0.2f;
+    float cur;
     if ((mWidth && rect.w > mWidth) || (mHeight && rect.h > mHeight)) {
-        float f11 = mStyles[0].size;
-        float f6 = 0.2f;
-        while (f10 - f7 > 0.2f) {
-            f11 = (f6 + f10) / 2;
-            f9 = f11 / mStyles[0].size;
-            WrapText(wide.begin(), ret, floats, lines, rect, f9);
+        cur = max;
+        while (max - min > 0.2f) {
+            cur = (min + max) / 2;
+            scale = cur / mStyles[0].size;
+            WrapText(buffer.begin(), len, charWidths, lines, rect, scale);
             if ((mWidth && rect.w > mWidth) || (mHeight && rect.h > mHeight)) {
-                f7 = f6;
-                f10 = f11;
+                max = cur;
+            } else {
+                min = cur;
             }
-            f6 = f7;
         }
-        if (f10 == f11) {
-            f9 = f7 / mStyles[0].size;
-            WrapText(wide.begin(), ret, floats, lines, rect, f9);
+        if (max == cur) {
+            scale = min / mStyles[0].size;
+            WrapText(buffer.begin(), len, charWidths, lines, rect, scale);
         }
     }
-    ConstructMeshes(lines, rect, f9);
+    ConstructMeshes(lines, rect, scale);
 }
 
 void RndText::FitTextScroll() {
     BuildFontMaps(true);
     std::vector<RndText::Line> lines;
-    std::vector<unsigned short> wide;
-    int ret = ConvertTextToWide(mText.c_str(), wide);
-    float *floats = (float *)_alloca((ret + 2) * sizeof(float));
+    std::vector<unsigned short> buffer;
+    int len = ConvertTextToWide(mText.c_str(), buffer);
+    float *charWidths = (float *)_alloca((len + 2) * sizeof(float));
     mNumSubTexts = 0;
     mEnterCheckPts.clear();
     mExitCheckPts.clear();
-    OnComputeCharWidths(wide.begin(), floats, false);
+    OnComputeCharWidths(buffer.begin(), charWidths, false);
     mScrollEnabled = false;
-    float f12 = 0;
-    float f11 = mWidth;
-    float f13 = f12;
+    float advancedWidth = 0;
+    float oldWidth = mWidth;
     Hmx::Rect rect;
-    if (floats[ret] > f11 || mFitType == kFitScrollMarqueeWrapAlways) {
+    if (charWidths[len] > mWidth || mFitType == kFitScrollMarqueeWrapAlways) {
         mWidth = 0;
         mScrollEnabled = true;
-        RndFontBase *font = mStyles[0].font;
+        RndFontBase *font = GetSafeFont(mStyles[0]);
         MILO_ASSERT(font, 0xA9E);
         if (font) {
-            unsigned short us;
-            DecodeUTF8(us, "8");
-            float fref;
-            font->CharAdvance(us, us, fref);
-            rect.x = mStyles[0].size;
-            f12 = (rect.x + 0x2c + fref) * rect.x;
+            unsigned short wcx;
+            DecodeUTF8(wcx, "8");
+            float advance;
+            font->CharAdvance(wcx, wcx, advance);
+            advancedWidth = (mStyles[0].kerning + advance) * mStyles[0].size;
         }
     }
-    WrapText(wide.begin(), ret, floats, lines, rect, 1);
+    WrapText(buffer.begin(), len, charWidths, lines, rect, 1);
     ConstructMeshes(lines, rect, 1);
     if (mScrollEnabled) {
-        mWidth = f11;
+        mWidth = oldWidth;
         mNumClones = 1;
-        mScrollTimeMs = f13;
-        mScrollSpeed = mScrollRate * f12 * -0.001f;
+        mScrollTimeMs = 0;
+        mScrollSpeed = mScrollRate * advancedWidth * -0.001f;
         if (mFitType == kFitScrollMarqueeWrapAlways) {
-            mScrollOffset = f11;
-            mEnterOffset = f11;
+            mScrollOffset = mWidth;
+            mEnterOffset = mWidth;
             mNumSubTexts++;
-            mFullStringLength = mIndentation * (float)mNumSubTexts + floats[ret];
+            mFullStringLength = mIndentation * (float)mNumSubTexts + charWidths[len];
             mEnterCheckPts.push_back(mFullStringLength);
-            mEnterCheckPts.push_back(f13);
+            mEnterCheckPts.push_front(0);
             mExitCheckPts.push_back(mFullStringLength);
             mCloneOffset = mFullStringLength;
-            f11 = f12;
-            if (f13 < f12) {
-                while (f13 < mFullStringLength) {
-                    if (mWidth < f11)
-                        break;
-                    f11 += f12;
-                    mNumClones++;
-                }
+
+            for (float w = mFullStringLength; mFullStringLength > 0 && w <= mWidth;
+                 w += mFullStringLength) {
+                mNumClones++;
             }
+
             mEnteredIdx = -1;
             mExitedIdx = -1;
         } else {
-            mScrollOffset = f13;
-            mFullStringLength = floats[ret];
-            mCloneOffset = f13;
+            mScrollOffset = 0;
+            mFullStringLength = charWidths[len];
+            mCloneOffset = 0;
         }
         mScrollTriggerTime = mScrollDelay;
         for (int i = 0; i < mFontMap.size(); i++) {
@@ -1532,9 +1526,10 @@ void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &vec) {
     }
 }
 
-void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {
+void RndText::QueueBlacklightPacket(RndMesh *pMesh, float cloneOffset, int numClones) {
+    unsigned int count = sBlacklightPacketCount;
     unsigned int cursize = sBlacklightPacketPool.capacity();
-    if (sBlacklightPacketCount >= cursize) {
+    if (count >= cursize) {
         unsigned int newsize = 8;
         if (cursize != 0) {
             newsize = cursize * 2;
@@ -1542,10 +1537,10 @@ void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {
         sBlacklightPacketPool.resize(newsize);
     }
     BlacklightPacket &packet = sBlacklightPacketPool[sBlacklightPacketCount++];
-    packet.mpMesh = mesh;
-    packet.mColor = mesh->Mat()->GetColor();
-    packet.mCloneOffset = f2;
-    packet.mNumClones = i3;
+    packet.mpMesh = pMesh;
+    packet.mColor = pMesh->Mat()->GetColor();
+    packet.mCloneOffset = cloneOffset;
+    packet.mNumClones = numClones;
     packet.mpCam = RndCam::Current();
 }
 
