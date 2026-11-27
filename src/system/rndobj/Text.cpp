@@ -1757,4 +1757,139 @@ int RndText::ConvertTextToWide(
     return p - buffer.begin();
 }
 
+int RndText::OnComputeCharWidths(
+    const unsigned short *in, float *charWidths, bool externalUsage
+) {
+    StyleState style(this, 1);
+    std::vector<unsigned short> negChars;
+    std::vector<unsigned short> missingChars;
+    std::vector<RndFontBase *> missingFonts;
+    float widthSet = 0;
+    charWidths[0] = 0;
+    const unsigned short *p = in;
+    float *widthIt = &charWidths[1];
+    unsigned short advanceChar = 0;
+    while (*p != '\0') {
+        unsigned short cur = *p;
+        if (cur == 0x3C && mMarkup) {
+            unsigned short sub = 0;
+            const unsigned short *pMarkup = ParseMarkup(p, style, sub);
+            for (; p < pMarkup; widthIt++, p++) {
+                *widthIt = widthSet;
+            }
+            if (sub != 0) {
+                widthIt--;
+                p--;
+                cur = sub;
+            } else {
+                continue;
+            }
+        }
+        if (cur != 0) {
+            if (style.fontMapIndex != -1) {
+                FontMapBase *base = mFontMap[style.fontMapIndex];
+                RndFontBase *font = base->Font();
+                if (font) {
+                    unsigned short oldCur = cur;
+                    float curAdvance;
+                    if (mFitType == kFitScrollMarqueeWrapAlways && cur == 10) {
+                        if (externalUsage) {
+                            widthSet += mIndentation;
+                        } else {
+                            mNumSubTexts++;
+                            mEnterCheckPts.push_back(
+                                (float)mNumSubTexts * mIndentation + widthSet
+                            );
+                            mExitCheckPts.push_back(
+                                (float)mNumSubTexts * mIndentation + widthSet
+                            );
+                        }
+                        if (font->CharAdvance(advanceChar, cur, curAdvance)) {
+                            base->IncrementDisplayableChars(cur);
+                        }
+                    } else if (font->CharAdvance(advanceChar, cur, curAdvance)) {
+                        curAdvance = (style.kerning + curAdvance) * style.size;
+                        if (curAdvance >= 0) {
+                            widthSet += curAdvance;
+                        } else if (
+                            cur != 10
+                            && std::find(negChars.begin(), negChars.end(), oldCur)
+                                == negChars.end()
+                        ) {
+                            negChars.push_back(oldCur);
+                        }
+                        base->IncrementDisplayableChars(cur);
+                        advanceChar = cur;
+                    } else if (cur != 10) {
+                        if (std::find(missingChars.begin(), missingChars.end(), cur)
+                            == missingChars.end()) {
+                            missingChars.push_back(cur);
+                        }
+                        if (std::find(missingFonts.begin(), missingFonts.end(), font)
+                            == missingFonts.end()) {
+                            missingFonts.push_back(font);
+                        }
+                    }
+                }
+            }
+            *widthIt = widthSet;
+            widthIt++;
+            p++;
+        }
+    }
+    if (missingChars.size() != 0) {
+        String n = MakeString("%s:%s '", PathName(this), TextToken());
+        String missing;
+        unsigned short c[2];
+        c[1] = 0;
+        for (int i = 0; i < missingChars.size(); i++) {
+            c[0] = missingChars[i];
+            n += MakeString("%s", WideCharToChar(c));
+            missing += MakeString("0x%02x ", missingChars[i]);
+        }
+        n += MakeString("\' (%s", missing);
+        String fonts;
+        for (int i = 0; i < missingFonts.size(); i++) {
+            fonts += MakeString("%s ", PathName(missingFonts[i]));
+        }
+        n += MakeString(") missing from font(s) (%s) in string \"", fonts);
+        for (auto p = in; *p != '\0'; p++) {
+            c[0] = *p;
+            n += MakeString("%s", WideCharToChar(c));
+        }
+        n += "\"";
+        for (int i = 0; i < n.length(); i++) {
+            if (n[i] == '%') {
+                n.replace(i, 1, "<PCNT>");
+                i++;
+            }
+        }
+        MILO_NOTIFY(n.c_str());
+    }
+    if (negChars.size() != 0) {
+        String n = MakeString("%s: '", PathName(this));
+        String neg;
+        unsigned short c[2];
+        c[1] = 0;
+        for (int i = 0; i < negChars.size(); i++) {
+            c[0] = negChars[i];
+            n += MakeString("%s", WideCharToChar(c));
+            neg += MakeString("0x%02x ", negChars[i]);
+        }
+        n += MakeString("' (%s", neg);
+        n += MakeString(
+            ") have negative widths from %s in string \"",
+            PathName(mFontMap[style.fontMapIndex]->Font())
+        );
+        for (auto p = in; *p != '\0'; p++) {
+            c[0] = *in; // FIXME: yeah this ain't right
+            n += MakeString("%s", WideCharToChar(c));
+        }
+        n += "\"";
+        MILO_NOTIFY(n.c_str());
+    }
+    *widthIt = widthSet;
+    return (widthIt - charWidths) - 1;
+}
+
 #pragma endregion
