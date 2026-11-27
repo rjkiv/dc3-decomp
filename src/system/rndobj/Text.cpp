@@ -1408,86 +1408,117 @@ void RndText::UpdateScrollOffsets() {
     }
 }
 
-const unsigned short *
-RndText::ParseMarkup(const unsigned short *us1, StyleState &state, unsigned short &usref) {
-    const unsigned short *p = us1 + 1;
-    bool is2f = *p == 0x2F;
-    if (is2f) {
-        p++;
+const unsigned short *RndText::ParseMarkup(
+    const unsigned short *c, StyleState &state, unsigned short &substitute
+) {
+    bool isSlash = *++c == '/';
+    if (isSlash) {
+        c++;
     }
-    usref = 0;
-    if (WStrniCmp(p, (const unsigned short *)L"sup", 3) == 0) {
-        if (is2f) {
-            state.size = state.scale * state.curStyle->size;
+    substitute = 0;
+    if (WStrniCmp(c, (const unsigned short *)L"sup", 3) == 0) {
+        float mult;
+        if (isSlash) {
+            mult = state.curStyle->size;
         } else {
-            state.size = state.scale * state.curStyle->size * gSuperscriptScale;
+            mult = state.curStyle->size * gSuperscriptScale;
         }
-        p += 3;
-    } else if (WStrniCmp(p, (const unsigned short *)L"gtr", 3) == 0) {
-        if (is2f) {
-            state.size = state.scale * state.curStyle->size;
+        c += 3;
+        state.size = state.scale * mult;
+    } else if (WStrniCmp(c, (const unsigned short *)L"gtr", 3) == 0) {
+        c += 3;
+        float mult;
+        if (isSlash) {
+            mult = state.curStyle->size;
         } else {
-            state.size = state.scale * state.curStyle->size * gGuitarScale;
+            mult = state.curStyle->size * gGuitarScale;
         }
-        if (is2f) {
-            state.zOffset = state.zOffset;
-        } else {
-            state.zOffset = gGuitarZOffset;
-        }
-        p += 3;
-    } else if (WStrniCmp(p, (const unsigned short *)L"it", 2) == 0) {
-        if (is2f) {
+        state.size = state.scale * mult;
+        state.zOffset = isSlash ? state.curStyle->zOffset : gGuitarZOffset;
+    } else if (WStrniCmp(c, (const unsigned short *)L"it", 2) == 0) {
+        c += 2;
+        if (isSlash) {
             state.italics = state.curStyle->italics;
         } else {
             state.italics = state.curStyle->italics + 0.1f;
         }
-        p += 2;
-    } else if (WStrniCmp(p, (const unsigned short *)L"color", 5) == 0) {
-        if (is2f) {
+    } else if (WStrniCmp(c, (const unsigned short *)L"color", 5) == 0) {
+        c += 5;
+        if (isSlash) {
+            // what is happening here
             state.textColor = state.curStyle->textColor;
-            p += 5;
+            // memcpy(&state.textColor, &state.curStyle->textColor, sizeof(Hmx::Color));
         } else {
-            int r, g, b;
-            int a = state.textColor.alpha * 256.0f;
-            swscanf((const wchar_t *)p, L"%d %d %d %d", r, g, b, a);
-            state.textColor.red = (float)r * 0.003921569f;
-            state.textColor.green = (float)g * 0.003921569f;
-            state.textColor.blue = (float)b * 0.003921569f;
-            state.textColor.alpha = (float)a * 0.003921569f;
-            p += 6;
+            c += 1;
+            int r = 0, g = 0, b = 0;
+            int a = state.textColor.alpha * 255.999f;
+            swscanf((const wchar_t *)c, L"%d %d %d %d", &r, &g, &b, &a);
+            state.textColor.red = (float)r / 255.0f;
+            state.textColor.green = (float)g / 255.0f;
+            state.textColor.blue = (float)b / 255.0f;
+            state.textColor.alpha = (float)a / 255.0f;
         }
-    } else if (WStrniCmp(p, (const unsigned short *)L"&#", 2) == 0) {
-        int x = 0x3F;
-        swscanf((const wchar_t *)p, L"%d", x);
-        usref = x;
-        p += 2;
-    } else if (WStrniCmp(p, (const unsigned short *)L"nobreak", 7) == 0) {
-        if (is2f) {
+    } else if (WStrniCmp(c, (const unsigned short *)L"&#", 2) == 0) {
+        c += 2;
+        int x = '?';
+        swscanf((const wchar_t *)c, L"%d", &x);
+        substitute = x;
+    } else if (WStrniCmp(c, (const unsigned short *)L"nobreak", 7) == 0) {
+        c += 7;
+        if (isSlash) {
             state.brk = true;
         } else {
             state.brk = false;
         }
-        p += 7;
-    } else if (WStrniCmp(p, (const unsigned short *)L"alt", 3) == 0) {
-        p += 3;
-        if (is2f) {
-            for (; *p != L'>' && *p != L'\0'; p++)
+    } else if (WStrniCmp(c, (const unsigned short *)L"alt", 3) == 0) {
+        c += 3;
+        if (isSlash) {
+            for (; *c != L'>' && *c != L'\0'; c++)
                 ;
         }
-        // more...
+
+        unsigned short cur = *c;
+        bool b4 = false;
+        int i11 = 1;
+        if (cur >= 0x32 && cur <= 0x39) {
+            i11 = cur - 0x30;
+            c++;
+        } else if (cur == 0x62 || cur == 0x42) {
+            b4 = true;
+            if (mStyles.size() <= 1) {
+                i11 = 0;
+            }
+            RndFontBase *fontBase = GetSafeFont(mStyles[i11]);
+            if (fontBase && FontMapIndex(fontBase, true) == -1) {
+                FontMapBase *fontMapBase = AcquireFontMap(fontBase);
+                fontMapBase->SetBlacklight(true);
+                mFontMap.push_back(fontMapBase);
+            }
+            c++;
+        }
+
+        if (isSlash) {
+            i11 = 0;
+        }
+        if (i11 >= mStyles.size()) {
+            i11 = 0;
+        }
+
+        state.curStyle = &mStyles[i11];
+        memcpy(&state, state.curStyle, sizeof(StyleBase));
+        state.fontMapIndex =
+            FontMapIndex(GetSafeFont(*state.curStyle), state.curStyle->blacklight || b4);
+        state.size *= state.scale;
     }
 
-    while (true) {
-        if (*p == L'>') {
-            return ++p;
-        }
-        if (*p == L'\0') {
-            break;
-        }
-        p++;
+    while (*c != '>' && *c != '\0') {
+        c++;
+    }
+    if (*c != '\0') {
+        c++;
     }
 
-    return p;
+    return c;
 }
 
 void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &buffer) {
