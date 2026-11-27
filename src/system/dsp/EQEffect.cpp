@@ -161,7 +161,7 @@ void EQEffect::SetParameter(int idx, float val) {
         mMF_d = -cosf(mMidFreqCutoff * 0.0001308997f);
         mComputeMF = mMF_h02TT != 0.0f || mMF_h02 != 0.0f;
         mMF_a = mMidFreqGain > 0.0f ? (mMF_k - 1.0f) / (mMF_k + 1.0f)
-                             : (mMF_k - mMF_v0) / (mMF_k + mMF_v0);
+                                    : (mMF_k - mMF_v0) / (mMF_k + mMF_v0);
         mMF_d *= 1.0f - mMF_a;
     } else if (dirty28) { // recalculate low band
         mLF_k = tan(6.544985e-5f * mLowFreqCutoff);
@@ -169,7 +169,7 @@ void EQEffect::SetParameter(int idx, float val) {
         mLF_h02 = (mLF_h02TT - 1.0f) / 2;
         mComputeLF = mLF_h02TT != 0.0f || mLF_h02 != 0.0f;
         mLF_a = mLowFreqGain > 0.0f ? (mLF_k - 1.0f) / (mLF_k + 1.0f)
-                             : (mLF_k - mLF_v0) / (mLF_k + mLF_v0);
+                                    : (mLF_k - mLF_v0) / (mLF_k + mLF_v0);
     } else if (dirty27) { // recalculate low pass
         mComputeLPF = mLPFCutoff < 19999;
         float f = mLPFCutoff / 24000;
@@ -216,25 +216,43 @@ void EQEffect::SetParameter(int idx, float val) {
     if (dirty25 && mLRMode != 0.0f) {
         FILTER f;
         createFilter(
-            FilterType(1), FilterBand(0), 0, mLowFreqCutoff / 48000.0f, mLowFreqCutoff / 48000.0f, &f, 2
+            FilterType(1),
+            FilterBand(0),
+            0,
+            mLowFreqCutoff / 48000.0f,
+            mLowFreqCutoff / 48000.0f,
+            &f,
+            2
         );
         mLPGain = f.gain;
-        if (f.numpoles > 0) {
-            _blkmov(&mLRB, &f.ycoeffs, f.numpoles * sizeof(float));
+        for (int i = 0; i < f.numpoles; i++) {
+            mLRB[0][i] = f.ycoeffs[i];
         }
         createFilter(
-            FilterType(1), FilterBand(2), 0, mLowFreqCutoff / 48000.0f, mHighFreqCutoff / 48000.0f, &f, 2
+            FilterType(1),
+            FilterBand(2),
+            0,
+            mLowFreqCutoff / 48000.0f,
+            mHighFreqCutoff / 48000.0f,
+            &f,
+            2
         );
         mBPGain = f.gain;
-        if (f.numpoles > 0) {
-            _blkmov(&mLRB, &f.ycoeffs, f.numpoles * sizeof(float));
+        for (int i = 0; i < f.numpoles; i++) {
+            mLRB[1][i] = f.ycoeffs[i];
         }
         createFilter(
-            FilterType(1), FilterBand(1), 0, mHighFreqCutoff / 48000.0f, mHighFreqCutoff / 48000.0f, &f, 2
+            FilterType(1),
+            FilterBand(1),
+            0,
+            mHighFreqCutoff / 48000.0f,
+            mHighFreqCutoff / 48000.0f,
+            &f,
+            2
         );
         mHPGain = f.gain;
-        if (f.numpoles > 0) {
-            _blkmov(&mLRB, &f.ycoeffs, f.numpoles * sizeof(float));
+        for (int i = 0; i < f.numpoles; i++) {
+            mLRB[2][i] = f.ycoeffs[i];
         }
         Reset();
     }
