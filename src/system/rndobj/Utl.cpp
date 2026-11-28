@@ -1723,10 +1723,10 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
     }
     RndLine *line = dynamic_cast<RndLine *>(obj);
     if (line) {
-        line->SetWidth(line->GetWidth() * scale);
+        line->SetWidth(line->Width() * scale);
         for (int i = 0; i < line->NumPoints(); i++) {
             Vector3 pos;
-            Scale(line->PointAt(i).v, scale, pos);
+            Scale(line->PointPos(i), scale, pos);
             line->SetPointPos(i, pos);
         }
         return;

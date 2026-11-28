@@ -66,31 +66,38 @@ public:
     NEW_OBJ(RndLine)
     REGISTER_OBJ(RndLine)
 
-    int NumPoints() const { return mPoints.size(); }
-    Point &PointAt(int idx) { return mPoints[idx]; }
-    float GetWidth() const { return mWidth; }
-    void SetWidth(float w) { mWidth = w; }
-    RndMat *Mat() const { return mMat.Ptr(); }
-
-    void SetPointPos(int, const Vector3 &);
-    void SetPointColor(int, const Hmx::Color &, bool);
-    void SetPointsColor(int, int, const Hmx::Color &);
-    void SetUpdate(bool);
-    void UpdatePointColor(int, bool);
     void SetMat(RndMat *);
     void SetNumPoints(int);
+    void SetWidth(float w) { mWidth = w; }
+    void SetPointPos(int i, const Vector3 &v);
+    void SetPointColor(int i, const Hmx::Color &c, bool sync);
+    void UpdatePointColor(int i, bool sync);
+    void SetPointsColor(int start, int end, const Hmx::Color &c);
+    void SetHasCaps(bool caps) { mHasCaps = caps; }
+    void SetLinePairs(bool pairs) { mLinePairs = pairs; }
+    void SetFoldAngle(float angle) {
+        mFoldAngle = angle;
+        mFoldCos = cosf(mFoldAngle);
+    }
+    RndMat *Mat() const { return mMat.Ptr(); }
+    int NumPoints() const { return mPoints.size(); }
+    float Width() const { return mWidth; }
+    bool HasCaps() const { return mHasCaps; }
+    bool LinePairs() const { return mLinePairs; }
+    float FoldAngle() const { return mFoldAngle; }
+    const Vector3 &PointPos(int idx) { return mPoints[idx].v; }
+    //  public: Vector3 WorldPointPos(int32_t);
+    const Hmx::Color &PointColor(int idx) { return mPoints[idx].c; }
+    void SetUpdate(bool);
 
 protected:
     RndLine();
 
     void UpdateInternal();
-    void UpdateLine(const Transform &, float);
-    void MapVerts(int, VertsMap &);
-    void SetFoldAngle(float angle) {
-        mFoldAngle = angle;
-        mFoldCos = cosf(mFoldAngle);
-    }
-
+    void MapVerts(int point, VertsMap &map);
+    void UpdateLine(Point *first, Point *last);
+    void UpdateLine(const Transform &camXfm, float nearPlane);
+    void UpdateLinePair(Point *first, Point *last);
     DataNode OnSetMat(const DataArray *);
 
     /** "Width of the line". Ranges from 0 to 1000. */
